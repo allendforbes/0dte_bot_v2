@@ -1,0 +1,18 @@
+# --- Python ---
+__pycache__/
+*.pyc
+
+# --- Virtual environments ---
+.venv/
+venv/
+
+# --- OS ---
+.DS_Store
+
+# --- Sensitive config ---
+bot_0dte/config.py
+config.py
+.env
+
+# --- Bytecode + misc ---
+*.pyo
