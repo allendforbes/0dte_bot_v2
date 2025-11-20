@@ -2,6 +2,7 @@ import time
 import shutil
 import datetime as dt
 
+
 # Minimal ANSI safely wrapped
 class C:
     RESET = "\033[0m"
@@ -27,6 +28,10 @@ class LivePanel:
         self.min_interval = 0.25  # Throttle rendering
         self.rows = {}
         print("[UI] LivePanel ready.")
+
+    def set_status(self, msg: str):
+        """Print a lightweight pipeline status message."""
+        print(f"[STATUS] {msg}")
 
     # ---------------------------------------------------------
     def update(
@@ -92,7 +97,9 @@ class LivePanel:
         print("=" * term_width)
         print("📡  LIVE MARKET PANEL".center(term_width))
         print("=" * term_width)
-        print(f"{'Symbol':<8} {'Price':<10} {'Bid':<10} {'Ask':<10} {'Signal':<25} {'Strike':<20}")
+        print(
+            f"{'Symbol':<8} {'Price':<10} {'Bid':<10} {'Ask':<10} {'Signal':<25} {'Strike':<20}"
+        )
         print("-" * term_width)
 
         for sym, row in sorted(self.rows.items()):
@@ -108,4 +115,3 @@ class LivePanel:
         print("=" * term_width)
         now = dt.datetime.now().strftime("%H:%M:%S")
         print(f"{C.DIM}Updated {now}{C.RESET}")
-

@@ -2,8 +2,6 @@ import asyncio
 from typing import List, Dict, Any, Optional
 from ib_insync import Option, ContractDetails
 
-from bot_0dte.infra.telemetry import TelemetryEvent
-
 
 class IBKRChainBridge:
     """
@@ -171,19 +169,11 @@ class IBKRChainBridge:
         except asyncio.TimeoutError:
             raise RuntimeError("market data snapshot timeout")
 
-        # -------------------------------------------------------
+            # -------------------------------------------------------
         # 5. Journaling hook (telemetry)
         # -------------------------------------------------------
         if self.journaling_cb:
             await self.journaling_cb(
-                TelemetryEvent(
-                    event="chain_fetch",
-                    payload={
-                        "symbol": symbol,
-                        "expiry": expiry,
-                        "count": len(enriched),
-                    },
-                )
             )
 
         return enriched
@@ -198,7 +188,7 @@ class IBKRChainBridge:
 
         def _snap():
             ticker = self.ib.reqMktData(contract, "", False, False)
-            self.ib.sleep(0.05)
+            self.ib.sleep(0.05)  # allow IBKR to populate ticker
             g = ticker.modelGreeks
             return {
                 "bid": ticker.bid,

@@ -1,0 +1,3 @@
+{"ts": 1763606853.346731, "iso": "2025-11-20T02:47:33.346735", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "regime": "TREND_EARLY", "grade": "A+ Early", "vol_path": "SUPPORT", "tp_mult": 5.0, "sl_mult": 0.35, "trail_mult": 1.3}}
+{"ts": 1763606853.356304, "iso": "2025-11-20T02:47:33.356307", "level": "EVENT", "event": "strike_selected", "data": {"symbol": "SPY", "right": "C", "strike": 470.0, "expiry": "20251119", "premium": 1.0, "bid": 0.95, "ask": 1.05}}
+{"ts": 1763606853.3566, "iso": "2025-11-20T02:47:33.356602", "level": "EVENT", "event": "orch_error", "data": {"error": "size_from_equity() missing 1 required positional argument: 'underlying_price'"}}

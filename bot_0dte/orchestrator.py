@@ -10,6 +10,7 @@ from bot_0dte.ui.live_panel import LivePanel
 from bot_0dte.universe import get_universe_for_today
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
+from bot_0dte.sizing import size_from_equity
 
 
 class Orchestrator:
@@ -50,6 +51,7 @@ class Orchestrator:
 
         # Expiry and last price caches (MA-based)
         from bot_0dte.universe import get_expiry_for_symbol
+
         self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
         self.md_chain_cache = {s: [] for s in self.symbols}
         self.last_price = {s: None for s in self.symbols}
@@ -66,8 +68,8 @@ class Orchestrator:
         self.symbols = universe or get_universe_for_today()
         # Expiry and last price caches
         from bot_0dte.universe import get_expiry_for_symbol
-        self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
 
+        self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
 
         # --- Strategy stack ---
         self.breakout = MorningBreakout(telemetry=self.telemetry)
@@ -87,7 +89,6 @@ class Orchestrator:
         print(f"📈 Universe: {', '.join(self.symbols)}")
         print("=" * 70 + "\n")
 
-
     # -------------------------------------------------------------
     # START orchestrator (called by SessionController.run())
     # -------------------------------------------------------------
@@ -99,7 +100,6 @@ class Orchestrator:
         print("[ORCH] Starting MarketDataFeed...")
         self.feed.callback = self.on_market_data
         await self.feed.start(self.symbols)
-
 
     # -------------------------------------------------------------
     # MAIN MARKET DATA INGESTION
@@ -151,7 +151,9 @@ class Orchestrator:
                     "flow_ratio": tick.get("flow_ratio"),
                     "iv_change": tick.get("iv_change"),
                     "skew_shift": tick.get("skew_shift"),
-                    "seconds_since_open": self._seconds_since_open(),
+                    "seconds_since_open": tick.get(
+                        "seconds_since_open", self._seconds_since_open()
+                    ),
                 }
             )
 
@@ -171,7 +173,9 @@ class Orchestrator:
             # =========================================================
             # STEP 2: STRICT STRIKE SELECTION (MarketData.app chain)
             # =========================================================
+            self.ui.set_status(f"{symbol}: selecting best strike…")
             strike = await self.selector.select(symbol, signal["bias"])
+
             if not strike:
                 self.logger.log_event("signal_dropped", {"reason": "no_strike"})
                 return
@@ -184,28 +188,33 @@ class Orchestrator:
                 signal=signal,
                 strike=strike,
             )
+            self.ui.set_status(
+                f"{symbol}: strike {strike['strike']}{strike['right']} prem={strike['premium']}"
+            )
             self.logger.log_event("strike_selected", strike)
 
             # =========================================================
             # STEP 3: LATENCY PRECHECK
             # =========================================================
+            self.ui.set_status(f"{symbol}: latency precheck…")
             pre = self.latency.validate(symbol, tick, signal["bias"])
+
             if not pre.ok:
+                self.ui.set_status(f"{symbol}: blocked – {pre.reason}")
                 self.logger.log_event("entry_blocked", {"reason": pre.reason})
                 return
 
             # =========================================================
             # STEP 4: SIZING
             # =========================================================
-
-            from bot_0dte.sizing import size_from_equity
             nlv = self.engine.account_state.net_liq
 
             if not self.engine.account_state.is_fresh():
                 self.logger.log_event("entry_blocked", {"reason": "stale_equity"})
                 return
 
-            qty = size_from_equity(nlv)
+            qty = size_from_equity(nlv, tick["price"])
+            self.ui.set_status(f"{symbol}: sizing = {qty}…")
 
             # =========================================================
             # STEP 5: TRAIL LOGIC INIT (meta)
@@ -226,16 +235,20 @@ class Orchestrator:
             tp = prem * tp_mult
             sl = prem * sl_mult
 
-            print("\n" + "=" * 60)
-            print("🚨 TRADE SETUP")
-            print(f"Symbol:      {symbol}")
-            print(f"Bias:        {signal['bias']}")
-            print(f"Strike:      {strike['strike']} {strike['right']}")
-            print(f"Premium:     {prem}")
-            print(f"Entry LMT:   {pre.limit_price:.2f}")
-            print(f"Take Profit: {tp:.2f}")
-            print(f"Stop Loss:   {sl:.2f}")
-            print(f"Qty:         {qty}")
+            print("")
+            print("=" * 60)
+            print(f"🚨 TRADE SIGNAL DETECTED for {symbol}")
+            print(f"Bias:         {signal['bias']}")
+            print(f"Regime:       {signal['regime']}")
+            print(f"Grade:        {signal['grade']}")
+            print(f"Vol Path:     {signal['vol_path']}")
+            print("-" * 60)
+            print(f"Strike:       {strike['strike']} {strike['right']}")
+            print(f"Premium:      {prem:.2f}")
+            print(f"Entry LMT:    {pre.limit_price:.2f}")
+            print(f"Take Profit:  {tp:.2f}")
+            print(f"Stop Loss:    {sl:.2f}")
+            print(f"Qty:          {qty}")
             print("=" * 60)
 
             resp = await asyncio.to_thread(input, "Approve trade? (y/n): ")
@@ -275,11 +288,36 @@ class Orchestrator:
             )
             self.logger.log_event("order_submitted", order)
 
+            # =========================================================
+            # POST-EXECUTION STATUS PANEL
+            # =========================================================
+            print("")
+            print("=" * 65)
+            print("🎯 EXECUTION CONFIRMED".center(65))
+            print("=" * 65)
+
+            print(f"Symbol:        {symbol}")
+            print(f"Bias:          {signal['bias']}")
+            print(f"Regime:        {signal['regime']}")
+            print(f"Grade:         {signal['grade']}")
+            print(f"Vol Path:      {signal['vol_path']}")
+            print("-" * 65)
+            print(f"Entry Filled:  {pre.limit_price:.2f}")
+            print(f"Take Profit:   {tp:.2f}")
+            print(f"Stop Loss:     {sl:.2f}")
+            print(f"Qty:           {qty}")
+            print(f"Trail Mode:    ACTIVE (mult={signal['trail_mult']})")
+            print("-" * 65)
+            print(f"Order ID:      {order.get('entry_order_id')}")
+            print(f"TP Order ID:   {order.get('tp_order_id')}")
+            print(f"SL Order ID:   {order.get('sl_order_id')}")
+            print("=" * 65)
+            print("")
+
         except Exception as e:
             self.logger.log_event("orch_error", {"error": str(e)})
             print(f"[ORCH][ERROR] {e}")
             raise
-
 
     # -------------------------------------------------------------
     def _seconds_since_open(self) -> float:
@@ -287,4 +325,3 @@ class Orchestrator:
         now = dt.datetime.now().astimezone()
         open_t = now.replace(hour=9, minute=30, second=0, microsecond=0)
         return max(0, (now - open_t).total_seconds())
-
