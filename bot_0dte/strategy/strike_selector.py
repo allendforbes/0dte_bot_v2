@@ -1,156 +1,148 @@
-"""
-STRICT Convexity StrikeSelector (0DTE-only, MarketData.app-first)
+# bot_0dte/strategy/strike_selector.py
 
-Hierarchy:
-    1. Use MarketData.app chain if available + fresh
-    2. Fallback to IBKRChainBridge only when needed
-    3. Enforce premium <= $1.00
-    4. Only ATM / ATM±1 / ATM±2
-    5. Reject weeklies Mon–Wed
+"""
+Hybrid WS-Native StrikeSelector (Convexity + Ultra-Low-Latency)
+---------------------------------------------------------------
+Consumes ChainAggregator rows produced from Massive NBBO + Quotes.
+
+Selection Logic:
+    1. Filter CALL/PUT by bias
+    2. Reject rows with missing bid/ask
+    3. Determine ATM from underlying price
+    4. Build ATM ±1 ±2 cluster
+    5. Calculate mid and apply premium <= $1 ceiling
+    6. Select contract closest to $1
+    7. Tiebreak by strike proximity to ATM (closer is better)
+
+Massive chain row format:
+{
+    "symbol": "SPY",
+    "strike": 450,
+    "right": "C",
+    "premium": 0.95,
+    "bid": 0.90,
+    "ask": 1.00,
+    "contract": "O:SPY241122C00450000"
+}
 """
 
-import pandas as pd
 import numpy as np
-from datetime import datetime
-
-CORE = {"SPY", "QQQ"}
-WEEKLIES = {"TSLA", "NVDA", "AAPL", "AMZN", "MSFT"}
+import pandas as pd
 
 
 class StrikeSelector:
     PREMIUM_CEILING = 1.00
+    MAX_ATM_DISTANCE = 2  # ATM ±1 ±2
 
-    def __init__(self, chain_bridge, engine):
+    def __init__(self, chain_bridge=None, engine=None):
         """
-        chain_bridge: IBKRChainBridge instance (fallback)
-        engine: ExecutionEngine (provides md_chain_cache + last_price)
+        IBKR is no longer used.
+        engine is passed so we can read engine.last_price[symbol].
         """
-        self.bridge = chain_bridge
         self.engine = engine
 
-    # ---------------------------------------------------------
-    @staticmethod
-    def _today_exp():
-        return datetime.now().strftime("%Y%m%d")
-
-    # ---------------------------------------------------------
-    @staticmethod
-    def _allow_weeklies_today():
-        # Thu = 3, Fri = 4
-        return datetime.now().weekday() >= 3
-
-    # ---------------------------------------------------------
-    async def _load_chain(self, symbol: str, expiry: str):
-        """
-        Option C hierarchy:
-        1) Use MarketDataFeed chain from orchestrator (zero-latency)
-        2) Fallback to IBKRChainBridge
-        """
-
-        md_cache = self.engine.md_chain_cache.get(symbol)
-
-        # MarketData.app chain present and non-empty
-        if md_cache and isinstance(md_cache, list) and len(md_cache) > 0:
-            return md_cache
-
-        # Fallback to IBKR
-        try:
-            return await self.bridge.fetch_chain(symbol, expiry)
-        except Exception:
+    # ------------------------------------------------------------------
+    def _cluster_strikes(self, underlying_price, strikes):
+        """Return ATM ±1 ±2 cluster."""
+        if underlying_price is None or not strikes:
             return []
 
-    # ---------------------------------------------------------
-    async def select(self, symbol: str, bias: str) -> dict:
-        expiry = self.engine.expiry_map[symbol]
+        atm = min(strikes, key=lambda k: abs(k - underlying_price))
+        cluster = [atm]
 
-        # --------------------- 1) Weekly suppression ---------------------
-        if symbol in WEEKLIES and not self._allow_weeklies_today():
-            print(f"[PREMIUM GUARD] Rejecting {symbol} — weeklies blocked Mon–Wed.")
-            return {}
+        for k in range(1, self.MAX_ATM_DISTANCE + 1):
+            if (atm - k) in strikes:
+                cluster.append(atm - k)
+            if (atm + k) in strikes:
+                cluster.append(atm + k)
 
-        # --------------------- 2) Load chain -----------------------------
-        chain = await self._load_chain(symbol, expiry)
-        if not chain:
-            print(f"[WARN] Empty chain for {symbol}")
-            return {}
+        return cluster
 
-        df = pd.DataFrame(chain)
-        df = df.replace({np.nan: None})
+    # ------------------------------------------------------------------
+    async def select_from_chain(self, chain_rows, bias):
+        """
+        Selects one optimal strike from the WS-native chain rows.
+        """
+        if not chain_rows:
+            return None
 
-        # Numeric enforcement
-        for col in ("strike", "bid", "ask", "last"):
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors="coerce")
+        # ---------------------------------------------------------------
+        # 1 — FILTER BY SIDE
+        # ---------------------------------------------------------------
+        side = "C" if bias.upper() == "CALL" else "P"
+        rows = [r for r in chain_rows if r.get("right") == side]
+        if not rows:
+            return None
 
-        df.dropna(subset=["strike"], inplace=True)
+        # ---------------------------------------------------------------
+        # 2 — PRICE SANITY
+        # Must have bid/ask, discard missing quotes
+        # ---------------------------------------------------------------
+        priced = [r for r in rows if r.get("bid") and r.get("ask")]
+        if not priced:
+            return None
 
-        today = self._today_exp()
-        df = df[df["expiry"].astype(str) == today]
-        if df.empty:
-            print(f"[WARN] No today expiry for {symbol}")
-            return {}
+        # ---------------------------------------------------------------
+        # 3 — UNDERLYING PRICE
+        # We use this to determine ATM
+        # ---------------------------------------------------------------
+        symbol = priced[0].get("symbol")
+        underlying = self.engine.last_price.get(symbol)
+        if underlying is None:
+            return None
 
-        # --------------------- 3) ATM determination ----------------------
-        last = self.engine.last_price.get(symbol)
-        if last is None:
-            print(f"[WARN] No last price for {symbol}, cannot compute ATM")
-            return {}
+        # ---------------------------------------------------------------
+        # 4 — ATM ±1 ±2 STRIKE CLUSTER
+        # ---------------------------------------------------------------
+        strikes = sorted({float(r["strike"]) for r in priced if r.get("strike")})
+        cluster = self._cluster_strikes(underlying, strikes)
+        if not cluster:
+            return None
 
-        strikes = sorted(df["strike"].unique())
-        atm = min(strikes, key=lambda x: abs(x - last))
+        clustered_rows = [r for r in priced if float(r["strike"]) in cluster]
+        if not clustered_rows:
+            return None
 
-        candidates = [atm]
-        for k in (1, 2):
-            if atm - k in strikes:
-                candidates.append(atm - k)
-            if atm + k in strikes:
-                candidates.append(atm + k)
+        # ---------------------------------------------------------------
+        # 5 — MIDPRICE & PREMIUM CEILING
+        # ---------------------------------------------------------------
+        enriched = []
+        for r in clustered_rows:
+            bid = float(r.get("bid", 0.0))
+            ask = float(r.get("ask", 0.0))
+            mid = (bid + ask) / 2
 
-        # --------------------- 4) Call/Put filter ------------------------
-        right = "C" if bias == "CALL" else "P"
-        df = df[df["right"].str.upper() == right]
-
-        if df.empty:
-            print(f"[WARN] No {bias} contracts for {symbol}")
-            return {}
-
-        # --------------------- 5) Premium convexity rule -----------------
-        best_pick = None
-        best_dist = float("inf")
-
-        for K in candidates:
-            sub = df[df["strike"] == K]
-            if sub.empty:
+            if mid <= 0:
+                continue
+            if mid > self.PREMIUM_CEILING:
                 continue
 
-            sub = sub.assign(mid=(sub["bid"] + sub["ask"]) / 2)
-            sub = sub.dropna(subset=["mid"])
-            if sub.empty:
-                continue
+            enriched.append(
+                {
+                    **r,
+                    "mid": mid,
+                    "dist": abs(mid - self.PREMIUM_CEILING),
+                    "atm_dist": abs(float(r["strike"]) - underlying),
+                }
+            )
 
-            # Pick mid <= 1.00, closest to 1.00 (highest convexity)
-            sub = sub[sub["mid"] <= self.PREMIUM_CEILING]
-            if sub.empty:
-                continue
+        if not enriched:
+            return None
 
-            # Distance from 1.00 (we want mid near $1 convexity line)
-            sub["dist"] = (sub["mid"] - self.PREMIUM_CEILING).abs()
-
-            row = sub.sort_values("dist").iloc[0]
-            if row["dist"] < best_dist:
-                best_dist = row["dist"]
-                best_pick = row
-
-        if best_pick is None:
-            print(f"[PREMIUM GUARD] {symbol}: all ATM±2 > ${self.PREMIUM_CEILING}.")
-            return {}
+        # ---------------------------------------------------------------
+        # 6 — SORT BY:
+        #      1) closeness to $1 premium
+        #      2) closeness to ATM
+        # ---------------------------------------------------------------
+        enriched.sort(key=lambda r: (r["dist"], r["atm_dist"]))
+        best = enriched[0]
 
         return {
             "symbol": symbol,
-            "right": right,
-            "strike": float(best_pick["strike"]),
-            "expiry": today,
-            "premium": round(float(best_pick["mid"]), 2),
-            "bid": float(best_pick["bid"]),
-            "ask": float(best_pick["ask"]),
+            "strike": float(best["strike"]),
+            "right": side,
+            "premium": round(best["mid"], 2),
+            "bid": float(best["bid"]),
+            "ask": float(best["ask"]),
+            "contract": best["contract"],
         }

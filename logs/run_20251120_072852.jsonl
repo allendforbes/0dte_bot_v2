@@ -1,0 +1,2 @@
+{"ts": 1763652532.415829, "iso": "2025-11-20T15:28:52.415833", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "regime": "RECLAIM", "grade": "A", "vol_path": "CONFIRM", "tp_mult": 3.0, "sl_mult": 0.5, "trail_mult": 1.2}}
+{"ts": 1763652532.4207308, "iso": "2025-11-20T15:28:52.420734", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}

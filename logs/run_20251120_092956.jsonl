@@ -1,0 +1,3 @@
+{"ts": 1763659796.242351, "iso": "2025-11-20T17:29:56.242355", "level": "INFO", "event": "session.startup", "data": {"mode": "mock"}}
+{"ts": 1763659796.2426822, "iso": "2025-11-20T17:29:56.242684", "level": "INFO", "event": "session.startup_complete"}
+{"ts": 1763659796.24274, "iso": "2025-11-20T17:29:56.242742", "level": "INFO", "event": "session.run_start"}

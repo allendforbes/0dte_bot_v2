@@ -29,10 +29,10 @@ class PrecheckResult:
 class LatencyPrecheck:
     def __init__(self):
         # Tick sanity
-        self.MAX_STALE_MS = 400        # must be <0.4s old
-        self.MAX_SPREAD_PCT = 0.25     # 25% of premium max
-        self.MAX_SLIPPAGE = 0.15       # 15% adverse movement
-        self.MAX_REVERSE_SLOPE = -0.01 # no micro flip
+        self.MAX_STALE_MS = 400  # must be <0.4s old
+        self.MAX_SPREAD_PCT = 0.25  # 25% of premium max
+        self.MAX_SLIPPAGE = 0.15  # 15% adverse movement
+        self.MAX_REVERSE_SLOPE = -0.01  # no micro flip
 
     # ------------------------------------------------------------------
     def validate(self, symbol: str, tick: dict, bias: str) -> PrecheckResult:
@@ -88,8 +88,10 @@ class LatencyPrecheck:
         slope = tick.get("vwap_dev_change")
         if slope is not None:
             reverse_flip = (
-                bias == "CALL" and slope < self.MAX_REVERSE_SLOPE or
-                bias == "PUT" and slope > -self.MAX_REVERSE_SLOPE
+                bias == "CALL"
+                and slope < self.MAX_REVERSE_SLOPE
+                or bias == "PUT"
+                and slope > -self.MAX_REVERSE_SLOPE
             )
             if reverse_flip:
                 return PrecheckResult(False, reason="reversal_tick")
