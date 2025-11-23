@@ -1,0 +1,56 @@
+.
+├── .DS_Store
+├── .gitignore
+├── bot_0dte
+│   ├── __init__.py
+│   ├── _archive_legacy
+│   │   ├── ibkr_chain_bridge.py
+│   │   ├── marketdata_feed.py
+│   │   ├── marketdata_ws_adapter.py
+│   │   └── md_app
+│   │       └── providers
+│   │           └── marketdata
+│   ├── bot_start.py
+│   ├── config.py
+│   ├── control
+│   │   └── session_controller.py
+│   ├── data
+│   │   ├── adapters
+│   │   ├── providers
+│   │   │   └── massive
+│   │   │       ├── _archive
+│   │   │       │   ├── massive_mux.py
+│   │   │       │   └── massive_ws_adapter.py
+│   │   │       ├── massive_contract_engine.py
+│   │   │       ├── massive_mux.py
+│   │   │       ├── massive_options_ws_adapter.py
+│   │   │       └── massive_stocks_ws_adapter.py
+│   │   └── replay
+│   │       └── replay_engine.py
+│   ├── execution
+│   │   ├── adapters
+│   │   │   ├── ibkr_exec.py
+│   │   │   └── mock_exec.py
+│   │   └── engine.py
+│   ├── infra
+│   │   ├── logger.py
+│   │   └── telemetry.py
+│   ├── orchestrator.py
+│   ├── risk
+│   │   └── trail_logic.py
+│   ├── sim
+│   │   └── bot_full_sim.py
+│   ├── sizing.py
+│   ├── strategy
+│   │   ├── latency_precheck.py
+│   │   ├── morning_breakout.py
+│   │   └── strike_selector.py
+│   ├── tests
+│   ├── ui
+│   │   └── live_panel.py
+│   └── universe.py
+├── bot_test.py
+├── project_tree.txt
+└── test_massive_ws.py
+
+21 directories, 33 files

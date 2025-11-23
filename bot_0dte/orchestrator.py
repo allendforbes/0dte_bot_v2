@@ -1,6 +1,4 @@
-# orchestrator.py — MassiveMux WS-Native Orchestrator (Full Replacement)
-# NOTE: This is a production-grade scaffold. Integrate with MassiveMux,
-# StocksWSAdapter, OptionsWSAdapter, ExecutionEngine, and StrikeSelector.
+# orchestrator.py — MassiveMux WS-Native Orchestrator (FINAL)
 
 import asyncio
 import datetime as dt
@@ -57,7 +55,7 @@ class ChainAggregator:
 
 
 # =====================================================================
-# Orchestrator
+# Orchestrator — receives underlying + NBBO from MassiveMux
 # =====================================================================
 class Orchestrator:
     def __init__(
@@ -77,58 +75,65 @@ class Orchestrator:
         self.auto_trade_enabled = auto_trade_enabled
         self.trade_mode = trade_mode
 
+        # Universe & expiry
         self.symbols = universe or get_universe_for_today()
         self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
 
+        # State
         self.last_price = {s: None for s in self.symbols}
         self.last_underlying_ts = {s: 0.0 for s in self.symbols}
 
+        # Chain aggregator
         self.chain_agg = ChainAggregator(self.symbols)
 
-        self.engine.expiry_map = self.expiry_map
-
+        # Strategy stack
         self.breakout = MorningBreakout(telemetry=self.telemetry)
         self.latency = LatencyPrecheck()
-        self.trail = TrailLogic(max_loss_pct=0.50)
         self.selector = StrikeSelector(chain_bridge=None, engine=self.engine)
+        self.trail = TrailLogic(max_loss_pct=0.50)
 
+        # UI
         self.ui = LivePanel()
 
         print("\n" + "=" * 70)
-        print("WS-NATIVE ORCHESTRATOR INITIALIZED".center(70))
+        print(" MASSIVE-WS ORCHESTRATOR INITIALIZED ".center(70, "="))
         print("=" * 70 + "\n")
 
-    # ------------------------------------------------------------
+    # ==================================================================
     async def start(self):
+        """Attach MassiveMux event handlers."""
         self.mux.on_underlying(self._on_underlying)
         self.mux.on_option(self._on_option)
-        await self.mux.connect(self.symbols)
+        await self.mux.connect(self.symbols, self.expiry_map)
 
-    # ------------------------------------------------------------
+    # ==================================================================
     async def _on_underlying(self, event: Dict[str, Any]):
         sym = event.get("symbol")
-        price = event.get("price")
-        if sym not in self.symbols or price is None:
+        price = float(event.get("price"))
+
+        if sym not in self.symbols:
             return
+
         self.last_price[sym] = price
         self.last_underlying_ts[sym] = time.time()
 
         self.ui.update(symbol=sym, price=price)
+
         await self._evaluate(sym)
 
-    # ------------------------------------------------------------
+    # ==================================================================
     async def _on_option(self, event: Dict[str, Any]):
         sym = event.get("symbol")
         if sym in self.symbols:
             self.chain_agg.update(event)
 
-    # ------------------------------------------------------------
+    # ==================================================================
     async def _evaluate(self, symbol: str):
         price = self.last_price[symbol]
         if price is None:
             return
 
-        # breakout signal
+        # breakout logic
         sig = self.breakout.qualify(
             {
                 "symbol": symbol,
@@ -139,13 +144,14 @@ class Orchestrator:
                 "seconds_since_open": self._seconds_since_open(),
             }
         )
+
         if not sig:
             return
 
         self.logger.log_event("signal_generated", sig)
         self.ui.set_status(f"{symbol}: breakout detected")
 
-        # chain freshness
+        # ensure chain ready
         if not self.chain_agg.is_fresh(symbol):
             self.logger.log_event("signal_dropped", {"reason": "stale_chain"})
             return
@@ -160,22 +166,27 @@ class Orchestrator:
             self.logger.log_event("signal_dropped", {"reason": "no_strike"})
             return
 
+        # pre-check latency
         pre = self.latency.validate(symbol, {"price": price}, sig["bias"])
         if not pre.ok:
             self.logger.log_event("entry_blocked", {"reason": pre.reason})
             return
 
+        # sizing
         if not self.engine.account_state.is_fresh():
             self.logger.log_event("entry_blocked", {"reason": "stale_equity"})
             return
 
         qty = size_from_equity(self.engine.account_state.net_liq, price)
+
+        # TP/SL
         prem = strike["premium"]
         tp = prem * sig["tp_mult"]
         sl = prem * sig["sl_mult"]
 
         self.trail.initialize(symbol, pre.limit_price, sig["trail_mult"])
 
+        # execute
         if not self.auto_trade_enabled:
             self.logger.log_event("trade_blocked", {"reason": "auto_trade_off"})
             return
@@ -196,7 +207,12 @@ class Orchestrator:
 
         if self.trade_mode == "paper":
             order = await self.engine.mock_bracket(
-                symbol, sig["bias"], qty, pre.limit_price, tp, sl
+                symbol,
+                sig["bias"],
+                qty,
+                pre.limit_price,
+                tp,
+                sl,
             )
             self.logger.log_event("paper_order", order)
             return
@@ -218,7 +234,7 @@ class Orchestrator:
             self.logger.log_event("order_submitted", order)
             return
 
-    # ------------------------------------------------------------
+    # ==================================================================
     def _seconds_since_open(self) -> float:
         now = dt.datetime.now().astimezone()
         open_t = now.replace(hour=9, minute=30, second=0, microsecond=0)
