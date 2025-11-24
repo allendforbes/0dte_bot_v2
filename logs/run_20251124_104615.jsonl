@@ -1,0 +1,1 @@
+{"ts": 1764009976.276801, "iso": "2025-11-24T18:46:16.276819", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "regime": "REJECT", "grade": "A", "vol_path": "NEUTRAL", "tp_mult": 3.0, "sl_mult": 0.5, "trail_mult": 1.2}}

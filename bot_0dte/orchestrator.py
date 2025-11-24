@@ -29,6 +29,10 @@ from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
 from bot_0dte.sizing import size_from_equity
 
+# internal classes defined in this file
+# VWAPTracker
+# ChainAggregator
+
 
 # =====================================================================
 # VWAP Tracker (rolling window calculation)
@@ -234,6 +238,7 @@ class Orchestrator:
         await self.mux.connect(self.symbols, self.expiry_map)
 
     # ==================================================================
+    # ==================================================================
     async def _on_underlying(self, event: Dict[str, Any]):
         """
         Handle underlying tick from MassiveMux.
@@ -247,23 +252,26 @@ class Orchestrator:
             "_recv_ts": float
         }
         """
-        sym = event.get("symbol")
+        sym_raw = event.get("symbol")
         price = event.get("price")
 
-        if sym not in self.symbols or price is None:
+        # Type narrowing so Pylance knows sym is a guaranteed str
+        if not isinstance(sym_raw, str) or price is None or sym_raw not in self.symbols:
             return
+
+        sym: str = sym_raw
 
         # Update state
         self.last_price[sym] = price
         self.last_underlying_ts[sym] = time.time()
 
         # Update UI
-        try:
-            self.ui.update(
-                symbol=sym, price=price, bid=event.get("bid"), ask=event.get("ask")
-            )
-        except Exception as e:
-            self.logger.warn(f"[UI] update failed: {e}")
+        self.ui.update(
+            symbol=sym,
+            price=price,
+            bid=event.get("bid"),
+            ask=event.get("ask"),
+        )
 
         # Evaluate for signal
         await self._evaluate(sym, price)

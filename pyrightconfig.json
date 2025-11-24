@@ -1,0 +1,17 @@
+{
+  "include": ["bot_0dte"],
+  "exclude": [
+    "**/_archive_legacy",
+    "bot_0dte/_archive_legacy",
+    "bot_0dte/data/providers/massive/_archive",
+    "bot_0dte/data/providers/massive/*_archive*"
+  ],
+  "extraPaths": ["."],
+  "venvPath": ".",
+  "venv": ".venv",
+  "reportOptionalMemberAccess": false,
+  "reportOptionalIterable": false,
+  "reportOptionalSubscript": false
+}
+
+

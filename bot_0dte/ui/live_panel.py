@@ -38,11 +38,11 @@ class LivePanel:
         self,
         symbol: str,
         price: float,
-        bid: float,
-        ask: float,
-        signal: dict = None,
-        strike: dict = None,
-        expiry: str = None,
+        bid: float | None = None,
+        ask: float | None = None,
+        signal: dict | None = None,
+        strike: dict | None = None,
+        expiry: str | None = None,
     ):
         """
         Store latest row and render if interval passed.

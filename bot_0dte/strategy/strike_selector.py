@@ -84,7 +84,7 @@ class StrikeSelector:
         return cluster
 
     # ------------------------------------------------------------------
-    async def select_from_chain(self, chain_rows: list, bias: str) -> dict:
+    async def select_from_chain(self, chain_rows: list, bias: str) -> dict | None:
         """
         Select optimal strike from WS-native chain rows.
 
