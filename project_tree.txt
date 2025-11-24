@@ -1,0 +1,95 @@
+bot_0dte
+├── __init__.py
+├── __pycache__
+│   ├── __init__.cpython-313.pyc
+│   ├── config.cpython-313.pyc
+│   ├── orchestrator.cpython-313.pyc
+│   ├── sizing.cpython-313.pyc
+│   └── universe.cpython-313.pyc
+├── _archive_legacy
+│   ├── ibkr_chain_bridge.py
+│   ├── marketdata_feed.py
+│   ├── marketdata_ws_adapter.py
+│   └── md_app
+│       └── providers
+│           └── marketdata
+│               └── __pycache__
+│                   ├── marketdata_feed.cpython-313.pyc
+│                   └── marketdata_ws_adapter.cpython-313.pyc
+├── bot_start.py
+├── config.py
+├── control
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── session_controller.cpython-313.pyc
+│   └── session_controller.py
+├── data
+│   ├── __init__.py
+│   ├── adapters
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   │       ├── ibkr_chain_bridge.cpython-313.pyc
+│   │       └── massive_ws_adapter.cpython-313.pyc
+│   ├── providers
+│   │   ├── __init__.py
+│   │   └── massive
+│   │       ├── __init__.py
+│   │       ├── _archive
+│   │       │   ├── massive_mux.py
+│   │       │   └── massive_ws_adapter.py
+│   │       ├── massive_contract_engine.py
+│   │       ├── massive_mux.py
+│   │       ├── massive_options_ws_adapter.py
+│   │       └── massive_stocks_ws_adapter.py
+│   └── replay
+│       ├── __init__.py
+│       └── replay_engine.py
+├── execution
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── engine.cpython-313.pyc
+│   ├── adapters
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── ibkr_exec.cpython-313.pyc
+│   │   │   └── mock_exec.cpython-313.pyc
+│   │   ├── ibkr_exec.py
+│   │   └── mock_exec.py
+│   └── engine.py
+├── infra
+│   ├── __pycache__
+│   │   ├── logger.cpython-313.pyc
+│   │   └── telemetry.cpython-313.pyc
+│   ├── logger.py
+│   └── telemetry.py
+├── orchestrator.py
+├── risk
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── trail_logic.cpython-313.pyc
+│   └── trail_logic.py
+├── sim
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── bot_full_sim.cpython-313.pyc
+│   └── bot_full_sim.py
+├── sizing.py
+├── strategy
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── latency_precheck.cpython-313.pyc
+│   │   ├── morning_breakout.cpython-313.pyc
+│   │   └── strike_selector.cpython-313.pyc
+│   ├── latency_precheck.py
+│   ├── morning_breakout.py
+│   └── strike_selector.py
+├── tests
+│   └── __init__.py
+├── ui
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── live_panel.cpython-313.pyc
+│   └── live_panel.py
+└── universe.py
+
+31 directories, 62 files

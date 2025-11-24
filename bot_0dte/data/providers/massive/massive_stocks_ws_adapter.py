@@ -1,4 +1,15 @@
-# bot_0dte/data/adapters/massive_stocks_ws_adapter.py
+"""
+MassiveStocksWSAdapter — Stocks WebSocket Adapter
+
+Responsibilities:
+    • Connect to Massive.com stocks feed
+    • Authenticate
+    • Subscribe to underlyings (Q.SPY, Q.QQQ, etc.)
+    • Normalize events to canonical format
+    • Dispatch to registered callbacks
+    • Auto-reconnect with backoff
+    • Heartbeat watchdog
+"""
 
 import os
 import json
@@ -14,14 +25,6 @@ logger = logging.getLogger(__name__)
 class MassiveStocksWSAdapter:
     """
     Low-latency WebSocket adapter for Massive.com STOCKS feed.
-
-    Responsibilities:
-        • Connect to RT feed
-        • Authenticate with API key
-        • Subscribe to underlyings (Q.*)
-        • Dispatch ticks to registered callbacks
-        • Auto reconnect with backoff
-        • Heartbeat watchdog
     """
 
     WS_URL = "wss://socket.massive.com/stocks"
@@ -147,14 +150,13 @@ class MassiveStocksWSAdapter:
                 self._last_heartbeat = now
 
                 data = json.loads(msg)
-                data["_recv_ts"] = now
 
                 # Massive sends arrays of events
                 if isinstance(data, list):
                     for event in data:
-                        await self._dispatch(event)
+                        await self._dispatch(event, now)
                 else:
-                    await self._dispatch(data)
+                    await self._dispatch(data, now)
 
         except Exception as e:
             logger.error(f"STOCKS router stopped: {e}")
@@ -163,16 +165,37 @@ class MassiveStocksWSAdapter:
             logger.warning("Stocks router ended — reconnecting")
             await self._connect_ws()
 
-    async def _dispatch(self, event: Dict[str, Any]):
+    async def _dispatch(self, event: Dict[str, Any], recv_ts: float):
         """
-        Massive underlyings: event["ev"] == "Q"
-        event["sym"] contains ticker
+        Normalize and dispatch underlying tick.
+
+        Massive format: event["ev"] == "Q", event["sym"] = ticker
+
+        Normalized output:
+        {
+            "symbol": str,
+            "price": float,
+            "bid": float | None,
+            "ask": float | None,
+            "_recv_ts": float
+        }
         """
         if event.get("ev") == "Q":
-            symbol = event.get("sym")
-            if symbol:
-                for cb in self._underlying_handlers:
-                    self.loop.create_task(cb(event))
+            raw_symbol = event.get("sym")
+            if not raw_symbol:
+                return
+
+            # Normalize event format
+            normalized = {
+                "symbol": raw_symbol,
+                "price": event.get("p", 0.0),  # Massive uses "p" for price
+                "bid": event.get("bp"),  # bid price (optional)
+                "ask": event.get("ap"),  # ask price (optional)
+                "_recv_ts": recv_ts,
+            }
+
+            for cb in self._underlying_handlers:
+                self.loop.create_task(cb(normalized))
 
     # ------------------------------------------------------------------
     # Heartbeat watchdog
