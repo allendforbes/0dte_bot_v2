@@ -258,7 +258,12 @@ class Orchestrator:
         self.last_underlying_ts[sym] = time.time()
 
         # Update UI
-        self.ui.update(symbol=sym, price=price)
+        try:
+            self.ui.update(
+                symbol=sym, price=price, bid=event.get("bid"), ask=event.get("ask")
+            )
+        except Exception as e:
+            self.logger.warn(f"[UI] update failed: {e}")
 
         # Evaluate for signal
         await self._evaluate(sym, price)
