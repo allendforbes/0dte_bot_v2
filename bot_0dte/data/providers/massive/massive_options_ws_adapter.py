@@ -1,4 +1,17 @@
-# bot_0dte/data/adapters/massive_options_ws_adapter.py
+"""
+MassiveOptionsWSAdapter — Options WebSocket Adapter
+
+Responsibilities:
+    • Connect to Massive.com options feed
+    • Authenticate
+    • Subscribe to option contracts (O:SPY241122C00450000, etc.)
+    • Handle NBBO events (fast)
+    • Handle Quote/Greek events (slower)
+    • Normalize events to canonical format
+    • Dispatch to registered callbacks
+    • Auto-reconnect with backoff
+    • Heartbeat watchdog
+"""
 
 import os
 import json
@@ -14,19 +27,6 @@ logger = logging.getLogger(__name__)
 class MassiveOptionsWSAdapter:
     """
     Massive.com Options Adapter (NBBO + Quotes/Greeks)
-    --------------------------------------------------
-    Responsibilities:
-        • Connect to real-time options websocket
-        • Authenticate with API key
-        • Subscribe to option contracts (O:<OCC_CODE>)
-        • Handle NBBO events (fast)
-        • Handle Quote/Greek events (slower)
-        • Reconnect on failure
-        • Heartbeat watchdog
-        • Callback system for orchestrator/chain aggregator
-
-    All events include:
-        "_recv_ts" -- precise receipt timestamp for latency analytics
     """
 
     WS_URL = "wss://socket.massive.com/options"
@@ -112,8 +112,10 @@ class MassiveOptionsWSAdapter:
     # ---------------------------------------------------------------------
     async def subscribe_contracts(self, occ_codes: List[str]):
         """
-        occ_codes example:
-            ["O:SPY241122C00445000", "O:SPY241122P00445000"]
+        Subscribe to option contracts.
+
+        Args:
+            occ_codes: List of OCC codes (e.g., ["O:SPY241122C00445000"])
         """
         if not self.ws:
             await self.connect()
@@ -140,19 +142,7 @@ class MassiveOptionsWSAdapter:
                     msgs = [msgs]
 
                 for event in msgs:
-                    event["_recv_ts"] = now
-
-                    ev = event.get("ev")
-
-                    # NBBO
-                    if ev == "NO":  # NBBO Options
-                        for cb in self._nbbo_handlers:
-                            self.loop.create_task(cb(event))
-
-                    # Quotes / Greeks
-                    elif ev == "OQ":  # Option Quotes w/ Greeks
-                        for cb in self._quote_handlers:
-                            self.loop.create_task(cb(event))
+                    await self._dispatch(event, now)
 
         except Exception as e:
             logger.error(f"[OPTIONS] Router crashed: {e}")
@@ -160,13 +150,70 @@ class MassiveOptionsWSAdapter:
             logger.warning("[OPTIONS] Router ending — reconnecting")
             await self.connect()
 
+    async def _dispatch(self, event: Dict[str, Any], recv_ts: float):
+        """
+        Normalize and dispatch option events.
+
+        Normalized output:
+        {
+            "symbol": str (underlying),
+            "contract": str (OCC code),
+            "strike": float,
+            "right": "C" | "P",
+            "bid": float,
+            "ask": float,
+            "delta": float | None,
+            "gamma": float | None,
+            "_recv_ts": float
+        }
+        """
+        ev = event.get("ev")
+
+        # NBBO
+        if ev == "NO":  # NBBO Options
+            normalized = {
+                "symbol": event.get("underlying", ""),
+                "contract": event.get("sym", ""),
+                "strike": event.get("strike", 0.0),
+                "right": event.get("right", ""),
+                "bid": event.get("bid", 0.0),
+                "ask": event.get("ask", 0.0),
+                "_recv_ts": recv_ts,
+            }
+
+            for cb in self._nbbo_handlers:
+                self.loop.create_task(cb(normalized))
+
+        # Quotes / Greeks
+        elif ev == "OQ":  # Option Quotes w/ Greeks
+            normalized = {
+                "symbol": event.get("underlying", ""),
+                "contract": event.get("sym", ""),
+                "strike": event.get("strike", 0.0),
+                "right": event.get("right", ""),
+                "bid": event.get("bid", 0.0),
+                "ask": event.get("ask", 0.0),
+                "delta": event.get("delta"),
+                "gamma": event.get("gamma"),
+                "theta": event.get("theta"),
+                "vega": event.get("vega"),
+                "iv": event.get("iv"),
+                "_recv_ts": recv_ts,
+            }
+
+            for cb in self._quote_handlers:
+                self.loop.create_task(cb(normalized))
+
     # ---------------------------------------------------------------------
     async def _heartbeat_watchdog(self):
-        while True:
-            await asyncio.sleep(5)
-            if time.time() - self._last_heartbeat > 10:
-                logger.error("[OPTIONS] Heartbeat stale — reconnecting")
-                await self.connect()
+        try:
+            while True:
+                await asyncio.sleep(5)
+                if time.time() - self._last_heartbeat > 10:
+                    logger.error("[OPTIONS] Heartbeat stale — reconnecting")
+                    await self.connect()
+        except asyncio.CancelledError:
+            pass
 
     # ---------------------------------------------------------------------
     async def close(self):

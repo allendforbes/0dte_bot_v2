@@ -1,4 +1,15 @@
-# bot_0dte/control/session_controller.py
+"""
+SessionController — WS-Native Session Management
+
+Optional wrapper for bot_start.py that adds:
+    • IBKR connection management
+    • Execution mode switching (mock/paper/live)
+    • Graceful startup/shutdown
+
+Note: bot_start.py can launch directly without this.
+This is kept for convenience and IBKR integration.
+"""
+
 import asyncio
 import logging
 
@@ -14,17 +25,14 @@ from bot_0dte.execution.adapters.ibkr_exec import IBKRExecAdapter
 from bot_0dte.execution.adapters.mock_exec import MockExecAdapter
 from bot_0dte.execution.engine import ExecutionEngine
 
-# NEW Massive WS providers
 from bot_0dte.data.providers.massive.massive_stocks_ws_adapter import (
     MassiveStocksWSAdapter,
 )
 from bot_0dte.data.providers.massive.massive_options_ws_adapter import (
     MassiveOptionsWSAdapter,
 )
-from bot_0dte.data.providers.massive.massive_contract_engine import ContractEngine
 from bot_0dte.data.providers.massive.massive_mux import MassiveMux
 
-# New orchestrator
 from bot_0dte.orchestrator import Orchestrator
 
 from bot_0dte.infra.logger import StructuredLogger
@@ -32,32 +40,32 @@ from bot_0dte.infra.telemetry import Telemetry
 from bot_0dte.universe import get_universe_for_today
 
 
+logger = logging.getLogger(__name__)
+
+
 class SessionController:
     """
-    Pure WS-native session controller (Massive.com only)
+    WS-native session controller.
 
-    Builds:
-        • execution adapter (mock or IBKR)
-        • execution engine
-        • Massive WS adapters (stocks + options)
-        • ContractEngine (OCC auto cluster)
-        • MassiveMux combined router
-        • orchestrator
+    Manages:
+        • Execution adapter lifecycle (IBKR or mock)
+        • WebSocket connections
+        • Orchestrator lifecycle
+        • Graceful shutdown
     """
 
     def __init__(self, universe=None):
         self.logger = StructuredLogger()
         self.telemetry = Telemetry()
 
-        # If none given, load dynamic universe rules
+        # Universe
         self.universe = universe or get_universe_for_today()
 
-        # Components that will be built at startup
+        # Components
         self.adapter = None
         self.engine = None
         self.stocks_ws = None
         self.options_ws = None
-        self.contract_engine = None
         self.mux = None
         self.orch = None
 
@@ -67,6 +75,9 @@ class SessionController:
     # STARTUP
     # ======================================================================
     async def startup(self):
+        """
+        Initialize all components and connect.
+        """
         self.logger.info("session.startup", {"mode": EXECUTION_MODE})
         print("\n[SESSION] Starting WS-native bot…\n")
 
@@ -124,28 +135,15 @@ class SessionController:
         self.options_ws = MassiveOptionsWSAdapter.from_env()
 
         # --------------------------------------------------------------
-        # 5. Contract Engine (auto OCC cluster)
+        # 5. MassiveMux (WS router)
         # --------------------------------------------------------------
-        self.contract_engine = ContractEngine(
-            options_ws=self.options_ws,
-            stocks_ws=self.stocks_ws,
-            orchestrator=None,  # patched after orchestrator is created
-        )
+        print("[SESSION] Creating MassiveMux...")
+        self.mux = MassiveMux(stocks_ws=self.stocks_ws, options_ws=self.options_ws)
 
         # --------------------------------------------------------------
-        # 6. Combined WS Router (MassiveMux)
+        # 6. Orchestrator (WS-native, no REST, no chain bridge)
         # --------------------------------------------------------------
-        self.mux = MassiveMux(
-            stocks_ws=self.stocks_ws,
-            options_ws=self.options_ws,
-            contract_engine=self.contract_engine,
-        )
-
-        # --------------------------------------------------------------
-        # 7. Orchestrator (no REST, no ChainBridge)
-        # --------------------------------------------------------------
-        from bot_0dte.orchestrator import Orchestrator
-
+        print("[SESSION] Creating orchestrator...")
         self.orch = Orchestrator(
             engine=self.engine,
             mux=self.mux,
@@ -153,11 +151,8 @@ class SessionController:
             logger=self.logger,
             universe=self.universe,
             auto_trade_enabled=False,
-            trade_mode=EXECUTION_MODE,  # "mock" → shadow, "paper", "live"
+            trade_mode=EXECUTION_MODE,
         )
-
-        # Link orchestrator back to ContractEngine
-        self.contract_engine.orch = self.orch
 
         print("\n[SESSION] Startup complete. Bot is ready.\n")
         self.logger.info("session.startup_complete")
@@ -167,13 +162,16 @@ class SessionController:
     # RUN LOOP
     # ======================================================================
     async def run(self):
+        """
+        Start orchestrator and run until stopped.
+        """
         if not self._running:
             raise RuntimeError("Session not started")
 
         print("[SESSION] Running bot…")
         self.logger.info("session.run_start")
 
-        # orchestrator kicks off MassiveMux + WS subscriptions
+        # Start orchestrator (connects WS, subscribes symbols)
         await self.orch.start()
 
         # Keep alive loop
@@ -184,14 +182,18 @@ class SessionController:
     # SHUTDOWN
     # ======================================================================
     async def shutdown(self):
+        """
+        Gracefully shutdown all components.
+        """
         print("\n[SESSION] Shutting down…\n")
         self._running = False
 
         try:
-            if self.stocks_ws:
-                await self.stocks_ws.close()
-            if self.options_ws:
-                await self.options_ws.close()
+            # Close WebSockets
+            if self.mux:
+                await self.mux.close()
+
+            # Disconnect IBKR
             if self.adapter and hasattr(self.adapter, "disconnect"):
                 await self.adapter.disconnect()
 
