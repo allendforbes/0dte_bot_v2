@@ -1,5 +1,0 @@
-{
-  "python.defaultInterpreterPath": "/Users/allenforbes/0dte_bot/.venv/bin/python",
-  "python.analysis.extraPaths": ["./"],
-  "python.analysis.autoImportCompletions": true
-}

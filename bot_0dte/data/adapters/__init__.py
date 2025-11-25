@@ -1,4 +1,11 @@
 """
-Legacy adapters (IBKR, REST). Preserved for backward compatibility.
+Adapters package (IBKR, REST, WebSocket, etc.)
+
+Note:
+    Originally contained legacy adapters.
+    Now extended to include IBUnderlyingAdapter (IBKR real-time underlying feed).
 """
-__all__ = []
+
+from .ib_underlying_adapter import IBUnderlyingAdapter
+
+__all__ = ["IBUnderlyingAdapter"]

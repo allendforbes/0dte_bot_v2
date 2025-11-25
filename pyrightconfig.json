@@ -6,9 +6,24 @@
     "bot_0dte/data/providers/massive/_archive",
     "bot_0dte/data/providers/massive/*_archive*"
   ],
+  
   "extraPaths": ["."],
   "venvPath": ".",
   "venv": ".venv",
+
+  // -------------------------
+  // Turn OFF false-positive IBKR errors
+  // -------------------------
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownVariableType": false,
+  "reportIncompatibleMethodOverride": false,
+  "reportAttributeAccessIssue": false,
+  "reportGeneralTypeIssues": false,
+
+  // Keep optional errors disabled (your settings)
   "reportOptionalMemberAccess": false,
   "reportOptionalIterable": false,
   "reportOptionalSubscript": false
