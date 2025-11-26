@@ -36,6 +36,7 @@ from bot_0dte.risk.trail_logic import TrailLogic
 
 # UI
 from bot_0dte.ui.live_panel import LivePanel
+from bot_0dte.ui.ui_state import UIState
 
 # Infra
 from bot_0dte.universe import get_universe_for_today, get_expiry_for_symbol
@@ -185,6 +186,8 @@ class Orchestrator:
 
         # UI
         self.ui = LivePanel()
+        self.ui_state = UIState()
+        self.ui.attach_ui_state(self.ui_state)
 
         # Active trade state
         self.active_symbol: Optional[str] = None
@@ -212,11 +215,24 @@ class Orchestrator:
 
         self.last_price[sym] = price
 
+        # Update UIState (non-visual)
+        self.ui_state.update_underlying(
+            symbol=sym,
+            price=price,
+            bid=event.get("bid"),
+            ask=event.get("ask"),
+            signal=self.ui_state.underlying.get(sym, {}).get("signal"),
+            strike=self.ui_state.underlying.get(sym, {}).get("strike"),
+        )
+
+        # Keep existing UI renderer
         self.ui.update(
             symbol=sym,
             price=price,
             bid=event.get("bid"),
             ask=event.get("ask"),
+            signal=self.ui_state.underlying[sym].get("signal"),
+            strike=self.ui_state.underlying[sym].get("strike"),
         )
 
         await self._evaluate(sym, price)
@@ -244,6 +260,19 @@ class Orchestrator:
             return
 
         mid = (bid + ask) / 2
+
+        # -------------------------------------------------------
+        # UIState: update active trade mark price + PnL
+        # -------------------------------------------------------
+        if self.ui_state.trade.active:
+            self.ui_state.trade.curr_price = mid
+
+            if self.active_entry_price:
+                pnl = (mid - self.active_entry_price) / self.active_entry_price * 100
+                self.ui_state.trade.pnl_pct = pnl
+
+            # latency hint (0ms for mocks)
+            self.ui_state.trade.last_update_ms = int((time.time() - event.get("_recv_ts", time.time())) * 1000)
 
         # -------------------------------
         # Hard SL at -50%
@@ -295,6 +324,13 @@ class Orchestrator:
             return
 
         self.logger.log_event("signal_generated", sig.__dict__)
+        # Insert signal into UIState (strike comes later)
+        self.ui_state.underlying.setdefault(symbol, {})["signal"] = {
+            "bias": sig.bias,
+            "grade": sig.grade,
+            "regime": sig.regime,
+        }
+
         self.ui.set_status(f"{symbol}: elite breakout detected")
 
         # Chain freshness
@@ -307,13 +343,53 @@ class Orchestrator:
             self.logger.log_event("signal_dropped", {"reason": "empty_chain"})
             return
 
+        # -------------------------------------------------------
         # Strike selection
+        # -------------------------------------------------------
         strike = await self.selector.select_from_chain(chain, sig.bias)
         if not strike:
             self.logger.log_event("signal_dropped", {"reason": "no_strike"})
             return
 
+        # -------------------------------------------------------
+        # Ensure underlying panel slot exists
+        # -------------------------------------------------------
+        if symbol not in self.ui_state.underlying:
+            self.ui_state.underlying[symbol] = {
+                "price": None,
+                "bid": None,
+                "ask": None,
+                "signal": None,
+                "strike": None,
+            }
+
+        # -------------------------------------------------------
+        # Update UIState::signal
+        # -------------------------------------------------------
+        self.ui_state.underlying[symbol]["signal"] = {
+            "bias": sig.bias,
+            "grade": sig.grade,
+            "regime": sig.regime,
+        }
+
+        # -------------------------------------------------------
+        # Update UIState::strike (safe and complete)
+        # -------------------------------------------------------
+        self.ui_state.underlying[symbol]["strike"] = {
+            "strike":  strike.get("strike"),
+            "right":   strike.get("right"),
+            "premium": strike.get("premium"),
+            "bid":     strike.get("bid"),
+            "ask":     strike.get("ask"),
+            "contract": strike.get("contract"),
+        }
+
+        # Surface status message
+        self.ui.set_status(f"{symbol}: elite breakout detected")
+
+        # -------------------------------------------------------
         # Latency pre-check
+        # -------------------------------------------------------
         tick = {
             "price": strike["premium"],
             "bid": strike["bid"],
@@ -330,6 +406,7 @@ class Orchestrator:
         if entry_price is None:
             self.logger.log_event("entry_blocked", {"reason": "no_entry_price"})
             return
+
 
         # Sizing
         premium = strike.get("premium")
@@ -352,6 +429,35 @@ class Orchestrator:
         self.active_bias = sig.bias
         self.active_entry_price = entry_price
         self.active_qty = qty
+        
+        # -------------------------------------------------------
+        # CLEAN & CONSOLIDATED UIState ACTIVATION
+        # -------------------------------------------------------
+        ts = self.ui_state.trade
+
+        ts.active       = True
+        ts.symbol       = symbol
+        ts.contract     = strike["contract"]
+        ts.bias         = sig.bias
+        ts.regime       = sig.regime
+        ts.grade        = sig.grade
+        ts.strike       = strike["strike"]
+
+        ts.entry_price  = entry_price
+        ts.curr_price   = entry_price
+        ts.pnl_pct      = 0.0
+
+        ts.trail_mult   = sig.trail_mult
+        ts.trail_target = entry_price * (1 + sig.trail_mult)
+        ts.hard_sl      = entry_price * 0.50
+
+        ts.last_update_ms = 0
+
+        # lifecycle
+        self.ui_state.log(
+            f"[ENTRY] {symbol} {ts.contract} @ {entry_price:.2f}"
+        )
+
 
         # EXECUTION -------------------------------------------
         if not self.auto and not self.active_symbol:
@@ -406,6 +512,21 @@ class Orchestrator:
             self.logger.log_event("exit_order", order)
         else:
             self.logger.log_event("shadow_exit", {"reason": reason})
+        # -------------------------------------------------------
+        # UIState — clear trade panel
+        # -------------------------------------------------------
+        self.ui_state.trade.active = False
+        self.ui_state.trade.symbol = None
+        self.ui_state.trade.contract = None
+        self.ui_state.trade.bias = None
+        self.ui_state.trade.entry_price = None
+        self.ui_state.trade.curr_price = None
+        self.ui_state.trade.pnl_pct = None
+        self.ui_state.trade.strike = None
+        self.ui_state.trade.regime = None
+        self.ui_state.trade.grade = None
+        self.ui_state.trade.trail_mult = None
+        self.ui_state.trade.last_update_ms = None
 
         # Reset active state
         self.active_symbol = None
