@@ -27,7 +27,7 @@ import time
 from typing import Dict, Any, List, Optional
 
 # Strategy
-from bot_0dte.strategy.elite_entry import EliteEntryEngine, EliteSignal
+from bot_0dte.strategy.elite_entry_diagnostic import EliteEntryEngine, EliteSignal
 from bot_0dte.strategy.latency_precheck import LatencyPrecheck
 from bot_0dte.strategy.strike_selector import StrikeSelector
 
@@ -177,6 +177,9 @@ class Orchestrator:
 
         # Chain aggregator
         self.chain_agg = ChainAggregator(self.symbols)
+        # Chain warm-up: block entries until NBBO has populated
+        self.chain_ready_ts = {s: 0.0 for s in self.symbols}
+        self.chain_warmup_sec = 1.0  # 1 second warm-up window after subscription
 
         # Strategies & logic
         self.entry_engine = EliteEntryEngine()
@@ -199,11 +202,48 @@ class Orchestrator:
         print("\n" + "=" * 70)
         print(" ELITE ORCHESTRATOR INITIALIZED ".center(70, "="))
         print("=" * 70 + "\n")
+    
+    def notify_chain_refresh(self, symbol: str):
+        """
+        Called by MassiveMux whenever the ContractEngine publishes a new
+        OCC subscription set (ATM ± clusters). This event signals that the
+        downstream NBBO stream will shift to a new strike set.
+
+        Responsibilities:
+            • Mark chain as fresh (chain_agg.last_ts)
+            • Record warm-up timestamp (chain_ready_ts)
+            • Log latency + chain age
+            • Idempotent updates (no double-refresh spam)
+        """
+
+        now = time.time()
+        last = self.chain_agg.last_ts.get(symbol, 0)
+
+        # Skip redundant updates (< 50ms apart)
+        if now - last < 0.050:   # 50 ms guard
+            return
+
+        # Refresh the chain freshness sentinel
+        self.chain_agg.last_ts[symbol] = now
+
+        # Used by warm-up logic to block entries briefly
+        self.chain_ready_ts[symbol] = now
+
+        # Structured latency instrumentation
+        self.logger.log_event(
+            "chain_refreshed",
+            {
+                "symbol": symbol,
+                "age_ms": round((now - last) * 1000, 3),
+                "ts": now,
+            }
+        )
 
     # ===============================================================
     async def start(self):
         self.mux.on_underlying(self._on_underlying)
         self.mux.on_option(self._on_option)
+        self.mux.parent_orchestrator = self
         await self.mux.connect(self.symbols, self.expiry_map)
 
     # ===============================================================
@@ -324,6 +364,9 @@ class Orchestrator:
             return
 
         self.logger.log_event("signal_generated", sig.__dict__)
+        # HUMAN-FRIENDLY SIGNAL PREVIEW
+        print(f"[SIGNAL] {symbol} {sig.bias} ({sig.grade}, {sig.regime}) — monitoring…")
+
         # Insert signal into UIState (strike comes later)
         self.ui_state.underlying.setdefault(symbol, {})["signal"] = {
             "bias": sig.bias,
@@ -350,6 +393,10 @@ class Orchestrator:
         if not strike:
             self.logger.log_event("signal_dropped", {"reason": "no_strike"})
             return
+        print(
+            f"[SIGNAL] {symbol} optimal strike → "
+            f"{strike['strike']}{strike['right']} @ {strike['premium']:.2f}"
+        )
 
         # -------------------------------------------------------
         # Ensure underlying panel slot exists
@@ -454,6 +501,7 @@ class Orchestrator:
         ts.last_update_ms = 0
 
         # lifecycle
+        print(f"[SIGNAL] ENTRY EXECUTING → {symbol} {strike['contract']} @ {entry_price:.2f}")
         self.ui_state.log(
             f"[ENTRY] {symbol} {ts.contract} @ {entry_price:.2f}"
         )

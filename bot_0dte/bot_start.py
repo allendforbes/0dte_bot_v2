@@ -105,3 +105,39 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+async def build_orchestrator_for_sim(symbols):
+    """
+    Build orchestrator in SIMULATION MODE:
+    - No IBKR
+    - No Massive WebSocket
+    - No account updates
+    - No execution engine calls
+    """
+    from bot_0dte.sim.fake_engine import FakeExecutionEngine
+    from bot_0dte.strategy.latency_precheck import LatencyPrecheck
+    from bot_0dte.data.providers.massive.massive_mux import MassiveMux
+    from bot_0dte.data.providers.massive.massive_options_ws_adapter import MassiveOptionsWSAdapter
+
+    # Fake data pipes
+    fake_ib = FakeExecutionEngine.make_fake_underlying_pipe()
+    fake_options = MassiveOptionsWSAdapter(api_key="SIM")
+
+    mux = MassiveMux(fake_ib, fake_options)
+
+    # Fake execution engine (no orders)
+    engine = FakeExecutionEngine()
+
+    logger = StructuredLogger()
+    telemetry = Telemetry()
+
+    orch = Orchestrator(
+        engine=engine,
+        mux=mux,
+        telemetry=telemetry,
+        logger=logger,
+        universe=symbols,
+        auto_trade_enabled=True,
+        trade_mode="shadow",
+    )
+    return orch

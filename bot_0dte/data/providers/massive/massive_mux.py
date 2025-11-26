@@ -1,15 +1,5 @@
 """
 MassiveMux — Hybrid Router (IBKR Underlying + Massive Options)
-
-Responsibilities:
-    • Route underlying ticks from IBKR adapter
-    • Route options NBBO from Massive adapter
-    • Create ContractEngine for OCC subscription management
-    • Handle reconnects for both data sources
-
-Architecture:
-    IBKR Adapter (underlying) → MassiveMux → Orchestrator
-    Massive Options (NBBO)    → MassiveMux → Orchestrator
 """
 
 import asyncio
@@ -19,7 +9,6 @@ from typing import Callable, List, Dict, Any
 from bot_0dte.data.adapters.ib_underlying_adapter import IBUnderlyingAdapter
 from .massive_options_ws_adapter import MassiveOptionsWSAdapter
 from .massive_contract_engine import ContractEngine
-
 
 logger = logging.getLogger(__name__)
 
@@ -41,22 +30,19 @@ class MassiveMux:
     def __init__(
         self, ib_underlying: IBUnderlyingAdapter, options_ws: MassiveOptionsWSAdapter
     ):
-        """
-        Initialize hybrid mux.
-
-        Args:
-            ib_underlying: IBKR underlying adapter
-            options_ws: Massive options WebSocket adapter
-        """
         self.ib_underlying = ib_underlying
         self.options = options_ws
-        self.loop = ib_underlying.loop
 
-        # Callbacks wired from Orchestrator
+        # Callbacks provided by orchestrator
         self._underlying_handlers: List[Callable] = []
         self._option_handlers: List[Callable] = []
 
-        self.contract_engine = None
+        # Created during connect()
+        self.contract_engine: ContractEngine = None
+        self.parent_orchestrator = None
+
+        # Use IBKR loop for unified scheduling
+        self.loop = ib_underlying.loop
 
     # ------------------------------------------------------------------
     # PUBLIC REGISTRATION
@@ -74,16 +60,14 @@ class MassiveMux:
     # ------------------------------------------------------------------
     async def connect(self, symbols: List[str], expiry_map: Dict[str, str]):
         """
-        Connect both data sources + create contract engine.
-
-        Args:
-            symbols: List of underlying symbols (e.g., ["SPY", "QQQ"])
-            expiry_map: Map of symbol -> expiry date (e.g., {"SPY": "2024-11-22"})
+        Connect IBKR (underlying), connect Massive (options),
+        and create ContractEngine.
         """
+
         logger.info(f"[MUX] Connecting hybrid system with {len(symbols)} symbols...")
 
         # --------------------------------------------------------------
-        # 1. Connect IBKR UNDERLYING
+        # 1. Connect IBKR Underlying
         # --------------------------------------------------------------
         logger.info("[MUX] Connecting IBKR underlying...")
         await self.ib_underlying.connect()
@@ -91,19 +75,24 @@ class MassiveMux:
         logger.info("[MUX] IBKR underlying connected ✅")
 
         # --------------------------------------------------------------
-        # 2. Connect MASSIVE OPTIONS
+        # 2. Connect Massive Options WS
         # --------------------------------------------------------------
         logger.info("[MUX] Connecting Massive options...")
         await self.options.connect()
         logger.info("[MUX] Massive options connected ✅")
 
         # --------------------------------------------------------------
-        # 3. Create ContractEngine with expiry_map
+        # 3. Create ContractEngine
         # --------------------------------------------------------------
-        self.contract_engine = ContractEngine(
-            options_ws=self.options, expiry_map=expiry_map
-        )
-        logger.info("[MUX] ContractEngine initialized")
+        if self.contract_engine is None:
+            for s in symbols:
+                if s not in expiry_map or not expiry_map[s]:
+                    logger.error(f"[MUX] Missing expiry for {s} → cannot trade this symbol")
+
+            self.contract_engine = ContractEngine(
+                options_ws=self.options,
+                expiry_map=expiry_map
+            )
 
         # --------------------------------------------------------------
         # 4. Wire callbacks
@@ -114,46 +103,38 @@ class MassiveMux:
         logger.info("[MUX] All connections established ✅")
 
     # ------------------------------------------------------------------
-    # ROUTING
+    # ROUTING: UNDERLYING → ContractEngine + Orchestrator
     # ------------------------------------------------------------------
     async def _handle_underlying(self, event: Dict[str, Any]):
         """
-        Route underlying tick from IBKR to:
-            1. ContractEngine (OCC subscription management)
-            2. Orchestrator callbacks
-
-        Event format (from IBUnderlyingAdapter):
-        {
-            "symbol": str,
-            "price": float,
-            "bid": float | None,
-            "ask": float | None,
-            "_recv_ts": float
-        }
+        Quiet routing:
+            - ContractEngine receives underlying tick
+            - Orchestrator receives underlying tick
+            - No terminal spam
         """
-        # 1. Notify ContractEngine (manages OCC subscriptions)
-        if self.contract_engine:
-            await self.contract_engine.on_underlying(event)
+        sym = event.get("symbol")
+        if not sym:
+            return
 
-        # 2. Notify Orchestrator
+        # 1. ContractEngine subscription management
+        if self.contract_engine:
+            before = list(self.contract_engine.current_subs.get(sym, []))
+            await self.contract_engine.on_underlying(event)
+            after = list(self.contract_engine.current_subs.get(sym, []))
+
+            # Notify orchestrator of chain refresh
+            if before != after and self.parent_orchestrator:
+                self.parent_orchestrator.notify_chain_refresh(sym)
+
+        # 2. Forward to orchestrator (quiet)
         for cb in self._underlying_handlers:
             self.loop.create_task(cb(event))
 
+    # ------------------------------------------------------------------
+    # ROUTING: OPTIONS → Orchestrator
+    # ------------------------------------------------------------------
     async def _handle_option(self, event: Dict[str, Any]):
-        """
-        Route option NBBO tick from Massive to Orchestrator.
-
-        Event format (from MassiveOptionsWSAdapter):
-        {
-            "symbol": str,
-            "contract": str,
-            "strike": float,
-            "right": "C" | "P",
-            "bid": float,
-            "ask": float,
-            "_recv_ts": float
-        }
-        """
+        """Forward NBBO event to orchestrator (quiet)."""
         for cb in self._option_handlers:
             self.loop.create_task(cb(event))
 
@@ -161,7 +142,6 @@ class MassiveMux:
     # SHUTDOWN
     # ------------------------------------------------------------------
     async def close(self):
-        """Gracefully close both data sources."""
         logger.info("[MUX] Closing connections...")
         await self.ib_underlying.close()
         await self.options.close()

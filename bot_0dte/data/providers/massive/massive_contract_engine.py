@@ -1,19 +1,22 @@
 """
-ContractEngine — Dynamic OCC Subscription Manager
+ContractEngine — Dynamic OCC Subscription Manager (Quiet, Production-Safe)
 
 Responsibilities:
     • Convert strikes → OCC codes
     • Generate ATM ±2 cluster per symbol
     • Auto-subscribe via MassiveOptionsWSAdapter
-    • Update subscriptions on price moves
+    • Update subscriptions on price moves (debounced)
     • Re-subscribe on reconnect
 
 OCC Format: O:<UNDERLYING><YYMMDD><C/P><STRIKE*1000 padded to 8>
-Example: O:SPY241122C00450000 (SPY, Nov 22 2024, Call, $450 strike)
+Example: O:SPY241122C00450000
 """
 
 import asyncio
 import logging
+import math
+import time
+from collections import defaultdict
 from typing import List, Dict
 
 logger = logging.getLogger(__name__)
@@ -21,17 +24,23 @@ logger = logging.getLogger(__name__)
 
 class ContractEngine:
     """
-    Dynamic OCC subscription manager.
-
-    Listens to underlying ticks and maintains ATM cluster subscriptions.
+    Maintains active OCC subscription set based on underlying price.
     """
 
     def __init__(self, options_ws, expiry_map: Dict[str, str]):
         self.opt_ws = options_ws
         self.expiry_map = expiry_map
 
+        # symbol → [occ codes...]
         self.current_subs: Dict[str, List[str]] = {}
+
+        # last seen underlying price
         self.last_price: Dict[str, float] = {}
+
+        # concurrency & rate limiting
+        self._locks = defaultdict(asyncio.Lock)          # per-symbol lock
+        self._last_refresh_ts: Dict[str, float] = {}     # throttle per symbol
+        self._min_refresh_interval = 1.0                 # seconds (safe for Massive)
 
     # ------------------------------------------------------------------
     # OCC Encoding
@@ -39,102 +48,88 @@ class ContractEngine:
     @staticmethod
     def encode_occ(symbol: str, expiry: str, right: str, strike: float) -> str:
         """
-        Encode option contract to OCC format.
-
-        Args:
-            symbol: "SPY"
-            expiry: "2024-11-22"
-            right: "C" or "P"
-            strike: 450.0
-
-        Returns:
-            "O:SPY241122C00450000"
+        Convert option attributes into Massive OCC format.
         """
         yyyy, mm, dd = expiry.split("-")
         yymmdd = yyyy[2:] + mm + dd
+
         strike_int = int(round(strike * 1000))
         strike_str = f"{strike_int:08d}"
+
         return f"O:{symbol.upper()}{yymmdd}{right.upper()}{strike_str}"
 
     # ------------------------------------------------------------------
-    # ATM Strike Cluster
+    # Strike Cluster
     # ------------------------------------------------------------------
     def _compute_strikes(self, price: float) -> List[float]:
         """
-        Generate ATM ±2 strike cluster.
-
-        Args:
-            price: Current underlying price
-
-        Returns:
-            [ATM-2, ATM-1, ATM, ATM+1, ATM+2]
+        ATM ±2 using floor — avoids noisy 0.50 flips.
         """
-        atm = round(price)
+        atm = math.floor(price)
         return [atm - 2, atm - 1, atm, atm + 1, atm + 2]
 
     # ------------------------------------------------------------------
-    # Main Trigger (called by MassiveMux)
+    # Main Trigger — called by MassiveMux per underlying tick
     # ------------------------------------------------------------------
     async def on_underlying(self, event: Dict):
-        """
-        Receive normalized underlying event from MassiveMux.
-
-        Event format:
-        {
-            "symbol": "SPY",
-            "price": 450.25,
-            "_recv_ts": 1234567890.123
-        }
-        """
         symbol = event.get("symbol")
         price = event.get("price")
 
-        if not symbol or not price:
+        if not symbol or price is None:
             return
 
-        # Initialize if first time seeing this symbol
-        if symbol not in self.last_price:
+        # serialize refreshes per symbol
+        async with self._locks[symbol]:
+            expiry = self.expiry_map.get(symbol)
+            if not expiry:
+                return
+
+            # First-time symbol init
+            if symbol not in self.last_price:
+                self.last_price[symbol] = price
+                self.current_subs[symbol] = []
+                self._last_refresh_ts[symbol] = 0.0
+
             self.last_price[symbol] = price
-            self.current_subs[symbol] = []
 
-        self.last_price[symbol] = price
+            # compute cluster
+            strikes = self._compute_strikes(price)
+            occ_codes = []
 
-        # Get expiry for this symbol
-        expiry = self.expiry_map.get(symbol)
-        if not expiry:
-            return  # No expiry configured
+            for K in strikes:
+                occ_codes.append(self.encode_occ(symbol, expiry, "C", K))
+                occ_codes.append(self.encode_occ(symbol, expiry, "P", K))
 
-        # Compute ATM cluster
-        strikes = self._compute_strikes(price)
-        occ_codes = []
+            new_set = frozenset(occ_codes)
+            cur_set = frozenset(self.current_subs.get(symbol, []))
 
-        # Generate calls and puts for each strike
-        for K in strikes:
-            occ_codes.append(self.encode_occ(symbol, expiry, "C", K))
-            occ_codes.append(self.encode_occ(symbol, expiry, "P", K))
+            # guard: unchanged
+            if new_set == cur_set:
+                return
 
-        # Deduplicate
-        occ_codes = sorted(list(set(occ_codes)))
+            # guard: throttle refreshes (1s)
+            now = time.monotonic()
+            last = self._last_refresh_ts.get(symbol, 0.0)
+            if (now - last) < self._min_refresh_interval:
+                return
 
-        # Compare to existing subscriptions
-        current = self.current_subs.get(symbol, [])
-        if set(current) == set(occ_codes):
-            return  # No change needed
+            # commit before async I/O
+            new_list = sorted(new_set)
+            self.current_subs[symbol] = new_list
+            self._last_refresh_ts[symbol] = now
 
-        logger.info(
-            f"[CONTRACT_ENGINE] Refreshing {symbol} → {len(occ_codes)} contracts"
-        )
+            logger.info(
+                f"[CONTRACT_ENGINE] Refreshing {symbol} → {len(new_list)} contracts"
+            )
 
-        # Update storage
-        self.current_subs[symbol] = occ_codes
+            await self.opt_ws.subscribe_contracts(new_list)
 
-        # Send subscription to options WS
-        await self.opt_ws.subscribe_contracts(occ_codes)
-
+    # ------------------------------------------------------------------
+    # Re-subscribe after Massive reconnect
     # ------------------------------------------------------------------
     async def resubscribe_all(self):
         """
-        Re-subscribe all contracts after options WS reconnect.
+        Send full subscription list back to Massive after reconnect.
         """
         for symbol, occ_list in self.current_subs.items():
             if occ_list:

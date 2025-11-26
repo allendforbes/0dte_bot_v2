@@ -134,8 +134,10 @@ class LivePanel:
     def render(self):
         term_width = shutil.get_terminal_size((120, 30)).columns
 
-        # Clear + move cursor home
-        print("\033[2J\033[H", end="")
+        # Clear screen reliably across terminals (macOS / VSCode / iTerm)
+        import sys
+        sys.stdout.write("\x1b[2J\x1b[H")
+        sys.stdout.flush()
 
         # ------------------------------------------------------
         # PANEL 1 — MARKET PANEL
@@ -197,9 +199,9 @@ class LivePanel:
         if pnl is not None:
             color = C.GREEN if pnl >= 0 else C.RED
             print(f"PnL %:         {color}{pnl:.2f}%{C.RESET}")
+        print(f"Trail Target:  {trade.trail_target:.2f}" if trade.trail_target else "Trail Target:   --")
+        print(f"Hard SL:       {trade.hard_sl:.2f}" if trade.hard_sl else "Hard SL:        --")
 
-        print(f"Trail Target:  {trade.trail_target}")
-        print(f"Hard SL:       {trade.hard_sl}")
         print(f"Last Update:   {trade.last_update_ms} ms")
         print("=" * 70)
 
