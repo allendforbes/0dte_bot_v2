@@ -101,6 +101,66 @@ class ExecutionEngine:
             return await self._mock_fill(
                 symbol, side, qty, entry_price, take_profit, stop_loss, meta
             )
+            # ------------------------------------------------------------
+    # MARKET ORDER EXECUTION
+    # ------------------------------------------------------------
+    async def send_market(
+        self,
+        symbol: str,
+        side: str,
+        qty: int,
+        price: float | None,
+        meta: dict,
+    ):
+        """
+        Unified market execution.
+        - mock mode → instant simulated market fill
+        - live mode → IBKR market order
+        - price may be None (exit), or a reference mid (entry)
+        """
+
+        # ----------------------------
+        # MOCK MODE
+        # ----------------------------
+        if self.use_mock or not self.ib:
+            print(f"[EXEC][MOCK] Market simulated for {symbol}: side={side} qty={qty}")
+            await asyncio.sleep(0.05)  # slight realism
+
+            return {
+                "symbol": symbol,
+                "side": side,
+                "qty": qty,
+                "price": price,
+                "meta": meta,
+                "status": "mock-market-fill",
+            }
+
+        # ----------------------------
+        # LIVE MODE — IBKR market order
+        # ----------------------------
+        try:
+            print(f"[EXEC][LIVE] MARKET {symbol} {side} x{qty}")
+
+            # IBKR Market Order object (pseudo-code)
+            contract = self._ib_contract_for(symbol)
+            order = self.ib.marketOrder(
+                action="BUY" if side.upper() == "CALL" else "SELL",
+                totalQuantity=qty,
+            )
+            trade = self.ib.placeOrder(contract, order)
+
+            return {
+                "symbol": symbol,
+                "side": side,
+                "qty": qty,
+                "meta": meta,
+                "status": "submitted",
+                "ib_order_id": trade.order.orderId,
+            }
+
+        except Exception as e:
+            print(f"[EXEC][LIVE][ERROR] {e}")
+            return {"status": "error", "error": str(e)}
 
         # --------------------------------------------------------
         # LIVE — IBKR ORDER ROUTING

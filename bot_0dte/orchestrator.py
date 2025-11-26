@@ -1,157 +1,124 @@
 """
-Orchestrator — WS-Native Event Router + VWAP Enrichment
+Elite Orchestrator — Unified WS-Native Breakout Engine
+------------------------------------------------------
 
 Responsibilities:
     • Consume underlying ticks from MassiveMux
-    • Compute VWAP locally (rolling window)
-    • Enrich snapshots with vwap, vwap_dev, vwap_dev_change
-    • Route to strategy stack (MorningBreakout → LatencyPrecheck → StrikeSelector)
-    • Aggregate option chain from NBBO ticks
-    • Execute trades via ExecutionEngine
+    • Compute VWAP (rolling window)
+    • Enrich snapshot for Elite Entry Engine
+    • Generate elite-level breakout signals
+    • Enforce one-trade-at-a-time regime
+    • Select optimal convex strike
+    • Validate latency conditions
+    • Execute entry (market order)
+    • Maintain adaptive trailing logic
+    • Apply immediate -50% catastrophic SL
+    • Exit on trail or SL via market order
+    • Lifecycle logging for full audit visibility
 
 Architecture:
-    MassiveMux → Orchestrator._on_underlying() → VWAP enrichment → Strategy → Execution
-    MassiveMux → Orchestrator._on_option() → ChainAggregator → StrikeSelector
+    MassiveMux → _on_underlying() → VWAP → EliteEntry → Execution
+    MassiveMux → _on_option() → trail update → exit check
 """
 
 import asyncio
 import datetime as dt
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
-from bot_0dte.strategy.morning_breakout import MorningBreakout
+# Strategy
+from bot_0dte.strategy.elite_entry import EliteEntryEngine, EliteSignal
 from bot_0dte.strategy.latency_precheck import LatencyPrecheck
 from bot_0dte.strategy.strike_selector import StrikeSelector
+
+# Risk
 from bot_0dte.risk.trail_logic import TrailLogic
+
+# UI
 from bot_0dte.ui.live_panel import LivePanel
+
+# Infra
 from bot_0dte.universe import get_universe_for_today, get_expiry_for_symbol
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
+
+# Sizing
 from bot_0dte.sizing import size_from_equity
 
-# internal classes defined in this file
-# VWAPTracker
-# ChainAggregator
-
 
 # =====================================================================
-# VWAP Tracker (rolling window calculation)
+# VWAP Tracker
 # =====================================================================
 class VWAPTracker:
-    """
-    Compute VWAP from tick stream.
-    Maintains rolling window of last N ticks.
-    """
+    """Rolling VWAP calculator with last_vwap + last_vwap_dev for smoke-test compatibility."""
 
     def __init__(self, window_size: int = 100):
         self.window_size = window_size
         self.prices = []
         self.volumes = []
+
+        # New attributes required by smoke_test.py
         self.last_vwap = None
+        self.last_vwap_dev = None
+
         self.last_dev = 0.0
 
-    def update(self, price: float, volume: float = 1.0) -> Dict[str, float]:
-        """
-        Update VWAP with new tick.
-
-        Args:
-            price: Current price
-            volume: Tick volume (defaults to 1 for tick count)
-
-        Returns:
-            {vwap, vwap_dev, vwap_dev_change}
-        """
+    def update(self, price: float, volume: float = 1.0):
         self.prices.append(price)
         self.volumes.append(volume)
 
-        # Maintain window size
         if len(self.prices) > self.window_size:
             self.prices.pop(0)
             self.volumes.pop(0)
 
-        # Calculate VWAP
         total_pv = sum(p * v for p, v in zip(self.prices, self.volumes))
         total_v = sum(self.volumes)
-        vwap = total_pv / total_v if total_v > 0 else price
+        vwap = total_pv / total_v if total_v else price
 
-        # Calculate deviation and change
-        vwap_dev = price - vwap
-        prev_dev = self.last_dev
-        vwap_dev_change = vwap_dev - prev_dev
+        dev = price - vwap
+        change = dev - self.last_dev
+        self.last_dev = dev
 
-        # Store for next iteration
+        # Required by tests
         self.last_vwap = vwap
-        self.last_dev = vwap_dev
+        self.last_vwap_dev = dev
 
         return {
             "vwap": vwap,
-            "vwap_dev": vwap_dev,
-            "vwap_dev_change": vwap_dev_change,
+            "vwap_dev": dev,
+            "vwap_dev_change": change,
         }
 
 
 # =====================================================================
-# Chain Aggregator (Massive NBBO → normalized chain snapshot)
+# Chain Aggregator
 # =====================================================================
 class ChainAggregator:
-    """
-    Aggregate NBBO ticks into chain snapshot.
-    Maintains cache of latest bid/ask for each contract.
-    """
+    """NBBO → normalized chain snapshot."""
 
-    def __init__(self, symbols: List[str]):
-        self.symbols = symbols
+    def __init__(self, symbols):
         self.cache = {s: {} for s in symbols}
         self.last_ts = {s: 0.0 for s in symbols}
 
-    def update(self, event: Dict[str, Any]):
-        """
-        Update chain cache with NBBO tick.
-
-        Event format (from MassiveMux):
-        {
-            "symbol": str,
-            "contract": str,
-            "strike": float,
-            "right": "C" | "P",
-            "bid": float,
-            "ask": float,
-            "_recv_ts": float
-        }
-        """
+    def update(self, event):
         sym = event.get("symbol")
         contract = event.get("contract")
         if not sym or not contract:
             return
-
         self.cache[sym][contract] = event
         self.last_ts[sym] = time.time()
 
-    def is_fresh(self, symbol: str, threshold: float = 2.0) -> bool:
-        """Check if chain data is recent enough."""
+    def is_fresh(self, symbol, threshold=2.0):
         return (time.time() - self.last_ts.get(symbol, 0)) <= threshold
 
-    def get_chain(self, symbol: str) -> List[Dict[str, Any]]:
-        """
-        Get normalized chain for strike selector.
-
-        Returns list of dicts:
-        {
-            "symbol": str,
-            "strike": float,
-            "right": "C" | "P",
-            "premium": float (mid price),
-            "bid": float,
-            "ask": float,
-            "contract": str (OCC code)
-        }
-        """
+    def get_chain(self, symbol):
         out = []
         for row in self.cache.get(symbol, {}).values():
-            bid = row.get("bid", 0)
-            ask = row.get("ask", 0)
-            mid = (bid + ask) / 2 if (bid and ask) else 0
-
+            bid = row.get("bid")
+            ask = row.get("ask")
+            if bid is None or ask is None:
+                continue
+            mid = (bid + ask) / 2
             out.append(
                 {
                     "symbol": symbol,
@@ -167,18 +134,11 @@ class ChainAggregator:
 
 
 # =====================================================================
-# Orchestrator — WS-Native Event Router
+# Orchestrator
 # =====================================================================
 class Orchestrator:
     """
-    Central orchestrator for WS-native bot.
-
-    Flow:
-        1. Receive underlying tick → compute VWAP → enrich snapshot
-        2. Pass to strategy → get signal
-        3. Check chain freshness → select strike
-        4. Validate latency → size position
-        5. Execute trade
+    Elite orchestrator — one active trade at a time, trail-only exit.
     """
 
     def __init__(
@@ -189,31 +149,36 @@ class Orchestrator:
         logger: StructuredLogger,
         universe=None,
         auto_trade_enabled=False,
-        trade_mode="shadow",  # shadow / paper / live
+        trade_mode="shadow",
     ):
         self.engine = engine
         self.mux = mux
         self.logger = logger
         self.telemetry = telemetry
-        self.auto_trade_enabled = auto_trade_enabled
+
+        self.auto = auto_trade_enabled
         self.trade_mode = trade_mode
 
-        # Universe & expiry
+        # Universe
         self.symbols = universe or get_universe_for_today()
         self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
 
-        # State
+        # Prices
         self.last_price = {s: None for s in self.symbols}
-        self.last_underlying_ts = {s: 0.0 for s in self.symbols}
 
-        # VWAP tracking (NEW)
-        self._vwap_tracker = {s: VWAPTracker(window_size=100) for s in self.symbols}
+        # VWAP
+        self.vwap = {s: VWAPTracker() for s in self.symbols}
+
+        # --- REQUIRED FOR SMOKE TEST COMPATIBILITY ---
+        # Smoke test expects ._vwap_tracker["SPY"] to exist
+        self._vwap_tracker = self.vwap
+        # ----------------------------------------------
 
         # Chain aggregator
         self.chain_agg = ChainAggregator(self.symbols)
 
-        # Strategy stack
-        self.breakout = MorningBreakout(telemetry=self.telemetry)
+        # Strategies & logic
+        self.entry_engine = EliteEntryEngine()
         self.latency = LatencyPrecheck()
         self.selector = StrikeSelector(chain_bridge=None, engine=self.engine)
         self.trail = TrailLogic(max_loss_pct=0.50)
@@ -221,51 +186,32 @@ class Orchestrator:
         # UI
         self.ui = LivePanel()
 
+        # Active trade state
+        self.active_symbol: Optional[str] = None
+        self.active_contract: Optional[str] = None
+        self.active_bias: Optional[str] = None
+        self.active_entry_price: Optional[float] = None
+        self.active_qty: Optional[int] = None
+
         print("\n" + "=" * 70)
-        print(" MASSIVE-WS ORCHESTRATOR INITIALIZED ".center(70, "="))
+        print(" ELITE ORCHESTRATOR INITIALIZED ".center(70, "="))
         print("=" * 70 + "\n")
 
-    # ==================================================================
+    # ===============================================================
     async def start(self):
-        """
-        Attach MassiveMux event handlers and start WS connections.
-        """
-        # Register callbacks
         self.mux.on_underlying(self._on_underlying)
         self.mux.on_option(self._on_option)
-
-        # Start MassiveMux (connects both WS, subscribes underlyings)
         await self.mux.connect(self.symbols, self.expiry_map)
 
-    # ==================================================================
-    # ==================================================================
-    async def _on_underlying(self, event: Dict[str, Any]):
-        """
-        Handle underlying tick from MassiveMux.
-
-        Event format:
-        {
-            "symbol": str,
-            "price": float,
-            "bid": float | None,
-            "ask": float | None,
-            "_recv_ts": float
-        }
-        """
-        sym_raw = event.get("symbol")
+    # ===============================================================
+    async def _on_underlying(self, event):
+        sym = event.get("symbol")
         price = event.get("price")
-
-        # Type narrowing so Pylance knows sym is a guaranteed str
-        if not isinstance(sym_raw, str) or price is None or sym_raw not in self.symbols:
+        if sym not in self.symbols or price is None:
             return
 
-        sym: str = sym_raw
-
-        # Update state
         self.last_price[sym] = price
-        self.last_underlying_ts[sym] = time.time()
 
-        # Update UI
         self.ui.update(
             symbol=sym,
             price=price,
@@ -273,78 +219,85 @@ class Orchestrator:
             ask=event.get("ask"),
         )
 
-        # Evaluate for signal
         await self._evaluate(sym, price)
 
-    # ==================================================================
-    async def _on_option(self, event: Dict[str, Any]):
-        """
-        Handle option NBBO tick from MassiveMux.
-
-        Event format:
-        {
-            "symbol": str,
-            "contract": str,
-            "strike": float,
-            "right": "C" | "P",
-            "bid": float,
-            "ask": float,
-            "_recv_ts": float
-        }
-        """
+    # ===============================================================
+    async def _on_option(self, event):
+        """Option NBBO → trail updates + SL enforcement."""
         sym = event.get("symbol")
-        if sym in self.symbols:
-            self.chain_agg.update(event)
+        if sym not in self.symbols:
+            return
 
-    # ==================================================================
+        self.chain_agg.update(event)
+
+        # No active trade?
+        if not self.trail.state.active:
+            return
+
+        # Contract not yet initialized or mismatch
+        if not self.active_contract or event.get("contract") != self.active_contract:
+            return
+
+        bid = event.get("bid")
+        ask = event.get("ask")
+        if bid is None or ask is None:
+            return
+
+        mid = (bid + ask) / 2
+
+        # -------------------------------
+        # Hard SL at -50%
+        # -------------------------------
+        if (
+            self.active_entry_price is not None
+            and mid <= self.active_entry_price * 0.50
+        ):
+            self.logger.log_event("hard_stop_triggered", {"mid": mid})
+            await self._execute_exit(sym, reason="hard_sl")
+            return
+
+        # -------------------------------
+        # Trail update
+        # -------------------------------
+        trail_res = self.trail.update(sym, mid)
+
+        if trail_res.get("should_exit"):
+            self.logger.log_event("trail_exit_triggered", trail_res)
+            await self._execute_exit(sym, reason="trail_exit")
+
+    # ===============================================================
     async def _evaluate(self, symbol: str, price: float):
-        """
-        Evaluate signal for given symbol/price.
+        """Main entry evaluation path."""
 
-        Steps:
-            1. Compute VWAP + enrichment
-            2. Pass to strategy → get signal
-            3. Validate chain freshness
-            4. Select strike
-            5. Validate latency
-            6. Size position
-            7. Execute trade
-        """
+        # No new trades while active
+        if self.active_symbol:
+            return
 
-        # ============================================================
-        # STEP 1: VWAP ENRICHMENT (NEW)
-        # ============================================================
-        tracker = self._vwap_tracker[symbol]
-        vwap_data = tracker.update(price)
+        # VWAP enrichment
+        vwap_data = self.vwap[symbol].update(price)
 
-        # Build enriched snapshot for strategy
-        enriched_snap = {
+        snap = {
             "symbol": symbol,
             "price": price,
             "vwap": vwap_data["vwap"],
             "vwap_dev": vwap_data["vwap_dev"],
             "vwap_dev_change": vwap_data["vwap_dev_change"],
-            "upvol_pct": None,  # Not available from WS
-            "flow_ratio": None,  # Not available from WS
-            "iv_change": None,  # Not available from WS
-            "skew_shift": None,  # Not available from WS
+            "upvol_pct": None,
+            "flow_ratio": None,
+            "iv_change": None,
+            "skew_shift": None,
             "seconds_since_open": self._seconds_since_open(),
         }
 
-        # ============================================================
-        # STEP 2: STRATEGY SIGNAL
-        # ============================================================
-        sig = self.breakout.qualify(enriched_snap)
-
+        # Signal
+        sig: Optional[EliteSignal] = self.entry_engine.qualify(snap)
         if not sig:
             return
 
-        self.logger.log_event("signal_generated", sig)
-        self.ui.set_status(f"{symbol}: breakout detected")
+        self.logger.log_event("signal_generated", sig.__dict__)
+        self.ui.set_status(f"{symbol}: elite breakout detected")
 
-        # ============================================================
-        # STEP 3: CHAIN FRESHNESS CHECK
-        # ============================================================
+        # Chain freshness
         if not self.chain_agg.is_fresh(symbol):
             self.logger.log_event("signal_dropped", {"reason": "stale_chain"})
             return
@@ -354,101 +307,118 @@ class Orchestrator:
             self.logger.log_event("signal_dropped", {"reason": "empty_chain"})
             return
 
-        # ============================================================
-        # STEP 4: STRIKE SELECTION
-        # ============================================================
-        strike = await self.selector.select_from_chain(chain, sig["bias"])
+        # Strike selection
+        strike = await self.selector.select_from_chain(chain, sig.bias)
         if not strike:
             self.logger.log_event("signal_dropped", {"reason": "no_strike"})
             return
 
-        # ============================================================
-        # STEP 5: LATENCY PRE-CHECK
-        # ============================================================
-        # Build tick dict for latency check
-        tick_data = {
+        # Latency pre-check
+        tick = {
             "price": strike["premium"],
             "bid": strike["bid"],
             "ask": strike["ask"],
             "vwap_dev_change": vwap_data["vwap_dev_change"],
         }
 
-        pre = self.latency.validate(symbol, tick_data, sig["bias"])
+        pre = self.latency.validate(symbol, tick, sig.bias)
         if not pre.ok:
             self.logger.log_event("entry_blocked", {"reason": pre.reason})
             return
 
-        # ============================================================
-        # STEP 6: POSITION SIZING
-        # ============================================================
+        entry_price = pre.limit_price
+        if entry_price is None:
+            self.logger.log_event("entry_blocked", {"reason": "no_entry_price"})
+            return
+
+        # Sizing
+        premium = strike.get("premium")
+        if premium is None or premium <= 0:
+            self.logger.log_event("entry_blocked", {"reason": "invalid_premium"})
+            return
+
         if not self.engine.account_state.is_fresh():
             self.logger.log_event("entry_blocked", {"reason": "stale_equity"})
             return
 
-        qty = size_from_equity(self.engine.account_state.net_liq, strike["premium"])
+        qty = size_from_equity(self.engine.account_state.net_liq, premium)
 
-        # ============================================================
-        # STEP 7: TP/SL CALCULATION
-        # ============================================================
-        prem = strike["premium"]
-        tp = prem * sig["tp_mult"]
-        sl = prem * sig["sl_mult"]
+        # Activate trail
+        self.trail.initialize(symbol, entry_price, sig.trail_mult)
 
-        self.trail.initialize(symbol, pre.limit_price, sig["trail_mult"])
+        # Set active trade
+        self.active_symbol = symbol
+        self.active_contract = strike["contract"]
+        self.active_bias = sig.bias
+        self.active_entry_price = entry_price
+        self.active_qty = qty
 
-        # ============================================================
-        # STEP 8: EXECUTION
-        # ============================================================
-        if not self.auto_trade_enabled:
+        # EXECUTION -------------------------------------------
+        if not self.auto and not self.active_symbol:
             self.logger.log_event("trade_blocked", {"reason": "auto_trade_off"})
             return
 
         if self.trade_mode == "shadow":
             self.logger.log_event(
-                "shadow_trade",
+                "shadow_entry",
                 {
                     "symbol": symbol,
-                    "strike": strike,
-                    "entry": pre.limit_price,
-                    "tp": tp,
-                    "sl": sl,
+                    "contract": self.active_contract,
+                    "entry": entry_price,
                     "qty": qty,
+                    "bias": sig.bias,
+                    "regime": sig.regime,
+                    "grade": sig.grade,
+                    "score": sig.score,
                 },
             )
             return
 
-        if self.trade_mode == "paper":
-            order = await self.engine.mock_bracket(
-                symbol,
-                sig["bias"],
-                qty,
-                pre.limit_price,
-                tp,
-                sl,
-            )
-            self.logger.log_event("paper_order", order)
-            return
+        order = await self.engine.send_market(
+            symbol=symbol,
+            side=sig.bias,
+            qty=qty,
+            price=entry_price,
+            meta={
+                "regime": sig.regime,
+                "grade": sig.grade,
+                "score": sig.score,
+                "trail_mult": sig.trail_mult,
+            },
+        )
+        self.logger.log_event("entry_order", order)
 
-        if self.trade_mode == "live":
-            order = await self.engine.send_bracket(
+    # ===============================================================
+    async def _execute_exit(self, symbol: str, reason: str):
+        """Process exit path for active trade."""
+
+        qty = self.active_qty
+        bias = self.active_bias
+
+        if self.trade_mode != "shadow":
+            order = await self.engine.send_market(
                 symbol=symbol,
-                side=sig["bias"],
+                side="SELL" if bias == "CALL" else "BUY",
                 qty=qty,
-                entry_price=pre.limit_price,
-                take_profit=tp,
-                stop_loss=sl,
-                meta={
-                    "regime": sig["regime"],
-                    "grade": sig["grade"],
-                    "vol_path": sig["vol_path"],
-                },
+                price=None,
+                meta={"reason": reason},
             )
-            self.logger.log_event("order_submitted", order)
-            return
+            self.logger.log_event("exit_order", order)
+        else:
+            self.logger.log_event("shadow_exit", {"reason": reason})
 
-    # ==================================================================
-    def _seconds_since_open(self) -> float:
-        """Calculate seconds since market open (9:30 AM ET)."""
+        # Reset active state
+        self.active_symbol = None
+        self.active_contract = None
+        self.active_bias = None
+        self.active_entry_price = None
+        self.active_qty = None
+        self.trail.state.active = False
+
+        self.ui.set_status(f"{symbol}: exited ({reason})")
+
+    # ===============================================================
+    def _seconds_since_open(self):
         now = dt.datetime.now().astimezone()
         open_t = now.replace(hour=9, minute=30, second=0, microsecond=0)
         return max(0.0, (now - open_t).total_seconds())
