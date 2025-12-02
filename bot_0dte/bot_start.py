@@ -1,17 +1,8 @@
 """
-bot_start.py — Hybrid Bot Launcher (IBKR + Massive)
+bot_start.py — Hybrid Bot Launcher (IBKR + Massive OPTIONS ONLY)
 
-Architecture:
-    • IBKR → Underlying quotes (SPY, QQQ, etc.)
-    • Massive.com → Options NBBO
-    • MassiveMux → Unified routing
-    • ContractEngine → Auto OCC subscriptions
-    • Orchestrator → VWAP + Strategy + Execution
-    • ExecutionEngine → Paper mode (IBKR)
-
-Data Flow:
-    IBKR TWS/Gateway → IBUnderlyingAdapter → MassiveMux → Orchestrator
-    Massive WebSocket → MassiveOptionsWSAdapter → MassiveMux → Orchestrator
+Matches CURRENT MassiveMux signature:
+    MassiveMux(ib_underlying, options_ws)
 """
 
 import asyncio
@@ -25,74 +16,54 @@ from bot_0dte.data.providers.massive.massive_mux import MassiveMux
 
 from bot_0dte.execution.engine import ExecutionEngine
 from bot_0dte.orchestrator import Orchestrator
+
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
-
 
 logging.basicConfig(level=logging.INFO)
 
 
 async def main():
-    """
-    Main entry point for hybrid IBKR + Massive bot.
-    """
-
     logger = StructuredLogger()
     telemetry = Telemetry()
 
-    # --------------------------------------------------------------
-    # 1. IBKR UNDERLYING ADAPTER
-    # --------------------------------------------------------------
     print("[BOOT] Initializing IBKR underlying adapter...")
     ib_underlying = IBUnderlyingAdapter(
-        host="127.0.0.1", port=4002, client_id=11  # Paper trading port (7497 for live)
+        host="127.0.0.1",
+        port=4002,       # Paper trading
+        client_id=11
     )
 
-    # --------------------------------------------------------------
-    # 2. MASSIVE OPTIONS ADAPTER
-    # --------------------------------------------------------------
-    print("[BOOT] Initializing Massive options adapter...")
+    print("[BOOT] Initializing Massive OPTIONS adapter...")
     options_ws = MassiveOptionsWSAdapter.from_env()
 
-    # --------------------------------------------------------------
-    # 3. HYBRID MUX (IBKR + Massive)
-    # --------------------------------------------------------------
     print("[BOOT] Creating hybrid MassiveMux...")
-    mux = MassiveMux(ib_underlying=ib_underlying, options_ws=options_ws)
+    mux = MassiveMux(
+        ib_underlying=ib_underlying,
+        options_ws=options_ws,    # ✔ match real MassiveMux signature
+    )
 
-    # --------------------------------------------------------------
-    # 4. EXECUTION ENGINE (Paper Mode)
-    # --------------------------------------------------------------
     print("[BOOT] Initializing execution engine (PAPER mode)...")
-    engine = ExecutionEngine(use_mock=False)  # False = connects to IBKR
+    engine = ExecutionEngine(use_mock=False)
     await engine.start()
 
-    # --------------------------------------------------------------
-    # 5. ORCHESTRATOR (WS-Native)
-    # --------------------------------------------------------------
     print("[BOOT] Creating orchestrator...")
     orch = Orchestrator(
         engine=engine,
         mux=mux,
         telemetry=telemetry,
         logger=logger,
-        auto_trade_enabled=True,  # Enable trading
-        trade_mode="paper",  # Paper mode
+        auto_trade_enabled=True,
+        trade_mode="paper",
     )
 
-    # --------------------------------------------------------------
-    # 6. START ORCHESTRATOR (Connects all adapters)
-    # --------------------------------------------------------------
-    print("\n🚀 Starting hybrid bot (IBKR + Massive)...\n")
+    print("\n🚀 Starting hybrid bot (IBKR + Massive OPTIONS)...\n")
     await orch.start()
 
-    # --------------------------------------------------------------
-    # 7. KEEP ALIVE LOOP
-    # --------------------------------------------------------------
     print("✅ Bot running in PAPER mode.")
     print("   Underlying: IBKR TWS/Gateway")
-    print("   Options: Massive.com WebSocket")
-    print("\nPress Ctrl+C to stop.\n")
+    print("   Options: Massive.com OPTIONS WebSocket\n")
+    print("Press Ctrl+C to stop.\n")
 
     try:
         while True:
@@ -105,39 +76,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-async def build_orchestrator_for_sim(symbols):
-    """
-    Build orchestrator in SIMULATION MODE:
-    - No IBKR
-    - No Massive WebSocket
-    - No account updates
-    - No execution engine calls
-    """
-    from bot_0dte.sim.fake_engine import FakeExecutionEngine
-    from bot_0dte.strategy.latency_precheck import LatencyPrecheck
-    from bot_0dte.data.providers.massive.massive_mux import MassiveMux
-    from bot_0dte.data.providers.massive.massive_options_ws_adapter import MassiveOptionsWSAdapter
-
-    # Fake data pipes
-    fake_ib = FakeExecutionEngine.make_fake_underlying_pipe()
-    fake_options = MassiveOptionsWSAdapter(api_key="SIM")
-
-    mux = MassiveMux(fake_ib, fake_options)
-
-    # Fake execution engine (no orders)
-    engine = FakeExecutionEngine()
-
-    logger = StructuredLogger()
-    telemetry = Telemetry()
-
-    orch = Orchestrator(
-        engine=engine,
-        mux=mux,
-        telemetry=telemetry,
-        logger=logger,
-        universe=symbols,
-        auto_trade_enabled=True,
-        trade_mode="shadow",
-    )
-    return orch
