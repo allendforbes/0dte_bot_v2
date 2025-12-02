@@ -1,0 +1,25 @@
+{"ts": 1764708211.346681, "iso": "2025-12-02T20:43:31.346698", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "SPY", "age_ms": 1764708211346.67, "ts": 1764708211.3466702}}
+{"ts": 1764708212.244692, "iso": "2025-12-02T20:43:32.244707", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764708212.244837, "iso": "2025-12-02T20:43:32.244843", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708213.748286, "iso": "2025-12-02T20:43:33.748324", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708213.7489018, "iso": "2025-12-02T20:43:33.748926", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708214.751153, "iso": "2025-12-02T20:43:34.751191", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708214.7517161, "iso": "2025-12-02T20:43:34.751730", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708214.999122, "iso": "2025-12-02T20:43:34.999140", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708214.999276, "iso": "2025-12-02T20:43:34.999279", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708216.750766, "iso": "2025-12-02T20:43:36.750775", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708216.7508428, "iso": "2025-12-02T20:43:36.750847", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708217.2521641, "iso": "2025-12-02T20:43:37.252180", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708217.252297, "iso": "2025-12-02T20:43:37.252302", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708220.7577019, "iso": "2025-12-02T20:43:40.757739", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708220.75804, "iso": "2025-12-02T20:43:40.758052", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708221.260988, "iso": "2025-12-02T20:43:41.261024", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708221.261255, "iso": "2025-12-02T20:43:41.261266", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708222.512165, "iso": "2025-12-02T20:43:42.512197", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708222.5124211, "iso": "2025-12-02T20:43:42.512433", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708223.761685, "iso": "2025-12-02T20:43:43.761705", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764708223.761881, "iso": "2025-12-02T20:43:43.761891", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708223.763208, "iso": "2025-12-02T20:43:43.763218", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764708223.7633421, "iso": "2025-12-02T20:43:43.763349", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764708224.01307, "iso": "2025-12-02T20:43:44.013104", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764708224.0134022, "iso": "2025-12-02T20:43:44.013409", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}

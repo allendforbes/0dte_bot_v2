@@ -1,0 +1,6 @@
+{"ts": 1764709829.234653, "iso": "2025-12-02T21:10:29.234697", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "QQQ", "age_ms": 1764709829234.61, "ts": 1764709829.2346098}}
+{"ts": 1764709829.2349849, "iso": "2025-12-02T21:10:29.234995", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "SPY", "age_ms": 1764709829234.971, "ts": 1764709829.2349708}}
+{"ts": 1764709831.634805, "iso": "2025-12-02T21:10:31.634830", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764709831.634948, "iso": "2025-12-02T21:10:31.634954", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}
+{"ts": 1764709833.136982, "iso": "2025-12-02T21:10:33.137007", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764709833.137185, "iso": "2025-12-02T21:10:33.137191", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "no_strike"}}

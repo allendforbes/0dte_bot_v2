@@ -1,0 +1,617 @@
+{"ts": 1764700571.727387, "iso": "2025-12-02T18:36:11.727405", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "SPY", "age_ms": 1764700571727.371, "ts": 1764700571.727371}}
+{"ts": 1764700571.7285829, "iso": "2025-12-02T18:36:11.728589", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "QQQ", "age_ms": 1764700571728.578, "ts": 1764700571.728578}}
+{"ts": 1764700572.3808231, "iso": "2025-12-02T18:36:12.380834", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700572.380908, "iso": "2025-12-02T18:36:12.380911", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700572.8849092, "iso": "2025-12-02T18:36:12.884947", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700572.8853, "iso": "2025-12-02T18:36:12.885317", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700573.6326919, "iso": "2025-12-02T18:36:13.632724", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700573.6328378, "iso": "2025-12-02T18:36:13.632845", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700573.634027, "iso": "2025-12-02T18:36:13.634034", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700573.6340768, "iso": "2025-12-02T18:36:13.634081", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700574.134153, "iso": "2025-12-02T18:36:14.134161", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700574.134191, "iso": "2025-12-02T18:36:14.134193", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700574.134457, "iso": "2025-12-02T18:36:14.134458", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700574.1344728, "iso": "2025-12-02T18:36:14.134475", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700574.635786, "iso": "2025-12-02T18:36:14.635800", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700574.6358569, "iso": "2025-12-02T18:36:14.635861", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700574.884473, "iso": "2025-12-02T18:36:14.884494", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700574.884612, "iso": "2025-12-02T18:36:14.884617", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700574.885751, "iso": "2025-12-02T18:36:14.885759", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700574.8857942, "iso": "2025-12-02T18:36:14.885797", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700575.384864, "iso": "2025-12-02T18:36:15.384881", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700575.384974, "iso": "2025-12-02T18:36:15.384977", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700575.385698, "iso": "2025-12-02T18:36:15.385705", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700575.385747, "iso": "2025-12-02T18:36:15.385750", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700577.139555, "iso": "2025-12-02T18:36:17.139565", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700577.13961, "iso": "2025-12-02T18:36:17.139613", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700577.889981, "iso": "2025-12-02T18:36:17.890022", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700577.8902478, "iso": "2025-12-02T18:36:17.890259", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700577.892458, "iso": "2025-12-02T18:36:17.892472", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700577.892531, "iso": "2025-12-02T18:36:17.892536", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700579.1446111, "iso": "2025-12-02T18:36:19.144648", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700579.14481, "iso": "2025-12-02T18:36:19.144820", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700580.144477, "iso": "2025-12-02T18:36:20.144516", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700580.144725, "iso": "2025-12-02T18:36:20.144735", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700580.394161, "iso": "2025-12-02T18:36:20.394202", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700580.394439, "iso": "2025-12-02T18:36:20.394449", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700580.896512, "iso": "2025-12-02T18:36:20.896529", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700580.896586, "iso": "2025-12-02T18:36:20.896589", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700581.399897, "iso": "2025-12-02T18:36:21.399932", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700581.400089, "iso": "2025-12-02T18:36:21.400098", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700581.896866, "iso": "2025-12-02T18:36:21.896880", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700581.8969421, "iso": "2025-12-02T18:36:21.896947", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700581.897595, "iso": "2025-12-02T18:36:21.897600", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700581.897641, "iso": "2025-12-02T18:36:21.897645", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700582.717868, "iso": "2025-12-02T18:36:22.717903", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700582.7180579, "iso": "2025-12-02T18:36:22.718068", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700582.901763, "iso": "2025-12-02T18:36:22.901804", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700582.902022, "iso": "2025-12-02T18:36:22.902032", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700583.65186, "iso": "2025-12-02T18:36:23.651894", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700583.652041, "iso": "2025-12-02T18:36:23.652049", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700585.655935, "iso": "2025-12-02T18:36:25.655969", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700585.656117, "iso": "2025-12-02T18:36:25.656127", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700588.410193, "iso": "2025-12-02T18:36:28.410234", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700588.410461, "iso": "2025-12-02T18:36:28.410472", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700588.913766, "iso": "2025-12-02T18:36:28.913803", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700588.913963, "iso": "2025-12-02T18:36:28.913973", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700589.160579, "iso": "2025-12-02T18:36:29.160620", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700589.160883, "iso": "2025-12-02T18:36:29.160900", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700589.662196, "iso": "2025-12-02T18:36:29.662237", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700589.662467, "iso": "2025-12-02T18:36:29.662479", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700590.163455, "iso": "2025-12-02T18:36:30.163482", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700590.163595, "iso": "2025-12-02T18:36:30.163601", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700591.1668448, "iso": "2025-12-02T18:36:31.166854", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700591.166896, "iso": "2025-12-02T18:36:31.166899", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700591.914634, "iso": "2025-12-02T18:36:31.914646", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700591.914728, "iso": "2025-12-02T18:36:31.914732", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700592.1678588, "iso": "2025-12-02T18:36:32.167920", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700592.168105, "iso": "2025-12-02T18:36:32.168118", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700593.540659, "iso": "2025-12-02T18:36:33.540677", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700593.540776, "iso": "2025-12-02T18:36:33.540780", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700593.541975, "iso": "2025-12-02T18:36:33.541982", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700593.542021, "iso": "2025-12-02T18:36:33.542025", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700595.15792, "iso": "2025-12-02T18:36:35.157936", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700595.1580212, "iso": "2025-12-02T18:36:35.158024", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700595.476676, "iso": "2025-12-02T18:36:35.476695", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700595.476855, "iso": "2025-12-02T18:36:35.476869", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700596.794034, "iso": "2025-12-02T18:36:36.794050", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700596.794118, "iso": "2025-12-02T18:36:36.794122", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700597.295475, "iso": "2025-12-02T18:36:37.295508", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700597.295659, "iso": "2025-12-02T18:36:37.295669", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700597.297257, "iso": "2025-12-02T18:36:37.297271", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700597.297361, "iso": "2025-12-02T18:36:37.297369", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700597.5475469, "iso": "2025-12-02T18:36:37.547562", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700597.547613, "iso": "2025-12-02T18:36:37.547616", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700597.548377, "iso": "2025-12-02T18:36:37.548380", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700597.548403, "iso": "2025-12-02T18:36:37.548405", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700598.299659, "iso": "2025-12-02T18:36:38.299697", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700598.3000479, "iso": "2025-12-02T18:36:38.300058", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700598.798312, "iso": "2025-12-02T18:36:38.798321", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700598.798364, "iso": "2025-12-02T18:36:38.798367", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700600.299258, "iso": "2025-12-02T18:36:40.299274", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700600.299372, "iso": "2025-12-02T18:36:40.299374", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700600.800622, "iso": "2025-12-02T18:36:40.800639", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700600.8007119, "iso": "2025-12-02T18:36:40.800717", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700600.8016331, "iso": "2025-12-02T18:36:40.801639", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700600.8016791, "iso": "2025-12-02T18:36:40.801682", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700601.554465, "iso": "2025-12-02T18:36:41.554506", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700601.554726, "iso": "2025-12-02T18:36:41.554737", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700602.056602, "iso": "2025-12-02T18:36:42.056636", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700602.0567849, "iso": "2025-12-02T18:36:42.056794", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700602.058434, "iso": "2025-12-02T18:36:42.058445", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700602.058516, "iso": "2025-12-02T18:36:42.058578", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700605.526777, "iso": "2025-12-02T18:36:45.526797", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700605.526907, "iso": "2025-12-02T18:36:45.526916", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700606.2772548, "iso": "2025-12-02T18:36:46.277288", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700606.27745, "iso": "2025-12-02T18:36:46.277462", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700606.278722, "iso": "2025-12-02T18:36:46.278737", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700606.2788422, "iso": "2025-12-02T18:36:46.278851", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700606.528955, "iso": "2025-12-02T18:36:46.528972", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700606.5290701, "iso": "2025-12-02T18:36:46.529076", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700607.030014, "iso": "2025-12-02T18:36:47.030036", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700607.030148, "iso": "2025-12-02T18:36:47.030157", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700608.773897, "iso": "2025-12-02T18:36:48.773904", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700608.773931, "iso": "2025-12-02T18:36:48.773932", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700609.2747362, "iso": "2025-12-02T18:36:49.274758", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700609.274879, "iso": "2025-12-02T18:36:49.274888", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700609.276305, "iso": "2025-12-02T18:36:49.276316", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700609.2763991, "iso": "2025-12-02T18:36:49.276407", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700610.7773771, "iso": "2025-12-02T18:36:50.777398", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700610.777513, "iso": "2025-12-02T18:36:50.777523", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700611.026413, "iso": "2025-12-02T18:36:51.026436", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700611.026585, "iso": "2025-12-02T18:36:51.026595", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700611.028189, "iso": "2025-12-02T18:36:51.028201", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700611.0282822, "iso": "2025-12-02T18:36:51.028290", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700612.0298262, "iso": "2025-12-02T18:36:52.029857", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700612.030037, "iso": "2025-12-02T18:36:52.030042", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700613.780494, "iso": "2025-12-02T18:36:53.780501", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700613.7805288, "iso": "2025-12-02T18:36:53.780531", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700615.536507, "iso": "2025-12-02T18:36:55.536530", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700615.536642, "iso": "2025-12-02T18:36:55.536651", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700615.78561, "iso": "2025-12-02T18:36:55.785634", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700615.7858171, "iso": "2025-12-02T18:36:55.785828", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700617.667534, "iso": "2025-12-02T18:36:57.667571", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700617.6677551, "iso": "2025-12-02T18:36:57.667761", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700617.918354, "iso": "2025-12-02T18:36:57.918385", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700617.918561, "iso": "2025-12-02T18:36:57.918571", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700618.668593, "iso": "2025-12-02T18:36:58.668619", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700618.6687171, "iso": "2025-12-02T18:36:58.668722", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700619.670377, "iso": "2025-12-02T18:36:59.670391", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700619.67045, "iso": "2025-12-02T18:36:59.670453", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700619.670954, "iso": "2025-12-02T18:36:59.670959", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700619.670989, "iso": "2025-12-02T18:36:59.670992", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700620.1706722, "iso": "2025-12-02T18:37:00.170685", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700620.170738, "iso": "2025-12-02T18:37:00.170742", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700620.171328, "iso": "2025-12-02T18:37:00.171332", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700620.171363, "iso": "2025-12-02T18:37:00.171366", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700620.421584, "iso": "2025-12-02T18:37:00.421605", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700620.42171, "iso": "2025-12-02T18:37:00.421719", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700620.422372, "iso": "2025-12-02T18:37:00.422382", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700620.4224582, "iso": "2025-12-02T18:37:00.422466", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700621.925596, "iso": "2025-12-02T18:37:01.925617", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700621.9257312, "iso": "2025-12-02T18:37:01.925740", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700621.927045, "iso": "2025-12-02T18:37:01.927056", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700621.9271412, "iso": "2025-12-02T18:37:01.927149", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700623.9293299, "iso": "2025-12-02T18:37:03.929355", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700623.929472, "iso": "2025-12-02T18:37:03.929481", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700624.183412, "iso": "2025-12-02T18:37:04.183425", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700624.1835241, "iso": "2025-12-02T18:37:04.183543", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700624.185462, "iso": "2025-12-02T18:37:04.185479", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700624.185566, "iso": "2025-12-02T18:37:04.185571", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700624.431901, "iso": "2025-12-02T18:37:04.431926", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700624.432031, "iso": "2025-12-02T18:37:04.432040", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700624.432384, "iso": "2025-12-02T18:37:04.432390", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700624.4324338, "iso": "2025-12-02T18:37:04.432437", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700625.1453109, "iso": "2025-12-02T18:37:05.145325", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700625.145385, "iso": "2025-12-02T18:37:05.145389", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700625.646472, "iso": "2025-12-02T18:37:05.646497", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700625.646695, "iso": "2025-12-02T18:37:05.646711", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700626.1488798, "iso": "2025-12-02T18:37:06.148894", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700626.148971, "iso": "2025-12-02T18:37:06.148975", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700626.149673, "iso": "2025-12-02T18:37:06.149679", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700626.149717, "iso": "2025-12-02T18:37:06.149720", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700626.397469, "iso": "2025-12-02T18:37:06.397494", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700626.397643, "iso": "2025-12-02T18:37:06.397653", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700626.398644, "iso": "2025-12-02T18:37:06.398654", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700626.398734, "iso": "2025-12-02T18:37:06.398741", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700626.89775, "iso": "2025-12-02T18:37:06.897785", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700626.897938, "iso": "2025-12-02T18:37:06.897948", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700626.898936, "iso": "2025-12-02T18:37:06.898941", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700626.898981, "iso": "2025-12-02T18:37:06.898985", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700627.148757, "iso": "2025-12-02T18:37:07.148770", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700627.1488252, "iso": "2025-12-02T18:37:07.148829", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700627.3990211, "iso": "2025-12-02T18:37:07.399035", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700627.399092, "iso": "2025-12-02T18:37:07.399096", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700628.652208, "iso": "2025-12-02T18:37:08.652230", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700628.652344, "iso": "2025-12-02T18:37:08.652353", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700629.154596, "iso": "2025-12-02T18:37:09.154617", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700629.1547258, "iso": "2025-12-02T18:37:09.154734", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700629.254943, "iso": "2025-12-02T18:37:09.254970", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "SPY", "age_ms": 57527.557, "ts": 1764700629.2549279}}
+{"ts": 1764700629.25525, "iso": "2025-12-02T18:37:09.255264", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700629.255336, "iso": "2025-12-02T18:37:09.255342", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700629.4034472, "iso": "2025-12-02T18:37:09.403470", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700629.40378, "iso": "2025-12-02T18:37:09.403797", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700631.657177, "iso": "2025-12-02T18:37:11.657190", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700631.6572511, "iso": "2025-12-02T18:37:11.657254", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700632.159391, "iso": "2025-12-02T18:37:12.159413", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700632.159529, "iso": "2025-12-02T18:37:12.159538", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700632.4075, "iso": "2025-12-02T18:37:12.407514", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700632.407593, "iso": "2025-12-02T18:37:12.407597", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700634.914237, "iso": "2025-12-02T18:37:14.914260", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700634.914376, "iso": "2025-12-02T18:37:14.914385", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700634.915733, "iso": "2025-12-02T18:37:14.915742", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700634.915787, "iso": "2025-12-02T18:37:14.915790", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700635.4127228, "iso": "2025-12-02T18:37:15.412745", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700635.41286, "iso": "2025-12-02T18:37:15.412869", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700635.413973, "iso": "2025-12-02T18:37:15.413979", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700635.414023, "iso": "2025-12-02T18:37:15.414027", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700635.664076, "iso": "2025-12-02T18:37:15.664090", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700635.664146, "iso": "2025-12-02T18:37:15.664150", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700635.916204, "iso": "2025-12-02T18:37:15.916225", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700635.916341, "iso": "2025-12-02T18:37:15.916350", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700638.4182441, "iso": "2025-12-02T18:37:18.418268", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700638.4184132, "iso": "2025-12-02T18:37:18.418423", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700638.91928, "iso": "2025-12-02T18:37:18.919300", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700638.919412, "iso": "2025-12-02T18:37:18.919421", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700639.669604, "iso": "2025-12-02T18:37:19.669625", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700639.669739, "iso": "2025-12-02T18:37:19.669748", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700639.6708622, "iso": "2025-12-02T18:37:19.670873", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700639.6709518, "iso": "2025-12-02T18:37:19.670960", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700640.425077, "iso": "2025-12-02T18:37:20.425097", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700640.425211, "iso": "2025-12-02T18:37:20.425220", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700640.9210649, "iso": "2025-12-02T18:37:20.921087", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700640.9212108, "iso": "2025-12-02T18:37:20.921220", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700640.9221902, "iso": "2025-12-02T18:37:20.922200", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700640.922281, "iso": "2025-12-02T18:37:20.922289", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700641.1729689, "iso": "2025-12-02T18:37:21.172990", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700641.1730938, "iso": "2025-12-02T18:37:21.173103", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700641.423299, "iso": "2025-12-02T18:37:21.423318", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700641.423435, "iso": "2025-12-02T18:37:21.423445", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700641.673738, "iso": "2025-12-02T18:37:21.673760", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700641.6738691, "iso": "2025-12-02T18:37:21.673877", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700641.675141, "iso": "2025-12-02T18:37:21.675152", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700641.675242, "iso": "2025-12-02T18:37:21.675251", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700642.924483, "iso": "2025-12-02T18:37:22.924506", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700642.924648, "iso": "2025-12-02T18:37:22.924658", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700642.926056, "iso": "2025-12-02T18:37:22.926068", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700642.926154, "iso": "2025-12-02T18:37:22.926163", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700643.4258938, "iso": "2025-12-02T18:37:23.425916", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700643.42605, "iso": "2025-12-02T18:37:23.426060", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700643.676157, "iso": "2025-12-02T18:37:23.676181", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700643.6763048, "iso": "2025-12-02T18:37:23.676313", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700643.677587, "iso": "2025-12-02T18:37:23.677600", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700643.677706, "iso": "2025-12-02T18:37:23.677715", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700644.179321, "iso": "2025-12-02T18:37:24.179335", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700644.1793962, "iso": "2025-12-02T18:37:24.179400", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700644.17994, "iso": "2025-12-02T18:37:24.179945", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700644.1799748, "iso": "2025-12-02T18:37:24.179978", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700644.930408, "iso": "2025-12-02T18:37:24.930431", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700644.930702, "iso": "2025-12-02T18:37:24.930719", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700644.93232, "iso": "2025-12-02T18:37:24.932336", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700644.9324129, "iso": "2025-12-02T18:37:24.932418", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700645.180599, "iso": "2025-12-02T18:37:25.180620", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700645.180724, "iso": "2025-12-02T18:37:25.180734", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700645.181439, "iso": "2025-12-02T18:37:25.181449", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700645.181528, "iso": "2025-12-02T18:37:25.181535", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700646.433134, "iso": "2025-12-02T18:37:26.433154", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700646.433269, "iso": "2025-12-02T18:37:26.433278", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700646.935851, "iso": "2025-12-02T18:37:26.935874", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700646.935992, "iso": "2025-12-02T18:37:26.936001", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700647.433884, "iso": "2025-12-02T18:37:27.433907", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700647.434035, "iso": "2025-12-02T18:37:27.434045", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700648.1840131, "iso": "2025-12-02T18:37:28.184032", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700648.184099, "iso": "2025-12-02T18:37:28.184104", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700648.285129, "iso": "2025-12-02T18:37:28.285150", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "QQQ", "age_ms": 76556.539, "ts": 1764700648.285117}}
+{"ts": 1764700648.285391, "iso": "2025-12-02T18:37:28.285397", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700648.285449, "iso": "2025-12-02T18:37:28.285452", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700648.686445, "iso": "2025-12-02T18:37:28.686467", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700648.686579, "iso": "2025-12-02T18:37:28.686588", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700648.687846, "iso": "2025-12-02T18:37:28.687857", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700648.687936, "iso": "2025-12-02T18:37:28.687941", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700649.189776, "iso": "2025-12-02T18:37:29.189796", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700649.189909, "iso": "2025-12-02T18:37:29.189919", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700649.43848, "iso": "2025-12-02T18:37:29.438503", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700649.438648, "iso": "2025-12-02T18:37:29.438658", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700649.686709, "iso": "2025-12-02T18:37:29.686732", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700649.686885, "iso": "2025-12-02T18:37:29.686896", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700649.688166, "iso": "2025-12-02T18:37:29.688178", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700649.6882648, "iso": "2025-12-02T18:37:29.688273", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700649.9377952, "iso": "2025-12-02T18:37:29.937816", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700649.937927, "iso": "2025-12-02T18:37:29.937936", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700650.942881, "iso": "2025-12-02T18:37:30.942902", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700650.9430149, "iso": "2025-12-02T18:37:30.943024", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700651.4406872, "iso": "2025-12-02T18:37:31.440713", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700651.440877, "iso": "2025-12-02T18:37:31.440888", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700651.692356, "iso": "2025-12-02T18:37:31.692381", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700651.692509, "iso": "2025-12-02T18:37:31.692518", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700651.9420722, "iso": "2025-12-02T18:37:31.942086", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700651.942143, "iso": "2025-12-02T18:37:31.942147", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700652.943441, "iso": "2025-12-02T18:37:32.943466", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700652.943639, "iso": "2025-12-02T18:37:32.943649", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700652.9445388, "iso": "2025-12-02T18:37:32.944549", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700652.944642, "iso": "2025-12-02T18:37:32.944649", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700652.945209, "iso": "2025-12-02T18:37:32.945217", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700652.945288, "iso": "2025-12-02T18:37:32.945295", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700653.4446871, "iso": "2025-12-02T18:37:33.444704", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700653.444792, "iso": "2025-12-02T18:37:33.444796", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700654.6983712, "iso": "2025-12-02T18:37:34.698393", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700654.698693, "iso": "2025-12-02T18:37:34.698708", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700654.7001011, "iso": "2025-12-02T18:37:34.700110", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700654.700164, "iso": "2025-12-02T18:37:34.700169", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700654.9467561, "iso": "2025-12-02T18:37:34.946779", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700654.946916, "iso": "2025-12-02T18:37:34.946927", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700655.198753, "iso": "2025-12-02T18:37:35.198774", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700655.1988869, "iso": "2025-12-02T18:37:35.198897", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700656.720534, "iso": "2025-12-02T18:37:36.720555", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700656.720664, "iso": "2025-12-02T18:37:36.720672", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700656.722047, "iso": "2025-12-02T18:37:36.722057", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700656.722139, "iso": "2025-12-02T18:37:36.722147", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700656.9715562, "iso": "2025-12-02T18:37:36.971576", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700656.971682, "iso": "2025-12-02T18:37:36.971691", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700657.471021, "iso": "2025-12-02T18:37:37.471044", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700657.4711869, "iso": "2025-12-02T18:37:37.471197", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700657.4724019, "iso": "2025-12-02T18:37:37.472413", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700657.472485, "iso": "2025-12-02T18:37:37.472492", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700658.221616, "iso": "2025-12-02T18:37:38.221639", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700658.221783, "iso": "2025-12-02T18:37:38.221793", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700658.473245, "iso": "2025-12-02T18:37:38.473266", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700658.4733708, "iso": "2025-12-02T18:37:38.473379", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700658.474412, "iso": "2025-12-02T18:37:38.474418", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700658.474464, "iso": "2025-12-02T18:37:38.474468", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700659.224597, "iso": "2025-12-02T18:37:39.224612", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700659.224669, "iso": "2025-12-02T18:37:39.224673", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700660.225487, "iso": "2025-12-02T18:37:40.225510", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700660.225657, "iso": "2025-12-02T18:37:40.225667", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700660.22721, "iso": "2025-12-02T18:37:40.227222", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700660.2273002, "iso": "2025-12-02T18:37:40.227308", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700663.374719, "iso": "2025-12-02T18:37:43.374742", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700663.374891, "iso": "2025-12-02T18:37:43.374901", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700663.376791, "iso": "2025-12-02T18:37:43.376803", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700663.376885, "iso": "2025-12-02T18:37:43.376893", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700663.626575, "iso": "2025-12-02T18:37:43.626596", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700663.626715, "iso": "2025-12-02T18:37:43.626724", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700664.1280699, "iso": "2025-12-02T18:37:44.128092", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700664.1282089, "iso": "2025-12-02T18:37:44.128219", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700664.1296651, "iso": "2025-12-02T18:37:44.129682", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700664.129796, "iso": "2025-12-02T18:37:44.129805", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700664.3780632, "iso": "2025-12-02T18:37:44.378085", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700664.378243, "iso": "2025-12-02T18:37:44.378289", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700664.879182, "iso": "2025-12-02T18:37:44.879205", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700664.879317, "iso": "2025-12-02T18:37:44.879325", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700665.3796601, "iso": "2025-12-02T18:37:45.379682", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700665.379797, "iso": "2025-12-02T18:37:45.379807", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700665.628659, "iso": "2025-12-02T18:37:45.628678", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700665.628792, "iso": "2025-12-02T18:37:45.628799", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700666.130312, "iso": "2025-12-02T18:37:46.130335", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700666.130465, "iso": "2025-12-02T18:37:46.130475", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700666.131545, "iso": "2025-12-02T18:37:46.131552", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700666.131605, "iso": "2025-12-02T18:37:46.131610", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700666.381801, "iso": "2025-12-02T18:37:46.381822", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700666.381931, "iso": "2025-12-02T18:37:46.381939", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700666.6330612, "iso": "2025-12-02T18:37:46.633081", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700666.6332002, "iso": "2025-12-02T18:37:46.633209", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700666.634561, "iso": "2025-12-02T18:37:46.634571", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700666.634651, "iso": "2025-12-02T18:37:46.634659", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700667.884681, "iso": "2025-12-02T18:37:47.884701", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700667.884809, "iso": "2025-12-02T18:37:47.884817", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700668.133672, "iso": "2025-12-02T18:37:48.133686", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700668.13377, "iso": "2025-12-02T18:37:48.133774", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700669.011126, "iso": "2025-12-02T18:37:49.011154", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700669.01131, "iso": "2025-12-02T18:37:49.011325", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700669.013994, "iso": "2025-12-02T18:37:49.014004", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700669.0140579, "iso": "2025-12-02T18:37:49.014063", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700669.761339, "iso": "2025-12-02T18:37:49.761363", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700669.761462, "iso": "2025-12-02T18:37:49.761471", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700669.8633652, "iso": "2025-12-02T18:37:49.863386", "level": "EVENT", "event": "chain_refreshed", "data": {"symbol": "SPY", "age_ms": 40608.424, "ts": 1764700669.863352}}
+{"ts": 1764700669.863641, "iso": "2025-12-02T18:37:49.863656", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700669.863772, "iso": "2025-12-02T18:37:49.863782", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700670.97745, "iso": "2025-12-02T18:37:50.977478", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700670.977589, "iso": "2025-12-02T18:37:50.977595", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700671.4774349, "iso": "2025-12-02T18:37:51.477466", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700671.47764, "iso": "2025-12-02T18:37:51.477647", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "empty_chain"}}
+{"ts": 1764700671.479187, "iso": "2025-12-02T18:37:51.479200", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700671.479265, "iso": "2025-12-02T18:37:51.479269", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700671.978412, "iso": "2025-12-02T18:37:51.978426", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700671.978486, "iso": "2025-12-02T18:37:51.978490", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700672.227833, "iso": "2025-12-02T18:37:52.227860", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700672.2280262, "iso": "2025-12-02T18:37:52.228037", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700673.0935948, "iso": "2025-12-02T18:37:53.093629", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700673.093776, "iso": "2025-12-02T18:37:53.093785", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700673.3446589, "iso": "2025-12-02T18:37:53.344696", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700673.344851, "iso": "2025-12-02T18:37:53.344861", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700673.9650712, "iso": "2025-12-02T18:37:53.965099", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700673.965206, "iso": "2025-12-02T18:37:53.965211", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700674.4646678, "iso": "2025-12-02T18:37:54.464701", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700674.464871, "iso": "2025-12-02T18:37:54.464921", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700675.46426, "iso": "2025-12-02T18:37:55.464274", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700675.464355, "iso": "2025-12-02T18:37:55.464359", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700675.465773, "iso": "2025-12-02T18:37:55.465784", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700675.4658601, "iso": "2025-12-02T18:37:55.465868", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700675.715533, "iso": "2025-12-02T18:37:55.715549", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700675.7156138, "iso": "2025-12-02T18:37:55.715619", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700675.96716, "iso": "2025-12-02T18:37:55.967181", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700675.967296, "iso": "2025-12-02T18:37:55.967306", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700676.3860538, "iso": "2025-12-02T18:37:56.386067", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700676.386134, "iso": "2025-12-02T18:37:56.386139", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700676.887825, "iso": "2025-12-02T18:37:56.887848", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700676.887989, "iso": "2025-12-02T18:37:56.887999", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700677.888671, "iso": "2025-12-02T18:37:57.888684", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700677.8887382, "iso": "2025-12-02T18:37:57.888741", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700678.1395662, "iso": "2025-12-02T18:37:58.139587", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700678.1397069, "iso": "2025-12-02T18:37:58.139716", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700678.8908842, "iso": "2025-12-02T18:37:58.890897", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700678.890958, "iso": "2025-12-02T18:37:58.890962", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700679.145189, "iso": "2025-12-02T18:37:59.145204", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700679.1452658, "iso": "2025-12-02T18:37:59.145269", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700679.6415732, "iso": "2025-12-02T18:37:59.641586", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700679.641644, "iso": "2025-12-02T18:37:59.641648", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700680.145365, "iso": "2025-12-02T18:38:00.145398", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700680.145547, "iso": "2025-12-02T18:38:00.145557", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700680.1456919, "iso": "2025-12-02T18:38:00.145699", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700680.1457658, "iso": "2025-12-02T18:38:00.145772", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700680.395515, "iso": "2025-12-02T18:38:00.395548", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700680.395676, "iso": "2025-12-02T18:38:00.395684", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700680.3977118, "iso": "2025-12-02T18:38:00.397730", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700680.3978271, "iso": "2025-12-02T18:38:00.397832", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700683.452878, "iso": "2025-12-02T18:38:03.452913", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700683.453071, "iso": "2025-12-02T18:38:03.453081", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700684.20637, "iso": "2025-12-02T18:38:04.206388", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700684.206461, "iso": "2025-12-02T18:38:04.206465", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700684.207392, "iso": "2025-12-02T18:38:04.207401", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700684.207447, "iso": "2025-12-02T18:38:04.207451", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700684.4558, "iso": "2025-12-02T18:38:04.455822", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700684.455936, "iso": "2025-12-02T18:38:04.455941", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700684.7027571, "iso": "2025-12-02T18:38:04.702789", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700684.70296, "iso": "2025-12-02T18:38:04.702966", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700684.704164, "iso": "2025-12-02T18:38:04.704173", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700684.704231, "iso": "2025-12-02T18:38:04.704235", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700686.2061849, "iso": "2025-12-02T18:38:06.206219", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700686.206385, "iso": "2025-12-02T18:38:06.206395", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700688.2092202, "iso": "2025-12-02T18:38:08.209248", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700688.2093492, "iso": "2025-12-02T18:38:08.209354", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700688.45758, "iso": "2025-12-02T18:38:08.457600", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700688.457695, "iso": "2025-12-02T18:38:08.457698", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700688.710704, "iso": "2025-12-02T18:38:08.710724", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700688.7108061, "iso": "2025-12-02T18:38:08.710811", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700689.462442, "iso": "2025-12-02T18:38:09.462473", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700689.462661, "iso": "2025-12-02T18:38:09.462671", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700689.712554, "iso": "2025-12-02T18:38:09.712589", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700689.712766, "iso": "2025-12-02T18:38:09.712773", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700689.7147331, "iso": "2025-12-02T18:38:09.714744", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700689.714795, "iso": "2025-12-02T18:38:09.714798", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700689.961709, "iso": "2025-12-02T18:38:09.961742", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700689.961924, "iso": "2025-12-02T18:38:09.961931", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700690.2138839, "iso": "2025-12-02T18:38:10.213919", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700690.214071, "iso": "2025-12-02T18:38:10.214081", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700690.464896, "iso": "2025-12-02T18:38:10.464916", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700690.464998, "iso": "2025-12-02T18:38:10.465002", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700690.466207, "iso": "2025-12-02T18:38:10.466220", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700690.46628, "iso": "2025-12-02T18:38:10.466285", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700690.963666, "iso": "2025-12-02T18:38:10.963706", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700690.9639292, "iso": "2025-12-02T18:38:10.963941", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700690.9658291, "iso": "2025-12-02T18:38:10.965839", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700690.965892, "iso": "2025-12-02T18:38:10.965896", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700691.466677, "iso": "2025-12-02T18:38:11.466704", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700691.4668028, "iso": "2025-12-02T18:38:11.466808", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700691.468398, "iso": "2025-12-02T18:38:11.468414", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700691.468513, "iso": "2025-12-02T18:38:11.468518", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700692.217911, "iso": "2025-12-02T18:38:12.217938", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700692.218029, "iso": "2025-12-02T18:38:12.218033", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700692.641557, "iso": "2025-12-02T18:38:12.641583", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700692.6416872, "iso": "2025-12-02T18:38:12.641692", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700692.8250299, "iso": "2025-12-02T18:38:12.825074", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700692.8252642, "iso": "2025-12-02T18:38:12.825270", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700693.621691, "iso": "2025-12-02T18:38:13.621730", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700693.621832, "iso": "2025-12-02T18:38:13.621837", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700693.6231492, "iso": "2025-12-02T18:38:13.623161", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700693.623235, "iso": "2025-12-02T18:38:13.623240", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700696.279487, "iso": "2025-12-02T18:38:16.279522", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700696.2798378, "iso": "2025-12-02T18:38:16.279856", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700696.281436, "iso": "2025-12-02T18:38:16.281447", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700696.281537, "iso": "2025-12-02T18:38:16.281546", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700696.525706, "iso": "2025-12-02T18:38:16.525739", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700696.525889, "iso": "2025-12-02T18:38:16.525894", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700698.027207, "iso": "2025-12-02T18:38:18.027242", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700698.0274189, "iso": "2025-12-02T18:38:18.027424", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700699.028974, "iso": "2025-12-02T18:38:19.029005", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700699.029145, "iso": "2025-12-02T18:38:19.029153", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700699.030657, "iso": "2025-12-02T18:38:19.030673", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700699.0307572, "iso": "2025-12-02T18:38:19.030763", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700699.5281641, "iso": "2025-12-02T18:38:19.528213", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700699.528351, "iso": "2025-12-02T18:38:19.528359", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700699.5296881, "iso": "2025-12-02T18:38:19.529701", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700699.529778, "iso": "2025-12-02T18:38:19.529784", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700699.530316, "iso": "2025-12-02T18:38:19.530322", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700699.5303638, "iso": "2025-12-02T18:38:19.530367", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700699.78163, "iso": "2025-12-02T18:38:19.781660", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700699.782073, "iso": "2025-12-02T18:38:19.782081", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.0306182, "iso": "2025-12-02T18:38:20.030660", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.030904, "iso": "2025-12-02T18:38:20.030915", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.032535, "iso": "2025-12-02T18:38:20.032543", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.032586, "iso": "2025-12-02T18:38:20.032612", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.032943, "iso": "2025-12-02T18:38:20.032951", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.033008, "iso": "2025-12-02T18:38:20.033012", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.03309, "iso": "2025-12-02T18:38:20.033094", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.033129, "iso": "2025-12-02T18:38:20.033133", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.0333009, "iso": "2025-12-02T18:38:20.033305", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.033341, "iso": "2025-12-02T18:38:20.033345", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.28337, "iso": "2025-12-02T18:38:20.283406", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.283552, "iso": "2025-12-02T18:38:20.283562", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.2841852, "iso": "2025-12-02T18:38:20.284199", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700700.2843049, "iso": "2025-12-02T18:38:20.284315", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.533272, "iso": "2025-12-02T18:38:20.533306", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.5334542, "iso": "2025-12-02T18:38:20.533465", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700700.5336, "iso": "2025-12-02T18:38:20.533608", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700700.533668, "iso": "2025-12-02T18:38:20.533673", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700701.281761, "iso": "2025-12-02T18:38:21.281782", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700701.281898, "iso": "2025-12-02T18:38:21.281902", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700701.535168, "iso": "2025-12-02T18:38:21.535202", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700701.535361, "iso": "2025-12-02T18:38:21.535371", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700702.786915, "iso": "2025-12-02T18:38:22.786951", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700702.787189, "iso": "2025-12-02T18:38:22.787200", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700703.248013, "iso": "2025-12-02T18:38:23.248054", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700703.2482681, "iso": "2025-12-02T18:38:23.248280", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700703.5036721, "iso": "2025-12-02T18:38:23.503706", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700703.503847, "iso": "2025-12-02T18:38:23.503855", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700703.999779, "iso": "2025-12-02T18:38:23.999814", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700703.99997, "iso": "2025-12-02T18:38:23.999980", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700704.323041, "iso": "2025-12-02T18:38:24.323068", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700704.32322, "iso": "2025-12-02T18:38:24.323228", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700705.055989, "iso": "2025-12-02T18:38:25.056024", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700705.056191, "iso": "2025-12-02T18:38:25.056201", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700705.348494, "iso": "2025-12-02T18:38:25.348528", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700705.348649, "iso": "2025-12-02T18:38:25.348656", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700706.935044, "iso": "2025-12-02T18:38:26.935078", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700706.9352262, "iso": "2025-12-02T18:38:26.935236", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700707.681878, "iso": "2025-12-02T18:38:27.681901", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700707.6819808, "iso": "2025-12-02T18:38:27.681985", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700708.220651, "iso": "2025-12-02T18:38:28.220685", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700708.220876, "iso": "2025-12-02T18:38:28.220884", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700708.471201, "iso": "2025-12-02T18:38:28.471233", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700708.4713972, "iso": "2025-12-02T18:38:28.471401", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700708.972616, "iso": "2025-12-02T18:38:28.972639", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700708.9727612, "iso": "2025-12-02T18:38:28.972766", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700709.474674, "iso": "2025-12-02T18:38:29.474710", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700709.4748669, "iso": "2025-12-02T18:38:29.474877", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700709.72293, "iso": "2025-12-02T18:38:29.722966", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700709.7231638, "iso": "2025-12-02T18:38:29.723186", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700709.85146, "iso": "2025-12-02T18:38:29.851495", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700709.8516731, "iso": "2025-12-02T18:38:29.851680", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700710.10354, "iso": "2025-12-02T18:38:30.103577", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700710.1037319, "iso": "2025-12-02T18:38:30.103741", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700710.1052191, "iso": "2025-12-02T18:38:30.105230", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700710.105309, "iso": "2025-12-02T18:38:30.105317", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700710.371787, "iso": "2025-12-02T18:38:30.371821", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700710.371967, "iso": "2025-12-02T18:38:30.371976", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700710.37266, "iso": "2025-12-02T18:38:30.372670", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700710.372756, "iso": "2025-12-02T18:38:30.372763", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700710.872732, "iso": "2025-12-02T18:38:30.872745", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700710.872849, "iso": "2025-12-02T18:38:30.872866", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700711.6252632, "iso": "2025-12-02T18:38:31.625301", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700711.625528, "iso": "2025-12-02T18:38:31.625664", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700712.125377, "iso": "2025-12-02T18:38:32.125409", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700712.1255229, "iso": "2025-12-02T18:38:32.125529", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700712.374605, "iso": "2025-12-02T18:38:32.374736", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700712.375366, "iso": "2025-12-02T18:38:32.375379", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700712.6919308, "iso": "2025-12-02T18:38:32.691964", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700712.69209, "iso": "2025-12-02T18:38:32.692097", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700713.877833, "iso": "2025-12-02T18:38:33.877843", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700713.8779032, "iso": "2025-12-02T18:38:33.877906", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700713.8783581, "iso": "2025-12-02T18:38:33.878361", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700713.8783848, "iso": "2025-12-02T18:38:33.878387", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700714.3216288, "iso": "2025-12-02T18:38:34.321663", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700714.3218272, "iso": "2025-12-02T18:38:34.321837", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700715.968149, "iso": "2025-12-02T18:38:35.968172", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700715.9682822, "iso": "2025-12-02T18:38:35.968287", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700715.968949, "iso": "2025-12-02T18:38:35.968959", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700715.969024, "iso": "2025-12-02T18:38:35.969030", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700716.718782, "iso": "2025-12-02T18:38:36.718803", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700716.7189162, "iso": "2025-12-02T18:38:36.718920", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700717.3056278, "iso": "2025-12-02T18:38:37.305661", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700717.30582, "iso": "2025-12-02T18:38:37.305826", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700717.306999, "iso": "2025-12-02T18:38:37.307006", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700717.307054, "iso": "2025-12-02T18:38:37.307058", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700718.2512488, "iso": "2025-12-02T18:38:38.251283", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700718.251542, "iso": "2025-12-02T18:38:38.251557", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700718.502551, "iso": "2025-12-02T18:38:38.502583", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700718.502778, "iso": "2025-12-02T18:38:38.502785", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700719.981736, "iso": "2025-12-02T18:38:39.981763", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700719.98188, "iso": "2025-12-02T18:38:39.981888", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700719.98325, "iso": "2025-12-02T18:38:39.983261", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700719.983329, "iso": "2025-12-02T18:38:39.983332", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700721.8244631, "iso": "2025-12-02T18:38:41.824497", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700721.824658, "iso": "2025-12-02T18:38:41.824668", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700721.8262799, "iso": "2025-12-02T18:38:41.826291", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700721.82635, "iso": "2025-12-02T18:38:41.826355", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700722.643424, "iso": "2025-12-02T18:38:42.643458", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700722.643577, "iso": "2025-12-02T18:38:42.643585", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700722.644615, "iso": "2025-12-02T18:38:42.644631", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700722.644691, "iso": "2025-12-02T18:38:42.644696", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700723.324794, "iso": "2025-12-02T18:38:43.324835", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700723.3250601, "iso": "2025-12-02T18:38:43.325070", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700723.576343, "iso": "2025-12-02T18:38:43.576379", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700723.57653, "iso": "2025-12-02T18:38:43.576539", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700723.578063, "iso": "2025-12-02T18:38:43.578069", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700723.57811, "iso": "2025-12-02T18:38:43.578114", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700723.826236, "iso": "2025-12-02T18:38:43.826245", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700723.826282, "iso": "2025-12-02T18:38:43.826284", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700723.826428, "iso": "2025-12-02T18:38:43.826430", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700723.8264582, "iso": "2025-12-02T18:38:43.826460", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700724.5771399, "iso": "2025-12-02T18:38:44.577170", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700724.577301, "iso": "2025-12-02T18:38:44.577306", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700724.578069, "iso": "2025-12-02T18:38:44.578074", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700724.578111, "iso": "2025-12-02T18:38:44.578113", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700725.079211, "iso": "2025-12-02T18:38:45.079230", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764700725.079318, "iso": "2025-12-02T18:38:45.079322", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700725.5786529, "iso": "2025-12-02T18:38:45.578690", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700725.578874, "iso": "2025-12-02T18:38:45.578880", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700725.580338, "iso": "2025-12-02T18:38:45.580347", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764700725.580396, "iso": "2025-12-02T18:38:45.580401", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700727.083642, "iso": "2025-12-02T18:38:47.083667", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700727.083818, "iso": "2025-12-02T18:38:47.083827", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700729.589088, "iso": "2025-12-02T18:38:49.589123", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700729.589271, "iso": "2025-12-02T18:38:49.589281", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700730.5874078, "iso": "2025-12-02T18:38:50.587446", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764700730.587658, "iso": "2025-12-02T18:38:50.587669", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1764700730.589532, "iso": "2025-12-02T18:38:50.589539", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764700730.589577, "iso": "2025-12-02T18:38:50.589580", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}

@@ -25,6 +25,7 @@ import asyncio
 import datetime as dt
 import time
 from typing import Dict, Any, List, Optional
+from bot_0dte.inevitability import InevitabilityEngine
 
 # Strategy
 from bot_0dte.strategy.elite_entry_diagnostic import EliteEntryEngine, EliteSignal
@@ -389,7 +390,8 @@ class Orchestrator:
         # -------------------------------------------------------
         # Strike selection
         # -------------------------------------------------------
-        strike = await self.selector.select_from_chain(chain, sig.bias)
+        strike = await self.selector.select_from_chain(chain, sig.bias, price)
+        
         if not strike:
             self.logger.log_event("signal_dropped", {"reason": "no_strike"})
             return

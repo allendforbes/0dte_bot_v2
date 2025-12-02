@@ -1,5 +1,11 @@
 """
-MassiveOptionsWSAdapter — Options WebSocket Adapter
+MassiveOptionsWSAdapter — FINAL MUX-COMPATIBLE VERSION
+Supports routing:
+    • on_nbbo(callback)
+    • on_quote(callback)
+    • on_reconnect(callback)
+Handles correct Massive format:
+    Q.O:<OCC>
 """
 
 import os
@@ -14,10 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class MassiveOptionsWSAdapter:
-    """
-    Massive.com Options Adapter (NBBO + Quotes/Greeks)
-    """
-
     WS_URL = "wss://socket.massive.com/options"
 
     def __init__(self, api_key: str, loop=None):
@@ -25,13 +27,13 @@ class MassiveOptionsWSAdapter:
         self.loop = loop or asyncio.get_event_loop()
 
         self.ws = None
-        self._connected = asyncio.Event()
 
-        # Callbacks
+        # REQUIRED by MUX:
         self._nbbo_handlers: List[Callable] = []
         self._quote_handlers: List[Callable] = []
+        self._reconnect_handlers: List[Callable] = []
 
-        # Health
+        self._connected = asyncio.Event()
         self._last_heartbeat = time.time()
         self._router_task = None
         self._heartbeat_task = None
@@ -41,26 +43,31 @@ class MassiveOptionsWSAdapter:
         self._retry = 1
         self._max_retry = 20
 
-    # ------------------------------------------------------------------
-    @classmethod
-    def from_env(cls, loop=None):
-        api_key = os.getenv("MASSIVE_API_KEY")
-        if not api_key:
-            raise RuntimeError("Missing MASSIVE_API_KEY in environment")
-        return cls(api_key, loop=loop)
-
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    # REQUIRED PUBLIC API
+    # ----------------------------------------------------------------------
     def on_nbbo(self, cb: Callable):
+        """Register NBBO handler (required by MassiveMux)."""
         self._nbbo_handlers.append(cb)
 
     def on_quote(self, cb: Callable):
+        """Register quote/Greeks handler."""
         self._quote_handlers.append(cb)
 
-    # ------------------------------------------------------------------
+    def on_reconnect(self, cb: Callable):
+        """Register reconnect callback (ContractEngine uses this)."""
+        self._reconnect_handlers.append(cb)
+
+    # ----------------------------------------------------------------------
+    @classmethod
+    def from_env(cls, loop=None):
+        key = os.getenv("MASSIVE_API_KEY")
+        if not key:
+            raise RuntimeError("Missing MASSIVE_API_KEY in env")
+        return cls(key, loop=loop)
+
+    # ----------------------------------------------------------------------
     async def connect(self):
-        """
-        Connect to Massive with exponential backoff and proper auth.
-        """
         async with self._reconnect_lock:
             while True:
                 try:
@@ -70,26 +77,29 @@ class MassiveOptionsWSAdapter:
                         self.WS_URL,
                         ping_interval=20,
                         ping_timeout=10,
-                        max_queue=None,
                     )
 
-                    # Authenticate
-                    await self.ws.send(
-                        json.dumps({"action": "auth", "params": self.api_key})
-                    )
+                    await self.ws.send(json.dumps({
+                        "action": "auth",
+                        "params": self.api_key
+                    }))
+
                     logger.info("Auth message sent to Massive OPTIONS")
 
                     self._connected.set()
                     self._last_heartbeat = time.time()
                     self._retry = 1
 
-                    # Launch router + heartbeat watchdog
+                    # start router + heartbeat
                     self._router_task = self.loop.create_task(self._router())
-                    self._heartbeat_task = self.loop.create_task(
-                        self._heartbeat_watchdog()
-                    )
+                    self._heartbeat_task = self.loop.create_task(self._heartbeat_watchdog())
 
                     logger.info("Massive OPTIONS WebSocket connected")
+
+                    # FIRE RECONNECT HANDLERS
+                    for cb in self._reconnect_handlers:
+                        self.loop.create_task(cb())
+
                     return
 
                 except Exception as e:
@@ -97,48 +107,45 @@ class MassiveOptionsWSAdapter:
                     await asyncio.sleep(self._retry)
                     self._retry = min(self._retry * 2, self._max_retry)
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     async def subscribe_contracts(self, occ_codes: List[str]):
         if not self.ws:
             await self.connect()
 
-        # Massive limits: batch in groups of 3
         BATCH = 3
         for i in range(0, len(occ_codes), BATCH):
             batch = occ_codes[i : i + BATCH]
 
-            sub_msg = {
-                "type": "subscribe",
-                "channels": [
-                    {"name": "options", "symbols": batch}
-                ]
-            }
+            # Massive requires Q.O:<contract>
+            syms = [f"Q.{sym}" for sym in batch]
+
+            msg = json.dumps({
+                "action": "subscribe",
+                "params": ",".join(syms)
+            })
 
             try:
-                await self.ws.send(json.dumps(sub_msg))
-                logger.info(f"[OPTIONS] Subscribed to batch of {len(batch)} contracts")
-            except Exception:
-                logger.warning("[OPTIONS] Send failed — reconnecting...")
+                await self.ws.send(msg)
+                logger.info(f"[OPTIONS] Subscribed → {syms}")
+
+            except Exception as e:
+                logger.warning(f"[OPTIONS] Send failed ({e}) — reconnecting...")
                 await self.connect()
 
-            # Safety spacing
-            await asyncio.sleep(0.05)  # 50ms pause
+            await asyncio.sleep(0.05)
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     async def _router(self):
-        """
-        Route NBBO + Greeks events.
-        """
         try:
             async for raw in self.ws:
                 now = time.time()
                 self._last_heartbeat = now
 
-                msgs = json.loads(raw)
-                if not isinstance(msgs, list):
-                    msgs = [msgs]
+                data = json.loads(raw)
+                if not isinstance(data, list):
+                    data = [data]
 
-                for event in msgs:
+                for event in data:
                     await self._dispatch(event, now)
 
         except Exception as e:
@@ -147,48 +154,49 @@ class MassiveOptionsWSAdapter:
             logger.warning("[OPTIONS] Router ending — reconnecting")
             await self.connect()
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     async def _dispatch(self, event: Dict[str, Any], recv_ts: float):
-        ev = event.get("ev")
 
-        # NBBO
-        if ev == "NO":
-            normalized = {
-                "symbol": event.get("underlying", ""),
-                "contract": event.get("sym", ""),
-                "strike": event.get("strike", 0.0),
-                "right": event.get("right", ""),
-                "bid": event.get("bid", 0.0),
-                "ask": event.get("ask", 0.0),
-                "_recv_ts": recv_ts,
-            }
-            for cb in self._nbbo_handlers:
-                self.loop.create_task(cb(normalized))
+        if event.get("ev") != "Q":
+            return
 
-        # Quotes/Greeks
-        elif ev == "OQ":
-            normalized = {
-                "symbol": event.get("underlying", ""),
-                "contract": event.get("sym", ""),
-                "strike": event.get("strike", 0.0),
-                "right": event.get("right", ""),
-                "bid": event.get("bid", 0.0),
-                "ask": event.get("ask", 0.0),
-                "delta": event.get("delta"),
-                "gamma": event.get("gamma"),
-                "theta": event.get("theta"),
-                "vega": event.get("vega"),
-                "iv": event.get("iv"),
-                "_recv_ts": recv_ts,
-            }
-            for cb in self._quote_handlers:
-                self.loop.create_task(cb(normalized))
+        contract = event.get("sym", "")
 
-    # ------------------------------------------------------------------
+        und = ""
+        right = None
+        strike = None
+
+        try:
+            # Massive sends a 20-character OCC-style string
+            if contract.startswith("O:") and len(contract) >= 19:
+                und = contract[2:5]            # SPY / QQQ
+                right = contract[11]           # char at index 11
+                strike_raw = contract[12:]     # remainder → "00683000"
+                strike = int(strike_raw) / 1000.0
+        except Exception as e:
+            print("OCC DECODE ERROR:", e, contract)
+
+        normalized = {
+            "symbol": und,
+            "contract": contract,
+            "strike": strike,
+            "right": right,
+            "bid": event.get("bp"),
+            "ask": event.get("ap"),
+            "bid_size": event.get("bs"),
+            "ask_size": event.get("as"),
+            "_recv_ts": recv_ts,
+        }
+
+        print(">>> NORMALIZED:", normalized)
+
+        for cb in self._nbbo_handlers:
+            self.loop.create_task(cb(normalized))
+
+
+
+    # ----------------------------------------------------------------------
     async def _heartbeat_watchdog(self):
-        """
-        Detect stale feed and reconnect.
-        """
         try:
             while True:
                 await asyncio.sleep(5)
@@ -198,15 +206,14 @@ class MassiveOptionsWSAdapter:
         except asyncio.CancelledError:
             pass
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     async def close(self):
         if self.ws:
             await self.ws.close()
 
-        if self._heartbeat_task:
-            self._heartbeat_task.cancel()
-
         if self._router_task:
             self._router_task.cancel()
+        if self._heartbeat_task:
+            self._heartbeat_task.cancel()
 
         logger.info("MassiveOptionsWSAdapter closed")

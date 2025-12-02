@@ -1,0 +1,11 @@
+{"ts": 1764217574.129854, "iso": "2025-11-27T04:26:14.129857", "level": "EVENT", "event": "chain_refreshed", "component": "REPLAY_1059", "data": {"symbol": "SPY", "age_ms": 1764217574129.849, "ts": 1764217574.1298492}}
+{"ts": 1764217574.29454, "iso": "2025-11-27T04:26:14.294549", "level": "EVENT", "event": "signal_generated", "component": "REPLAY_1059", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764217574.2946382, "iso": "2025-11-27T04:26:14.294641", "level": "EVENT", "event": "signal_dropped", "component": "REPLAY_1059", "data": {"reason": "no_strike"}}
+{"ts": 1764217574.365974, "iso": "2025-11-27T04:26:14.365998", "level": "EVENT", "event": "signal_generated", "component": "REPLAY_1059", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764217574.366209, "iso": "2025-11-27T04:26:14.366213", "level": "EVENT", "event": "signal_dropped", "component": "REPLAY_1059", "data": {"reason": "no_strike"}}
+{"ts": 1764217574.4377222, "iso": "2025-11-27T04:26:14.437748", "level": "EVENT", "event": "signal_generated", "component": "REPLAY_1059", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764217574.437973, "iso": "2025-11-27T04:26:14.437978", "level": "EVENT", "event": "signal_dropped", "component": "REPLAY_1059", "data": {"reason": "no_strike"}}
+{"ts": 1764217574.509867, "iso": "2025-11-27T04:26:14.509890", "level": "EVENT", "event": "signal_generated", "component": "REPLAY_1059", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 50.0, "trail_mult": 1.25}}
+{"ts": 1764217574.510066, "iso": "2025-11-27T04:26:14.510073", "level": "EVENT", "event": "signal_dropped", "component": "REPLAY_1059", "data": {"reason": "no_strike"}}
+{"ts": 1764217574.793369, "iso": "2025-11-27T04:26:14.793380", "level": "EVENT", "event": "signal_generated", "component": "REPLAY_1059", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764217574.793579, "iso": "2025-11-27T04:26:14.793584", "level": "EVENT", "event": "shadow_entry", "component": "REPLAY_1059", "data": {"symbol": "SPY", "contract": "O:SPY251129C00681000", "entry": 0.8729999999999746, "qty": 10, "bias": "CALL", "regime": "TREND_UP", "grade": "A", "score": 60.0}}
