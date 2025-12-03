@@ -9,7 +9,8 @@ Correct evaluation order (from test behavior):
     5) slippage
     6) reversal
     7) liquidity
-    8) success
+    8) microstructure protection (upvol + IV)
+    9) success
 """
 
 from dataclasses import dataclass
@@ -38,7 +39,7 @@ class EliteLatencyPrecheck:
     REVERSAL_CALL = -0.01
     REVERSAL_PUT = 0.01
 
-    def validate(self, symbol: str, tick: dict, bias: str, grade: str) -> PrecheckResult:
+    def validate(self, symbol: str, tick: dict, bias: str, grade: str, snap: dict = None) -> PrecheckResult:
 
         price = tick.get("price")
         bid = tick.get("bid")
@@ -72,11 +73,6 @@ class EliteLatencyPrecheck:
         mid = (bid + ask) / 2
         limit_side = ask if bias == "CALL" else bid
 
-        # ====================================
-        # SPREAD / SLIPPAGE / MID DRIFT ORDER
-        # Tests require CALL and PUT to behave differently
-        # ====================================
-
         spread = ask - bid
         spread_pct = spread / max(price, 0.01)
         max_spread = self.MAX_SPREAD_A_PLUS if grade == "A+" else self.MAX_SPREAD_A
@@ -94,16 +90,13 @@ class EliteLatencyPrecheck:
         # ====================================
         if bias == "CALL":
 
-            # 1) SPREAD
             if spread_pct > max_spread:
                 return PrecheckResult(False, reason="wide_spread")
 
-            # 2) MID DRIFT
             mid_drift = abs(mid - price) / max(price, 0.01)
             if mid_drift > self.MAX_MID_DRIFT:
                 return PrecheckResult(False, reason="mid_drift")
 
-            # 3) SLIPPAGE
             if slippage > max_slippage:
                 return PrecheckResult(False, reason="slippage_risk")
 
@@ -113,32 +106,17 @@ class EliteLatencyPrecheck:
         #   2) spread
         #   3) mid drift
         # ====================================
-        else:  # PUT
+        else:
 
-            # 1) SLIPPAGE FIRST (test requires this)
             if slippage > max_slippage:
                 return PrecheckResult(False, reason="slippage_risk")
 
-            # 2) THEN SPREAD
             if spread_pct > max_spread:
                 return PrecheckResult(False, reason="wide_spread")
 
-            # 3) THEN MID DRIFT
             mid_drift = abs(mid - price) / max(price, 0.01)
             if mid_drift > self.MAX_MID_DRIFT:
                 return PrecheckResult(False, reason="mid_drift")
-
-        # ====================================
-        # 3) SLIPPAGE THIRD
-        # ====================================
-        max_slippage = (
-            self.MAX_SLIPPAGE_A_PLUS if grade == "A+" else self.MAX_SLIPPAGE_A
-        )
-
-        slippage = abs(limit_side - price) / max(price, 0.01)
-
-        if slippage > max_slippage:
-            return PrecheckResult(False, reason="slippage_risk")
 
         # ------------------------------------
         # REVERSAL
@@ -155,6 +133,21 @@ class EliteLatencyPrecheck:
             return PrecheckResult(False, reason="thin_liquidity")
         if ask_size is not None and ask_size < self.MIN_SIZE:
             return PrecheckResult(False, reason="thin_liquidity")
+
+        # ------------------------------------
+        # MICROSTRUCTURE PROTECTION
+        # ------------------------------------
+        if snap is not None:
+            upvol_pct = snap.get("upvol_pct")
+            if upvol_pct is not None:
+                if bias == "CALL" and upvol_pct < 55:
+                    return PrecheckResult(False, reason="weak_flow")
+                if bias == "PUT" and upvol_pct > 45:
+                    return PrecheckResult(False, reason="weak_flow")
+
+            iv_change = snap.get("iv_change")
+            if iv_change is not None and abs(iv_change) > 0.2:
+                return PrecheckResult(False, reason="iv_spike")
 
         # ------------------------------------
         # SUCCESS

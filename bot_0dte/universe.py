@@ -2,55 +2,60 @@ import datetime as dt
 print(">>> Loaded universe.py (Massive-correct expiries)")
 from typing import Optional
 
+# ----------------------------------------------------------
 # Symbols
+# ----------------------------------------------------------
 CORE = ["SPY", "QQQ"]
 WEEKLIES = ["TSLA", "NVDA", "AAPL", "AMZN", "MSFT", "META"]
 
 def get_universe_for_today():
     """
-    Simpler:
-      - Always trade CORE
-      - Trade WEEKLIES Thu/Fri
+    Very simple:
+      • Always trade CORE
+      • Add WEEKLIES only on Thu/Fri
     """
-    wd = dt.datetime.now().weekday()
+    wd = dt.datetime.now().weekday()  # Monday=0
     if wd <= 2:
-        return CORE[:]       # Mon-Tue-Wed
-    return CORE + WEEKLIES   # Thu-Fri
+        return CORE[:]                # Mon–Tue–Wed
+    return CORE + WEEKLIES            # Thu–Fri
 
 
 # ----------------------------------------------------------
-# Massive.com expiry rules (NO OCC roll)
+# Massive.com expiry rules — REAL listing expirations (NOT OCC +1)
 # ----------------------------------------------------------
-CORE_EXPIRY_WEEKDAYS = {0, 2, 4}   # Mon, Wed, Fri
+# CORE expiries happen every:
+#   Monday (0), Wednesday (2), Friday (4)
+CORE_EXPIRY_WEEKDAYS = {0, 2, 4}
 
 def get_expiry_for_symbol(symbol: str) -> Optional[str]:
     """
-    MASSIVE-CORRECT VERSION:
-      • CORE (SPY / QQQ):
+    MASSIVE-CORRECT VERSION (final):
+      • Massive expects the ACTUAL exchange-listed expiry date, NOT
+        the OCC settlement (+1) date.
+
+      • CORE (SPY, QQQ):
             - If today is Mon/Wed/Fri → expiry = today
-            - Otherwise → next upcoming Mon/Wed/Fri
+            - Otherwise → next Mon/Wed/Fri
 
       • WEEKLIES:
-            - Thu: expiry = Friday of this week
-            - Fri: expiry = today
-            - Mon–Wed → inactive
-
-    NOTE:
-        Massive EXPECTS the REAL market expiration date,
-        NOT the OCC settlement date (+1 day).
+            - Mon–Wed → inactive (returns None)
+            - Thu → this Friday
+            - Fri → today
     """
+
     today = dt.date.today()
     wd = today.weekday()
 
-    # ----------------------------------------
-    # CORE (SPY / QQQ)
-    # ----------------------------------------
+    # -----------------------------------------------------
+    # CORE SYMBOLS
+    # -----------------------------------------------------
     if symbol in CORE:
 
+        # Same-day expiry available?
         if wd in CORE_EXPIRY_WEEKDAYS:
             expiry = today
         else:
-            # find next Mon/Wed/Fri
+            # Find next Mon/Wed/Fri
             for i in range(1, 7):
                 cand = today + dt.timedelta(days=i)
                 if cand.weekday() in CORE_EXPIRY_WEEKDAYS:
@@ -59,21 +64,21 @@ def get_expiry_for_symbol(symbol: str) -> Optional[str]:
 
         return expiry.strftime("%Y-%m-%d")
 
-    # ----------------------------------------
-    # WEEKLIES (Thu/Fri only)
-    # ----------------------------------------
+    # -----------------------------------------------------
+    # WEEKLIES — valid only Thu/Fri
+    # -----------------------------------------------------
     if symbol in WEEKLIES:
 
+        # Mon–Tue–Wed → no weekly expiry trades
         if wd <= 2:
-            return None     # Mon–Wed no weekly trading
+            return None
 
-        if wd == 3:
-            # Thursday → Friday weekly
+        if wd == 3:  # Thursday → Friday weekly
             expiry = today + dt.timedelta(days=1)
-        else:
-            # Friday → today
+        else:        # Friday → today
             expiry = today
 
         return expiry.strftime("%Y-%m-%d")
 
+    # Unknown symbol
     return None

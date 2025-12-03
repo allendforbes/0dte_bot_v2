@@ -1,0 +1,2 @@
+{"ts": 1764751371.620532, "iso": "2025-12-03T08:42:51.620540", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764751371.621032, "iso": "2025-12-03T08:42:51.621036", "level": "EVENT", "event": "shadow_entry", "data": {"symbol": "SPY", "contract": "O:SPY251122C00450000", "entry": 1.0, "qty": 10, "bias": "CALL", "regime": "TREND_UP", "grade": "A", "score": 60.0}}

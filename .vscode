@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./bot_0dte",
+        "./bot_0dte/contracts"
+    ]
+}

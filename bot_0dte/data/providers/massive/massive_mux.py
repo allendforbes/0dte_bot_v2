@@ -8,7 +8,7 @@ from typing import Callable, List, Dict, Any
 
 from bot_0dte.data.adapters.ib_underlying_adapter import IBUnderlyingAdapter
 from .massive_options_ws_adapter import MassiveOptionsWSAdapter
-from .massive_contract_engine import ContractEngine
+from bot_0dte.contracts.massive_contract_engine import MassiveContractEngine
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class MassiveMux:
     Unifies:
         • IBUnderlyingAdapter (real-time underlying quotes)
         • MassiveOptionsWSAdapter (options NBBO)
-        • ContractEngine (auto OCC subscription logic)
+        • MassiveContractEngine (dynamic OCC subscription)
     """
 
     def __init__(
@@ -34,7 +34,7 @@ class MassiveMux:
         self._option_handlers: List[Callable] = []
 
         # created during connect()
-        self.contract_engine: ContractEngine = None
+        self.contract_engine: MassiveContractEngine = None
         self.parent_orchestrator = None
 
         # use IBKR's event loop
@@ -66,12 +66,16 @@ class MassiveMux:
         await self.options.connect()
         logger.info("[MUX] Massive options connected ✅")
 
-        # 3. CONTRACT ENGINE
+        # 3. CONTRACT ENGINE (ONE PER SYMBOL)
         if self.contract_engine is None:
-            self.contract_engine = ContractEngine(
-                options_ws=self.options,
-                expiry_map=expiry_map
-            )
+            self.contract_engine = {}
+            for sym in symbols:
+                self.contract_engine[sym] = MassiveContractEngine(
+                    symbol=sym,
+                    ws=self.options,
+                )
+                # initial subscription
+                await self.contract_engine[sym].refresh_contracts()
 
         # 4. WIRE RECONNECT
         self.options.on_reconnect(self._on_massive_reconnect)
@@ -86,11 +90,9 @@ class MassiveMux:
     # RECONNECT HANDLER
     # ------------------------------------------------------------------
     async def _on_massive_reconnect(self):
-        if not self.contract_engine:
-            return
-
         logger.info("[MUX] Massive reconnected — resubscribing OCC contracts...")
-        await self.contract_engine.resubscribe_all()
+        for eng in self.contract_engine.values():
+            await eng.resubscribe_all()
 
     # ------------------------------------------------------------------
     # ROUTING: UNDERLYING
@@ -100,11 +102,11 @@ class MassiveMux:
         if not sym:
             return
 
-        # contract engine updates ATM cluster
-        if self.contract_engine:
-            before = list(self.contract_engine.current_subs.get(sym, []))
-            await self.contract_engine.on_underlying(event)
-            after = list(self.contract_engine.current_subs.get(sym, []))
+        eng = self.contract_engine.get(sym)
+        if eng:
+            before = list(eng.contracts)
+            await eng.on_underlying(event)
+            after = list(eng.contracts)
 
             if before != after and self.parent_orchestrator:
                 self.parent_orchestrator.notify_chain_refresh(sym)

@@ -1,6 +1,6 @@
 """
-Elite Entry Engine v3.0 — Trend + Reclaim (Convexity Purified)
-All optional operands guarded explicitly (Pyright friendly).
+Elite Entry Engine v4.0 — VWAP + Greeks + IV Confirmation
+Highly stable breakout detector for micro-momentum trading.
 """
 
 from dataclasses import dataclass
@@ -20,38 +20,39 @@ class EliteEntryEngine:
     # Time gating
     MORNING_LIMIT_SEC = 5400  # 90 minutes
 
-    # Trend thresholds
-    SLOPE_TREND_UP = 0.02
-    SLOPE_TREND_DN = -0.02
-
-    # Absolute minimum momentum to qualify
+    # VWAP baseline thresholds
     SLOPE_MIN = 0.005
     DEV_MIN = 0.05
 
-    # Microstructure thresholds
-    UPVOL_MIN = 65
-    FLOW_CALL = 1.20
-    FLOW_PUT = 0.80
+    # Greek thresholds
+    DELTA_TARGET = 0.30
+    DELTA_TOL = 0.15
+    GAMMA_MIN = 0.02
+    IV_SPIKE = 0.03  # minimum IV uptick for confirmation
 
-    # Base scoring
+    # Scoring weights
     BASE_TREND = 70
-    RECLAIM_SCORE = 70
+    BOOST_IV = 8
+    BOOST_DELTA = 7
+    BOOST_GAMMA = 10
+    BOOST_SLOPE = 10
 
-    # Boosts
-    BOOST_MICRO = 10
-    BOOST_IV = 10
-    BOOST_STRONG_SLOPE = 10
-
-    # Grade thresholds
-    GRADE_A_PLUS = 85
-
-    # Trail multipliers
+    GRADE_A_PLUS = 90
     TRAIL_A = 1.30
     TRAIL_A_PLUS = 1.40
 
-    # ================================================================
+    # =================================================================
     def qualify(self, snap: dict) -> Optional[EliteSignal]:
-        # Extract required fields
+        """
+        Identify high-probability micro-breakouts based on:
+            • VWAP reclaim
+            • VWAP slope acceleration
+            • Delta alignment
+            • Gamma lift (convexity expansion)
+            • IV uptick confirming pressure
+        """
+
+        # Required fields
         symbol = snap.get("symbol")
         price = snap.get("price")
         vwap = snap.get("vwap")
@@ -59,97 +60,77 @@ class EliteEntryEngine:
         slope = snap.get("vwap_dev_change")
         secs = snap.get("seconds_since_open", 0)
 
-        # Optional microstructure
-        upvol = snap.get("upvol_pct")
-        flow = snap.get("flow_ratio")
+        # Greeks & IV
+        delta = snap.get("delta")
+        gamma = snap.get("gamma")
+        iv = snap.get("iv")
         ivc = snap.get("iv_change")
-        skew = snap.get("skew_shift")
 
         # -----------------------------
         # Hard validation
         # -----------------------------
         if (
-            symbol is None
-            or price is None
-            or vwap is None
-            or dev is None
-            or slope is None
+            symbol is None or price is None or vwap is None
+            or dev is None or slope is None
         ):
             return None
 
         if secs > self.MORNING_LIMIT_SEC:
             return None
 
-        # Absolute minimum momentum
+        # VWAP must show energy
         if abs(slope) < self.SLOPE_MIN:
             return None
         if abs(dev) < self.DEV_MIN:
             return None
 
         # -----------------------------
-        # RECLAIM PRECEDENCE
+        # Reclaim Logic (priority)
         # -----------------------------
-        bias: Optional[str] = None
-        score = float(self.BASE_TREND)
-        regime = "TREND_EARLY"
-
         if dev > 0.10 and slope > 0:
             bias = "CALL"
-            score = float(self.RECLAIM_SCORE)
             regime = "RECLAIM"
-
         elif dev < -0.10 and slope < 0:
             bias = "PUT"
-            score = float(self.RECLAIM_SCORE)
             regime = "RECLAIM"
-
         else:
-            # -----------------------------
-            # TREND LOGIC
-            # -----------------------------
+            # Trend logic fallback
             if price < vwap and slope > 0:
                 bias = "CALL"
+                regime = "TREND"
             elif price > vwap and slope < 0:
                 bias = "PUT"
+                regime = "TREND"
             else:
                 return None
 
-        if bias is None:
-            return None
+        # -----------------------------
+        # Start scoring
+        # -----------------------------
+        score = float(self.BASE_TREND)
 
         # -----------------------------
-        # MICROSTRUCTURE BOOSTS
-        # (inline non-None checks so Pyright narrows types)
+        # Greek-based boosts
         # -----------------------------
-        if bias == "CALL":
-            if (
-                upvol is not None and flow is not None and ivc is not None and skew is not None
-                and upvol >= self.UPVOL_MIN
-                and flow >= self.FLOW_CALL
-                and ivc >= 0
-                and skew >= 0
-            ):
-                score += self.BOOST_MICRO
-        else:  # PUT
-            if (
-                upvol is not None and flow is not None and ivc is not None and skew is not None
-                and upvol >= self.UPVOL_MIN
-                and flow <= self.FLOW_PUT
-                and ivc >= 0
-                and skew <= 0
-            ):
-                score += self.BOOST_MICRO
+        if delta is not None:
+            # CALL: want ~ +0.30; PUT: want ~ -0.30
+            delta_err = abs(abs(delta) - self.DELTA_TARGET)
+            if delta_err <= self.DELTA_TOL:
+                score += self.BOOST_DELTA
 
-        # IV boost
-        if ivc is not None and ivc > 0:
+        if gamma is not None and gamma >= self.GAMMA_MIN:
+            score += self.BOOST_GAMMA
+
+        # IV must not be collapsing; spike is strong confirmation
+        if ivc is not None and ivc >= self.IV_SPIKE:
             score += self.BOOST_IV
 
-        # Strong slope boost
+        # Strong slope = strong energy
         if abs(slope) > 0.05:
-            score += self.BOOST_STRONG_SLOPE
+            score += self.BOOST_SLOPE
 
         # -----------------------------
-        # GRADING
+        # Grading
         # -----------------------------
         if score >= self.GRADE_A_PLUS:
             grade = "A+"
@@ -159,7 +140,7 @@ class EliteEntryEngine:
             trail_mult = float(self.TRAIL_A)
 
         # -----------------------------
-        # FINISH
+        # Finished
         # -----------------------------
         return EliteSignal(
             bias=bias,
