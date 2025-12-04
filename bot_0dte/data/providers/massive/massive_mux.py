@@ -1,8 +1,12 @@
 """
-MassiveMux — Hybrid Router (IBKR Underlying + Massive Options)
+MassiveMux v3.0 — Hybrid Router (IBKR Underlying + Massive NBBO/OQ)
+-------------------------------------------------------------------
+• No initial OCC subscription — waits for first IBKR tick
+• Pure OCC → adapter auto-prefixes to Q.O:<occ>
+• Correct reconnect semantics
+• No concurrency hazards
 """
 
-import asyncio
 import logging
 from typing import Callable, List, Dict, Any
 
@@ -14,95 +18,62 @@ logger = logging.getLogger(__name__)
 
 
 class MassiveMux:
-    """
-    Hybrid data router.
-
-    Unifies:
-        • IBUnderlyingAdapter (real-time underlying quotes)
-        • MassiveOptionsWSAdapter (options NBBO)
-        • MassiveContractEngine (dynamic OCC subscription)
-    """
-
-    def __init__(
-        self, ib_underlying: IBUnderlyingAdapter, options_ws: MassiveOptionsWSAdapter
-    ):
+    def __init__(self, ib_underlying: IBUnderlyingAdapter, options_ws: MassiveOptionsWSAdapter):
         self.ib_underlying = ib_underlying
         self.options = options_ws
 
-        # callbacks provided by orchestrator
         self._underlying_handlers: List[Callable] = []
         self._option_handlers: List[Callable] = []
 
-        # created during connect()
-        self.contract_engine: MassiveContractEngine = None
-        self.parent_orchestrator = None
+        self.contract_engines: Dict[str, MassiveContractEngine] = {}
 
-        # use IBKR's event loop
+        self.parent_orchestrator = None
         self.loop = ib_underlying.loop
 
-    # ------------------------------------------------------------------
-    # PUBLIC REGISTRATION
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     def on_underlying(self, cb: Callable):
         self._underlying_handlers.append(cb)
 
     def on_option(self, cb: Callable):
         self._option_handlers.append(cb)
 
-    # ------------------------------------------------------------------
-    # CONNECTION
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     async def connect(self, symbols: List[str], expiry_map: Dict[str, str]):
-        logger.info(f"[MUX] Connecting hybrid system with {len(symbols)} symbols...")
+        logger.info(f"[MUX] Connecting with universe: {symbols}")
 
-        # 1. IBKR UNDERLYING
-        logger.info("[MUX] Connecting IBKR underlying...")
+        # 1 — Underlying
         await self.ib_underlying.connect()
         await self.ib_underlying.subscribe(symbols)
-        logger.info("[MUX] IBKR underlying connected ✅")
 
-        # 2. MASSIVE OPTIONS
-        logger.info("[MUX] Connecting Massive options...")
+        # 2 — Massive
         await self.options.connect()
-        logger.info("[MUX] Massive options connected ✅")
 
-        # 3. CONTRACT ENGINE (ONE PER SYMBOL)
-        if self.contract_engine is None:
-            self.contract_engine = {}
-            for sym in symbols:
-                self.contract_engine[sym] = MassiveContractEngine(
-                    symbol=sym,
-                    ws=self.options,
-                )
-                # initial subscription
-                await self.contract_engine[sym].refresh_contracts()
+        # 3 — Create engines (no initial subs)
+        for sym in symbols:
+            self.contract_engines[sym] = MassiveContractEngine(sym, self.options)
 
-        # 4. WIRE RECONNECT
+        # 4 — Reconnect handler
         self.options.on_reconnect(self._on_massive_reconnect)
 
-        # 5. ROUTING
+        # 5 — Wire streams
         self.ib_underlying.on_underlying(self._handle_underlying)
         self.options.on_nbbo(self._handle_option)
 
-        logger.info("[MUX] All connections established ✅")
+        logger.info("[MUX] All connections established")
 
-    # ------------------------------------------------------------------
-    # RECONNECT HANDLER
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     async def _on_massive_reconnect(self):
-        logger.info("[MUX] Massive reconnected — resubscribing OCC contracts...")
-        for eng in self.contract_engine.values():
+        logger.warning("[MUX] Massive reconnected → resubscribe OCC")
+        for eng in self.contract_engines.values():
             await eng.resubscribe_all()
 
-    # ------------------------------------------------------------------
-    # ROUTING: UNDERLYING
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     async def _handle_underlying(self, event: Dict[str, Any]):
         sym = event.get("symbol")
         if not sym:
             return
 
-        eng = self.contract_engine.get(sym)
+        eng = self.contract_engines.get(sym)
         if eng:
             before = list(eng.contracts)
             await eng.on_underlying(event)
@@ -111,22 +82,15 @@ class MassiveMux:
             if before != after and self.parent_orchestrator:
                 self.parent_orchestrator.notify_chain_refresh(sym)
 
-        # forward to orchestrator
         for cb in self._underlying_handlers:
             self.loop.create_task(cb(event))
 
-    # ------------------------------------------------------------------
-    # ROUTING: OPTION
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     async def _handle_option(self, event: Dict[str, Any]):
         for cb in self._option_handlers:
             self.loop.create_task(cb(event))
 
-    # ------------------------------------------------------------------
-    # SHUTDOWN
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     async def close(self):
-        logger.info("[MUX] Closing connections...")
         await self.ib_underlying.close()
         await self.options.close()
-        logger.info("[MUX] Connections closed")

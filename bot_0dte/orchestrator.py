@@ -1,16 +1,16 @@
 """
-Elite Orchestrator — WS-Native Breakout Engine (Option 2: Greeks for chain + risk only)
----------------------------------------------------------------------------------------
+Elite Orchestrator — A2-M Edition (WS-Native Micro-Breakout Engine)
+-------------------------------------------------------------------
 
-Signal engine:     → VWAP-only (no greeks)
+Signal engine:     → VWAP-only (no greeks as predictors)
 Chain enrichment:  → greeks, IV, microstructure
-Strike selection:  → convexity (gamma), premium ceiling
-Latency precheck:  → greeks + IV risk + liquidity + spread
+Strike selection:  → convexity (gamma), delta-target, premium ceilings
+Latency precheck:  → greeks + IV + liquidity + spread + A2-M extensions
 Trail logic:       → unchanged
-Execution:         → same behavior
+Execution:         → unchanged
 
-This is the correct architecture for a micro-breakout bot: 
-greeks = filters, not predictors.
+A2-M Philosophy:
+    greeks = filters (quality), NOT predictors (direction)
 """
 
 import asyncio
@@ -20,8 +20,9 @@ from typing import Dict, Any, List, Optional
 
 # Strategy layers
 from bot_0dte.strategy.elite_entry_diagnostic import EliteEntryEngine, EliteSignal
-from bot_0dte.strategy.elite_latency_precheck import EliteLatencyPrecheck
+from bot_0dte.chain.chain_aggregator import ChainAggregator
 from bot_0dte.strategy.strike_selector import StrikeSelector
+from bot_0dte.strategy.elite_latency_precheck import EliteLatencyPrecheck
 
 # Risk
 from bot_0dte.risk.trail_logic import TrailLogic
@@ -31,7 +32,12 @@ from bot_0dte.ui.live_panel import LivePanel
 from bot_0dte.ui.ui_state import UIState
 
 # Infra
-from bot_0dte.universe import get_universe_for_today, get_expiry_for_symbol
+from bot_0dte.universe import (
+    get_universe_for_today,
+    get_expiry_for_symbol,
+    max_latency_ms,
+    max_premium,
+)
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
 
@@ -80,59 +86,7 @@ class VWAPTracker:
 
 
 # ============================================================================
-# Chain Aggregator — stores greeks + NBBO
-# ============================================================================
-class ChainAggregator:
-    """NBBO → normalized chain snapshot."""
-
-    def __init__(self, symbols):
-        self.cache = {s: {} for s in symbols}
-        self.last_ts = {s: 0.0 for s in symbols}
-
-    def update(self, event):
-        sym = event.get("symbol")
-        contract = event.get("contract")
-        if not sym or not contract:
-            return
-
-        self.cache[sym][contract] = event
-        self.last_ts[sym] = time.time()
-
-    def is_fresh(self, symbol, threshold=2.0):
-        return (time.time() - self.last_ts.get(symbol, 0)) <= threshold
-
-    def get_chain(self, symbol):
-        out = []
-        for row in self.cache.get(symbol, {}).values():
-            bid = row.get("bid")
-            ask = row.get("ask")
-            if bid is None or ask is None:
-                continue
-
-            mid = (bid + ask) / 2
-            out.append(
-                {
-                    "symbol": symbol,
-                    "strike": row.get("strike"),
-                    "right": row.get("right"),
-                    "premium": mid,
-                    "bid": bid,
-                    "ask": ask,
-                    "contract": row.get("contract"),
-                    "iv": row.get("iv"),
-                    "delta": row.get("delta"),
-                    "gamma": row.get("gamma"),
-                    "theta": row.get("theta"),
-                    "vega": row.get("vega"),
-                    "volume": row.get("volume"),
-                    "open_interest": row.get("open_interest"),
-                }
-            )
-        return out
-
-
-# ============================================================================
-# Microstructure Calculation Helpers
+# Microstructure Helpers (unchanged)
 # ============================================================================
 def compute_upvol_pct(chain_rows):
     if not chain_rows:
@@ -175,12 +129,10 @@ def compute_skew_shift(chain_rows):
 
 
 # ============================================================================
-# ORCHESTRATOR
+# ORCHESTRATOR — A2-M
 # ============================================================================
 class Orchestrator:
-    """
-    One-trade-at-a-time micro-breakout engine.
-    """
+    """One-trade-at-a-time micro-breakout engine with A2-M enhancements."""
 
     def __init__(
         self,
@@ -208,12 +160,13 @@ class Orchestrator:
 
         # VWAP
         self.vwap = {s: VWAPTracker() for s in self.symbols}
-        self._vwap_tracker = self.vwap  # smoke-test compatibility
 
-        # Chain
+        # Chain aggregator — A2-M ChainSnapshot enabled
         self.chain_agg = ChainAggregator(self.symbols)
         self.chain_ready_ts = {s: 0.0 for s in self.symbols}
-        self.chain_warmup_sec = 1.0
+
+        # Warm-up
+        self.start_ts = time.time()
 
         # Strategy stack
         self.entry_engine = EliteEntryEngine()
@@ -234,7 +187,7 @@ class Orchestrator:
         self.active_qty = None
 
         print("\n" + "=" * 70)
-        print(" ELITE ORCHESTRATOR INITIALIZED ".center(70, "="))
+        print(" ELITE ORCHESTRATOR (A2-M) INITIALIZED ".center(70, "="))
         print("=" * 70 + "\n")
 
     # ----------------------------------------------------------------------
@@ -245,12 +198,12 @@ class Orchestrator:
         if now - last < 0.050:
             return
 
-        self.chain_agg.last_ts[symbol] = now
         self.chain_ready_ts[symbol] = now
+        self.chain_agg.last_ts[symbol] = now
 
         self.logger.log_event(
             "chain_refreshed",
-            {"symbol": symbol, "age_ms": round((now - last) * 1000, 3)},
+            {"symbol": symbol, "age_ms": round((now - last) * 1000, 2)},
         )
 
     # ----------------------------------------------------------------------
@@ -269,6 +222,7 @@ class Orchestrator:
 
         self.last_price[sym] = price
 
+        # VWAP/UI Update
         self.ui_state.update_underlying(
             symbol=sym,
             price=price,
@@ -295,7 +249,11 @@ class Orchestrator:
         if sym not in self.symbols:
             return
 
-        self.chain_agg.update(event)
+        # A2-M: use update_from_nbbo
+        if hasattr(self.chain_agg, "update_from_nbbo"):
+            self.chain_agg.update_from_nbbo(event)
+        else:
+            self.chain_agg.update(event)
 
         if not self.trail.state.active:
             return
@@ -313,10 +271,10 @@ class Orchestrator:
         # UI PnL update
         if self.ui_state.trade.active:
             self.ui_state.trade.curr_price = mid
-            self.ui_state.trade.pnl_pct = (
-                (mid - self.active_entry_price) / self.active_entry_price * 100
-                if self.active_entry_price else 0.0
-            )
+            if self.active_entry_price:
+                self.ui_state.trade.pnl_pct = (
+                    (mid - self.active_entry_price) / self.active_entry_price * 100
+                )
             self.ui_state.trade.last_update_ms = 0
 
         # Hard SL
@@ -337,19 +295,25 @@ class Orchestrator:
             return
 
         vwap_data = self.vwap[symbol].update(price)
-        chain = self.chain_agg.get_chain(symbol)
 
-        # microstructure snapshot
+        # ChainSnapshot (A2-M)
+        chain_snapshot = self.chain_agg.get(symbol)
+        if not chain_snapshot:
+            return
+
+        chain_rows = chain_snapshot.rows
+
+        # Microstructure snapshot
         snap = {
             "symbol": symbol,
             "price": price,
             "vwap": vwap_data["vwap"],
             "vwap_dev": vwap_data["vwap_dev"],
             "vwap_dev_change": vwap_data["vwap_dev_change"],
-            "upvol_pct": compute_upvol_pct(chain),
-            "flow_ratio": compute_flow_ratio(chain),
-            "iv_change": compute_iv_change(chain),
-            "skew_shift": compute_skew_shift(chain),
+            "upvol_pct": compute_upvol_pct(chain_rows),
+            "flow_ratio": compute_flow_ratio(chain_rows),
+            "iv_change": compute_iv_change(chain_rows),
+            "skew_shift": compute_skew_shift(chain_rows),
             "seconds_since_open": self._seconds_since_open(),
         }
 
@@ -360,37 +324,47 @@ class Orchestrator:
         self.logger.log_event("signal_generated", sig.__dict__)
         print(f"[SIGNAL] {symbol} {sig.bias} ({sig.grade}, {sig.regime}) — monitoring…")
 
-        self.ui_state.underlying.setdefault(symbol, {})["signal"] = {
-            "bias": sig.bias,
-            "grade": sig.grade,
-            "regime": sig.regime,
-        }
+        # warm-up freshness handling
+        now_ms = time.time() * 1000
+        if time.time() - self.start_ts < 8:
+            if not chain_snapshot.is_fresh(now_ms, 1000):
+                return
+        else:
+            if not chain_snapshot.is_fresh(now_ms, 750):  # A2-M threshold
+                self.logger.log_event("signal_dropped", {"reason": "stale_chain"})
+                return
 
-        self.ui.set_status(f"{symbol}: elite breakout detected")
-
-        # Chain freshness check
-        if not self.chain_agg.is_fresh(symbol):
-            self.logger.log_event("signal_dropped", {"reason": "stale_chain"})
-            return
-
-        if not chain:
+        if not chain_rows:
             self.logger.log_event("signal_dropped", {"reason": "empty_chain"})
             return
 
-        # Strike selection with gamma preference
-        strike = await self.selector.select_from_chain(chain, sig.bias, price)
+        # Strike selection (A2-M: delta/gamma/premium ceiling integrated already)
+        strike = await self.selector.select_from_chain(
+            chain_rows,
+            sig.bias,
+            price,
+        )
         if not strike:
             self.logger.log_event("signal_dropped", {"reason": "no_strike"})
             return
 
         print(f"[SIGNAL] {symbol} optimal strike → {strike['strike']}{strike['right']} @ {strike['premium']:.2f}")
 
-        # latency pre-check (with microstructure context)
+        # Premium ceiling guard (A2-M)
+        if strike["premium"] > max_premium(symbol):
+            self.logger.log_event("entry_blocked", {"reason": "premium_ceiling"})
+            return
+
+        # latency pre-check (A2-M includes latency_ms, gamma guards, delta guards)
         tick = {
             "price": strike["premium"],
             "bid": strike["bid"],
             "ask": strike["ask"],
             "vwap_dev_change": vwap_data["vwap_dev_change"],
+            "delta": strike.get("delta"),
+            "gamma": strike.get("gamma"),
+            "_chain_age_ms": now_ms - chain_snapshot.last_update_ts_ms,
+            "latency_ms": self.telemetry.latency_ms.get(symbol),  # optional
         }
 
         pre = self.latency.validate(symbol, tick, sig.bias, sig.grade, snap)
@@ -443,7 +417,6 @@ class Orchestrator:
 
         print(f"[SIGNAL] ENTRY EXECUTING → {symbol} {strike['contract']} @ {entry_price:.2f}")
 
-        # execution or shadow
         if not self.auto:
             self.logger.log_event("shadow_entry", {
                 "symbol": symbol,
@@ -495,7 +468,7 @@ class Orchestrator:
         ts.strike = ts.regime = ts.grade = None
         ts.trail_mult = ts.last_update_ms = None
 
-        # reset
+        # reset internal state
         self.active_symbol = None
         self.active_contract = None
         self.active_bias = None

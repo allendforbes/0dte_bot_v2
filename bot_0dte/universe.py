@@ -1,18 +1,79 @@
 import datetime as dt
-print(">>> Loaded universe.py (Massive-correct expiries)")
+print(">>> Loaded universe.py (Massive-correct expiries + A2-M rules)")
 from typing import Optional
 
 # ----------------------------------------------------------
 # Symbols
 # ----------------------------------------------------------
 CORE = ["SPY", "QQQ"]
-WEEKLIES = ["TSLA", "NVDA", "AAPL", "AMZN", "MSFT", "META"]
+MATMAN = ["TSLA", "NVDA", "AAPL", "AMZN", "MSFT", "META"]
+WEEKLIES = MATMAN[:]  # alias for compatibility
 
+# ----------------------------------------------------------
+# A2-M Premium Ceiling Rules
+# CORE: Hard $1.00
+# MATMAN: Soft $1.50 Mon–Thu, $1.25 Fri
+# ----------------------------------------------------------
+CORE_CEILING = 1.00
+MATMAN_CEILING_MON_THU = 1.50
+MATMAN_CEILING_FRI = 1.25
+
+
+def max_premium(symbol: str) -> float:
+    """Returns symbol-specific A2-M premium ceiling."""
+    wd = dt.datetime.now().weekday()  # Mon=0..Fri=4
+
+    if symbol in CORE:
+        return CORE_CEILING
+
+    if symbol in MATMAN:
+        return MATMAN_CEILING_FRI if wd == 4 else MATMAN_CEILING_MON_THU
+
+    return 1.00  # fallback/default
+
+
+# ----------------------------------------------------------
+# A2-M Latency Constraints
+# ----------------------------------------------------------
+# You can tune symbol-specific latency caps here.
+# Typical values for retail IBKR WebSocket + Massive WS:
+SYMBOL_LATENCY_CAP_MS = {
+    "SPY": 120,
+    "QQQ": 120,
+    "AAPL": 150,
+    "AMZN": 150,
+    "META": 150,
+    "MSFT": 150,
+    "NVDA": 150,
+    "TSLA": 180,
+}
+
+
+def max_latency_ms(symbol: str) -> int:
+    """Return maximum allowed latency before blocking trade."""
+    return SYMBOL_LATENCY_CAP_MS.get(symbol, 150)
+
+
+# ----------------------------------------------------------
+# A2-M Delta-Trail Enablement
+# (currently optional; orchestrator checks this)
+# ----------------------------------------------------------
+def delta_trail_enabled(symbol: str) -> bool:
+    """
+    In A2-M, delta-aware trailing is optional.
+    Enabled only for MATMAN by design (trend-friendly).
+    """
+    return symbol in MATMAN
+
+
+# ----------------------------------------------------------
+# Trading universe activation
+# ----------------------------------------------------------
 def get_universe_for_today():
     """
     Very simple:
       • Always trade CORE
-      • Add WEEKLIES only on Thu/Fri
+      • Add MATMAN/WEEKLIES only on Thu/Fri
     """
     wd = dt.datetime.now().weekday()  # Monday=0
     if wd <= 2:
@@ -21,24 +82,22 @@ def get_universe_for_today():
 
 
 # ----------------------------------------------------------
-# Massive.com expiry rules — REAL listing expirations (NOT OCC +1)
+# Massive.com expiry rules — REAL listing expiries
 # ----------------------------------------------------------
-# CORE expiries happen every:
-#   Monday (0), Wednesday (2), Friday (4)
-CORE_EXPIRY_WEEKDAYS = {0, 2, 4}
+CORE_EXPIRY_WEEKDAYS = {0, 2, 4}  # Mon, Wed, Fri
+
 
 def get_expiry_for_symbol(symbol: str) -> Optional[str]:
     """
-    MASSIVE-CORRECT VERSION (final):
-      • Massive expects the ACTUAL exchange-listed expiry date, NOT
-        the OCC settlement (+1) date.
+    MASSIVE-CORRECT VERSION:
+      • Massive expects the ACTUAL exchange-listed expiry date.
 
       • CORE (SPY, QQQ):
             - If today is Mon/Wed/Fri → expiry = today
             - Otherwise → next Mon/Wed/Fri
 
-      • WEEKLIES:
-            - Mon–Wed → inactive (returns None)
+      • WEEKLIES (MATMAN):
+            - Mon–Wed → inactive (None)
             - Thu → this Friday
             - Fri → today
     """
@@ -46,12 +105,10 @@ def get_expiry_for_symbol(symbol: str) -> Optional[str]:
     today = dt.date.today()
     wd = today.weekday()
 
-    # -----------------------------------------------------
-    # CORE SYMBOLS
-    # -----------------------------------------------------
+    # CORE
     if symbol in CORE:
 
-        # Same-day expiry available?
+        # Same-day expiry?
         if wd in CORE_EXPIRY_WEEKDAYS:
             expiry = today
         else:
@@ -64,9 +121,7 @@ def get_expiry_for_symbol(symbol: str) -> Optional[str]:
 
         return expiry.strftime("%Y-%m-%d")
 
-    # -----------------------------------------------------
-    # WEEKLIES — valid only Thu/Fri
-    # -----------------------------------------------------
+    # MATMAN/WEEKLIES
     if symbol in WEEKLIES:
 
         # Mon–Tue–Wed → no weekly expiry trades
@@ -80,5 +135,4 @@ def get_expiry_for_symbol(symbol: str) -> Optional[str]:
 
         return expiry.strftime("%Y-%m-%d")
 
-    # Unknown symbol
     return None

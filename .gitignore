@@ -16,3 +16,6 @@ config.py
 
 # --- Bytecode + misc ---
 *.pyo
+logs/
+params:<YOUR_KEY>
+action:auth

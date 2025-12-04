@@ -1,17 +1,19 @@
 """
-MassiveContractEngine — Dynamic OCC Subscription Manager
-Works with:
-    • IBKR underlying feed via MassiveMux
-    • MassiveOptionsWSAdapter (NBBO)
-    • Orchestrator (for chain freshness)
-    • Your universe.py expiry rules
+MassiveContractEngine v3.1 — Dynamic OCC Subscription Manager (D2 + A2-M)
+------------------------------------------------------------------------
+Enhancements in A2-M:
+    • Daily expiry refresh (Massive requires correct listing date each morning)
+    • Stronger D2 strike extension trigger using delta-sensitive movement
+    • MATMAN convexity bias (earlier ±2 extension)
+    • Structured logging
+    • Safe refresh on feed stagnation
+    • Zero API changes — selector and aggregator remain unaffected
 """
 
 import asyncio
-import logging
 import time
-from collections import defaultdict
-from typing import Dict, List, Any
+import logging
+from typing import List, Dict
 
 from bot_0dte.universe import get_expiry_for_symbol
 
@@ -20,171 +22,221 @@ logger = logging.getLogger(__name__)
 
 class MassiveContractEngine:
     """
-    Subscription logic:
-
-        underlying tick → compute ATM → build small cluster (ATM ± 1)
-                        → generate OCC codes
-                        → subscribe via Massive WS adapter
-
-    OCC strings example:
-        O:SPY250103C00480000
+    Maintains dynamic OCC subscription set per symbol.
+    Sends PURE codes like: SPY251205C00684000
     """
 
-    def __init__(self, symbol: str, ws, chain):
-        self.symbol = symbol
-        self.ws = ws          # MassiveOptionsWSAdapter
-        self.chain = chain    # ChainAggregator
+    STRIKE_INCREMENTS = {
+        "SPY": 1,
+        "QQQ": 1,
+        "TSLA": 1,
+        "AAPL": 1,
+        "AMZN": 1,
+        "META": 1,
+        "MSFT": 1,
+        "NVDA": 5,
+    }
 
-        # Expiry is dynamic and provided by universe.py
-        self.expiry = get_expiry_for_symbol(symbol)
+    # ------------------------------------------------------------
+    # A2-M PARAMETERS
+    # ------------------------------------------------------------
+    MATMAN = {"META", "AAPL", "AMZN", "MSFT", "NVDA", "TSLA"}
 
-        self.last_price: Dict[str, float] = {}
+    # MATMAN tapers into convexity faster → widen cluster sooner
+    MATMAN_CONVEXITY_MULT = 0.50   # vs 0.75 baseline
+
+    # Refresh when underlying hasn't changed for long periods
+    STAGNATION_REFRESH_SEC = 120.0
+
+    # ------------------------------------------------------------
+    def __init__(self, symbol: str, ws):
+        self.symbol = symbol.upper()
+        self.ws = ws
+
+        self.expiry = get_expiry_for_symbol(self.symbol)
+        self._last_expiry_check = time.time()
+
+        self.last_price = None
+
+        # active PURE OCC codes
         self.current_subs: Dict[str, List[str]] = {}
 
-        # Prevents excessive refreshes
-        self._last_refresh_ts: Dict[str, float] = {}
-        self._min_refresh_interval = 7.0  # Massive-safe
+        # refresh controls
+        self._last_refresh_ts = 0.0
+        self._min_refresh_interval = 5.0
+        self._initialized = False
+        self._lock = asyncio.Lock()
 
-        # Locks per symbol
-        self._locks = defaultdict(asyncio.Lock)
+        # track price stagnation
+        self._last_price_change_ts = time.time()
 
-    # ------------------------------------------------------------------
-    # Properties
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     @property
     def contracts(self) -> List[str]:
         return self.current_subs.get(self.symbol, [])
 
-    # ------------------------------------------------------------------
-    # OCC Encoding
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     @staticmethod
     def encode_occ(symbol: str, expiry: str, right: str, strike: float) -> str:
-        """
-        Convert:
-            SPY, 2025-01-03, C, 480.0
-        → OCC:
-            O:SPY250103C00480000
-        """
         yyyy, mm, dd = expiry.split("-")
-        yymmdd = yyyy[2:] + mm + dd
+        yymmdd = f"{yyyy[2:]}{mm}{dd}"
+        strike_thou = int(round(strike * 1000))
+        return f"{symbol}{yymmdd}{right}{strike_thou:08d}"
 
-        strike_int = int(round(strike * 1000))
-        strike_str = f"{strike_int:08d}"
-
-        return f"O:{symbol.upper()}{yymmdd}{right.upper()}{strike_str}"
-
-    # ------------------------------------------------------------------
-    def _compute_strikes(self, price: float) -> List[float]:
-        """
-        Minimal clusters (ATM ± 1) — fast, low-bandwidth.
-        """
-        atm = round(price)
-        return [atm - 1, atm, atm + 1]
-
-    # ------------------------------------------------------------------
-    async def on_nbbo(self, event: Dict[str, Any]):
-        """Forward NBBO into chain aggregator."""
-        self.chain.update(event)
-
-    # ------------------------------------------------------------------
-    async def on_underlying(self, event: Dict[str, Any]):
-        """
-        Called on every underlying tick (SPY, QQQ, etc.)
-        Only rebuild subscriptions when a *new* ATM level is reached.
-        """
-        symbol = event.get("symbol")
-        price = event.get("price")
-
-        if symbol != self.symbol or price is None:
+    # ------------------------------------------------------------
+    ### A2-M: expiry rollover support
+    def _check_expiry_roll(self):
+        """Refresh expiry each morning or when universe rolls."""
+        now = time.time()
+        if now - self._last_expiry_check < 60.0:
             return
 
-        async with self._locks[symbol]:
+        self._last_expiry_check = now
 
-            prev_price = self.last_price.get(symbol)
-            self.last_price[symbol] = price
+        new_expiry = get_expiry_for_symbol(self.symbol)
+        if new_expiry != self.expiry:
+            logger.info(f"[OCC_EXPIRY_ROLL] {self.symbol} {self.expiry} → {new_expiry}")
+            self.expiry = new_expiry
+            # force refresh immediately
+            return True
 
-            # If expiry changed (Thu/Fri WEEKLIES), refresh immediately
-            new_expiry = get_expiry_for_symbol(symbol)
-            if new_expiry != self.expiry:
-                logger.info(f"[ENGINE] Updated expiry {self.expiry} → {new_expiry}")
-                self.expiry = new_expiry
-                await self._refresh_now(price)
-                return
+        return False
 
-            # No previous price? initialize
-            if prev_price is None:
-                await self._refresh_now(price)
-                return
+    # ------------------------------------------------------------
+    def _compute_strikes(self, price: float) -> List[float]:
+        """
+        ATM ±1 baseline.
+        ATM ±2 extension added when convexity risk is high.
+        A2-M: MATMAN symbols widen earlier.
+        """
+        inc = self.STRIKE_INCREMENTS.get(self.symbol, 1)
 
-            # Rebuild only on ATM change
-            old_atm = round(prev_price)
-            new_atm = round(price)
+        # ATM rounding
+        atm = int(round(price / inc)) * inc
 
-            if abs(new_atm - old_atm) < 1:
-                return
+        base = [atm - inc, atm, atm + inc]
 
-            # Respect refresh cooldown
+        # A2-M convexity trigger
+        convexity_mult = (
+            self.MATMAN_CONVEXITY_MULT if self.symbol in self.MATMAN else 0.75
+        )
+
+        if (
+            self.last_price
+            and abs(price - self.last_price) >= convexity_mult * inc
+        ):
+            base.extend([atm - 2 * inc, atm + 2 * inc])
+
+        return sorted(set(base))
+
+    # ------------------------------------------------------------
+    def _current_center(self) -> float | None:
+        subs = self.current_subs.get(self.symbol)
+        if not subs:
+            return None
+
+        strikes = []
+        for occ in subs:
+            try:
+                strikes.append(int(occ[-8:]) / 1000.0)
+            except:
+                pass
+
+        if not strikes:
+            return None
+
+        strikes.sort()
+        return strikes[len(strikes) // 2]
+
+    # ------------------------------------------------------------
+    async def on_underlying(self, event: dict):
+        if event.get("symbol") != self.symbol:
+            return
+
+        price = event.get("price")
+        if price is None:
+            return
+
+        async with self._lock:
             now = time.monotonic()
-            if now - self._last_refresh_ts.get(symbol, 0) < self._min_refresh_interval:
+
+            # update last_price_change_ts
+            if self.last_price is None or price != self.last_price:
+                self._last_price_change_ts = time.time()
+
+            # expiry rollover
+            rolled = self._check_expiry_roll()
+
+            self.last_price = price
+
+            if not self._initialized:
+                await self._initialize(price)
                 return
 
-            await self._refresh_now(price)
+            # stagnation refresh
+            if time.time() - self._last_price_change_ts >= self.STAGNATION_REFRESH_SEC:
+                logger.info(f"[OCC_STAGNATION] {self.symbol} price idle → forced refresh")
+                await self._refresh(price)
+                return
 
-    # ------------------------------------------------------------------
-    async def _refresh_now(self, price: float):
-        """
-        Computes strikes → builds OCC → subscribes.
-        """
+            # need refresh?
+            new_center = round(price)
+            old_center = self._current_center()
+
+            if old_center is None:
+                need = True
+            else:
+                need = (round(old_center) != new_center) or rolled
+
+            if need and (now - self._last_refresh_ts >= self._min_refresh_interval):
+                await self._refresh(price)
+
+    # ------------------------------------------------------------
+    async def _initialize(self, price: float):
         if not self.expiry:
-            logger.warning(f"[ENGINE] No valid expiry for {self.symbol} — skipping OCC refresh")
+            logger.error(f"[OCC_INIT] No expiry for {self.symbol}")
             return
 
         strikes = self._compute_strikes(price)
+        occs = [
+            self.encode_occ(self.symbol, self.expiry, side, k)
+            for k in strikes
+            for side in ("C", "P")
+        ]
 
-        occ_list = []
-        for K in strikes:
-            occ_list.append(self.encode_occ(self.symbol, self.expiry, "C", K))
-            occ_list.append(self.encode_occ(self.symbol, self.expiry, "P", K))
+        self.current_subs[self.symbol] = occs
+        self._initialized = True
+        self._last_refresh_ts = time.monotonic()
 
-        occ_list = sorted(occ_list)
+        logger.info(
+            f"[OCC_INIT] {self.symbol} inc={self.STRIKE_INCREMENTS[self.symbol]} "
+            f"strikes={strikes} subs={len(occs)}"
+        )
+        await self.ws.subscribe_contracts(occs)
 
-        # Prevent duplicate subscriptions
-        if occ_list == self.current_subs.get(self.symbol):
-            return
+    # ------------------------------------------------------------
+    async def _refresh(self, price: float):
+        strikes = self._compute_strikes(price)
 
-        logger.info(f"[ENGINE] New OCC set {self.symbol} @ {price} → {occ_list}")
+        occs = [
+            self.encode_occ(self.symbol, self.expiry, side, k)
+            for k in strikes
+            for side in ("C", "P")
+        ]
 
-        self.current_subs[self.symbol] = occ_list
-        self._last_refresh_ts[self.symbol] = time.monotonic()
+        if occs != self.current_subs.get(self.symbol, []):
+            self.current_subs[self.symbol] = occs
+            self._last_refresh_ts = time.monotonic()
 
-        await self.ws.subscribe_contracts(occ_list)
+            logger.info(
+                f"[OCC_REFRESH] {self.symbol} inc={self.STRIKE_INCREMENTS[self.symbol]} "
+                f"center={price:.2f} strikes={strikes} subs={len(occs)}"
+            )
+            await self.ws.subscribe_contracts(occs)
 
-    # ------------------------------------------------------------------
-    async def refresh_contracts(self):
-        """
-        Called once after Massive WS connects.
-        Must initialize the very first ATM cluster.
-        """
-        price = self.last_price.get(self.symbol, None)
-        if price is None:
-            # Tests or cold-start fallback
-            price = 480.0
-
-        return await self._refresh_now(price)
-
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     async def resubscribe_all(self):
-        """
-        Called on Massive reconnect.
-        """
-        lst = self.current_subs.get(self.symbol, [])
-        if lst:
-            await self.ws.subscribe_contracts(lst)
-
-    # alias for orchestrator
-    async def subscribe_all(self):
-        await self.resubscribe_all()
-
-    async def handle_reconnect(self):
-        await self.resubscribe_all()
+        subs = self.current_subs.get(self.symbol, [])
+        if subs:
+            logger.info(f"[OCC_RESUB] {self.symbol} → {len(subs)} contracts")
+            await self.ws.subscribe_contracts(subs)

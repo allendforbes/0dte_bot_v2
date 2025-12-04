@@ -1,6 +1,18 @@
 {
     "python.analysis.extraPaths": [
+        ".",
         "./bot_0dte",
-        "./bot_0dte/contracts"
+        "./bot_0dte/strategy",
+        "./bot_0dte/contracts",
+        "./bot_0dte/data",
+        "./bot_0dte/data/providers",
+        "./bot_0dte/strategy",
+        "./bot_0dte/ui",
+        "./bot_0dte/risk"
+    ],
+    "python.autoComplete.extraPaths": [
+        ".",
+        "./bot_0dte",
+        "./bot_0dte/strategy"
     ]
 }
