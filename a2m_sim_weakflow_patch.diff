@@ -1,0 +1,64 @@
+diff --git a/bot_0dte/orchestrator.py b/bot_0dte/orchestrator.py
+index abc1234..def5678 100644
+--- a/bot_0dte/orchestrator.py
++++ b/bot_0dte/orchestrator.py
+@@ -63,6 +63,10 @@ class Orchestrator:
+         self.logger = logger
+         self.telemetry = telemetry
+ 
++        # SIM-mode detection
++        # SyntheticMux exposes push_underlying(); real MassiveMux does not.
++        self.sim_mode = hasattr(mux, "push_underlying")
++
+         # Symbols + expiries
+         self.symbols = universe or get_universe_for_today()
+         self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
+@@ -232,6 +236,7 @@ class Orchestrator:
+             "flow_ratio": compute_flow_ratio(chain_rows),
+             "iv_change": compute_iv_change(chain_rows),
+             "skew_shift": compute_skew_shift(chain_rows),
++            "sim_mode": self.sim_mode,
+             "seconds_since_open": self._seconds_since_open(),
+         }
+ 
+diff --git a/bot_0dte/strategy/elite_latency_precheck.py b/bot_0dte/strategy/elite_latency_precheck.py
+index 123abcd..456efgh 100644
+--- a/bot_0dte/strategy/elite_latency_precheck.py
++++ b/bot_0dte/strategy/elite_latency_precheck.py
+@@ -137,14 +137,32 @@ class EliteLatencyPrecheck:
+         # ------------------------------------
+         # MICROSTRUCTURE PROTECTION
+         # ------------------------------------
+-        if snap is not None:
+-            upvol_pct = snap.get("upvol_pct")
+-            if upvol_pct is not None:
+-                if bias == "CALL" and upvol_pct < 55:
+-                    return PrecheckResult(False, reason="weak_flow")
+-                if bias == "PUT" and upvol_pct > 45:
+-                    return PrecheckResult(False, reason="weak_flow")
+-
+-            iv_change = snap.get("iv_change")
+-            if iv_change is not None and abs(iv_change) > 0.2:
+-                return PrecheckResult(False, reason="iv_spike")
++        if snap is not None:
++
++            # SIM-MODE WEAK_FLOW BYPASS
++            if snap.get("sim_mode"):
++                # allow flow to pass, but still enforce IV-spike protection
++                iv_change = snap.get("iv_change")
++                if iv_change is not None and abs(iv_change) > 0.2:
++                    return PrecheckResult(False, reason="iv_spike")
++
++            else:
++                # LIVE TRADING — strict gating
++                upvol_pct = snap.get("upvol_pct")
++                if upvol_pct is not None:
++                    if bias == "CALL" and upvol_pct < 55:
++                        return PrecheckResult(False, reason="weak_flow")
++                    if bias == "PUT" and upvol_pct > 45:
++                        return PrecheckResult(False, reason="weak_flow")
++
++                iv_change = snap.get("iv_change")
++                if iv_change is not None and abs(iv_change) > 0.2:
++                    return PrecheckResult(False, reason="iv_spike")
+

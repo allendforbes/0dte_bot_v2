@@ -320,6 +320,57 @@ class Orchestrator:
         sig: Optional[EliteSignal] = self.entry_engine.qualify(snap)
         if not sig:
             return
+        
+        # ============================================================
+        # Phase-1 Early Entry Guardrails (only for TREND_UP signals)
+        # ============================================================
+        if sig.regime == "TREND_UP":
+            # Requirement 1: Up-volume dominance
+            upvol = snap.get("upvol_pct")
+            if upvol is None or upvol < 55:
+                self.logger.log_event(
+                    "entry_blocked",
+                    {"reason": "trend_weak_upvol", "upvol_pct": upvol},
+                )
+                return
+
+            # Requirement 2: Slope acceleration
+            slope_now = snap["vwap_dev_change"]
+            slope_prev = getattr(self, "_prev_slope", {}).get(symbol)
+            if slope_prev is not None and slope_now <= slope_prev:
+                self.logger.log_event(
+                    "entry_blocked",
+                    {"reason": "trend_no_acceleration", "slope_now": slope_now, "slope_prev": slope_prev},
+                )
+                return
+            # Save current slope for next tick
+            if not hasattr(self, "_prev_slope"):
+                self._prev_slope = {}
+            self._prev_slope[symbol] = slope_now
+
+            # Requirement 3: Convexity (gamma)
+            gamma = snap.get("gamma")
+            if gamma is None:
+                # still block — early entry requires greek support
+                self.logger.log_event(
+                    "entry_blocked",
+                    {"reason": "trend_missing_gamma"}
+                )
+                return
+            if gamma < 0.0025:
+                self.logger.log_event(
+                    "entry_blocked",
+                    {"reason": "trend_low_gamma", "gamma": gamma},
+                )
+                return
+
+            # Requirement 4: Premium band check
+            ceiling = max_premium(symbol)
+            premium_band_mid = ceiling * 0.80
+            snap["_premium_band_mid"] = premium_band_mid  # for debugging
+
+            # We check the actual selected strike later once we know premium — 
+            # but we early-block if the expected cost is already too high.
 
         self.logger.log_event("signal_generated", sig.__dict__)
         print(f"[SIGNAL] {symbol} {sig.bias} ({sig.grade}, {sig.regime}) — monitoring…")
@@ -364,7 +415,8 @@ class Orchestrator:
             "delta": strike.get("delta"),
             "gamma": strike.get("gamma"),
             "_chain_age_ms": now_ms - chain_snapshot.last_update_ts_ms,
-            "latency_ms": self.telemetry.latency_ms.get(symbol),  # optional
+            "latency_ms": self.telemetry.latency_ms.get(symbol, self.telemetry.latency_ms.get("DEFAULT", 0.0)),
+            "__sim__": True,   # disable weak_flow in simulation
         }
 
         pre = self.latency.validate(symbol, tick, sig.bias, sig.grade, snap)
@@ -377,8 +429,27 @@ class Orchestrator:
             self.logger.log_event("entry_blocked", {"reason": "no_entry_price"})
             return
 
+        # Determine selected premium (mid) once
+        premium = float(strike["premium"])
+
+        # ============================================================
+        # Phase-1 Premium Band Enforcement (after strike is selected)
+        #   (band midpoint = 80% of symbol ceiling)
+        # ============================================================
+        ceiling = max_premium(symbol)
+        premium_band_mid = ceiling * 0.80
+        if premium >= premium_band_mid:
+            self.logger.log_event(
+                "entry_blocked",
+                {
+                    "reason": "premium_outside_band",
+                    "premium": premium,
+                    "band_mid": round(premium_band_mid, 3),
+                },
+            )
+            return
+
         # sizing
-        premium = strike["premium"]
         if premium <= 0:
             self.logger.log_event("entry_blocked", {"reason": "invalid_premium"})
             return

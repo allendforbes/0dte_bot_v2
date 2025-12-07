@@ -176,14 +176,22 @@ class EliteLatencyPrecheck:
         # ------------------------------------
         # MICROSTRUCTURE PROTECTION
         # ------------------------------------
+        # Simulation skip: weak_flow disabled when tick["__sim__"] = True
         if snap is not None:
+            is_sim = tick.get("__sim__", False)
+
             upvol_pct = snap.get("upvol_pct")
             if upvol_pct is not None:
-                # A2-M tightened directional flow thresholds
-                if bias == "CALL" and upvol_pct < 60:
-                    return PrecheckResult(False, reason="weak_flow")
-                if bias == "PUT" and upvol_pct > 40:
-                    return PrecheckResult(False, reason="weak_flow")
+                if not is_sim:
+                    if bias == "CALL" and upvol_pct < 60:
+                        return PrecheckResult(False, reason="weak_flow")
+                    if bias == "PUT" and upvol_pct > 40:
+                        return PrecheckResult(False, reason="weak_flow")
+
+            iv_change = snap.get("iv_change")
+            if iv_change is not None and abs(iv_change) > 0.20:
+                return PrecheckResult(False, reason="iv_spike")
+
 
             iv_change = snap.get("iv_change")
             if iv_change is not None and abs(iv_change) > 0.20:

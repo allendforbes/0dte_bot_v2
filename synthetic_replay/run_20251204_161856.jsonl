@@ -1,0 +1,449 @@
+{"ts": 1764893936.444326, "iso": "2025-12-05T00:18:56.444333", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893936.444638, "iso": "2025-12-05T00:18:56.444643", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.517382, "iso": "2025-12-05T00:18:56.517388", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893936.517473, "iso": "2025-12-05T00:18:56.517476", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.552456, "iso": "2025-12-05T00:18:56.552461", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893936.552535, "iso": "2025-12-05T00:18:56.552538", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.621592, "iso": "2025-12-05T00:18:56.621598", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893936.6217039, "iso": "2025-12-05T00:18:56.621708", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.776008, "iso": "2025-12-05T00:18:56.776025", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893936.776154, "iso": "2025-12-05T00:18:56.776159", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.8020759, "iso": "2025-12-05T00:18:56.802082", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893936.802186, "iso": "2025-12-05T00:18:56.802189", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.868541, "iso": "2025-12-05T00:18:56.868551", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893936.868663, "iso": "2025-12-05T00:18:56.868666", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.921592, "iso": "2025-12-05T00:18:56.921601", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893936.921688, "iso": "2025-12-05T00:18:56.921691", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893936.993872, "iso": "2025-12-05T00:18:56.993882", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893936.993954, "iso": "2025-12-05T00:18:56.993956", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.064818, "iso": "2025-12-05T00:18:57.064828", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.064922, "iso": "2025-12-05T00:18:57.064925", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.1149151, "iso": "2025-12-05T00:18:57.114922", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.115017, "iso": "2025-12-05T00:18:57.115020", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.311032, "iso": "2025-12-05T00:18:57.311076", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.311649, "iso": "2025-12-05T00:18:57.311668", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.382108, "iso": "2025-12-05T00:18:57.382148", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893937.3824818, "iso": "2025-12-05T00:18:57.382492", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.5048058, "iso": "2025-12-05T00:18:57.504816", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.504908, "iso": "2025-12-05T00:18:57.504911", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.55279, "iso": "2025-12-05T00:18:57.552802", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893937.552917, "iso": "2025-12-05T00:18:57.552920", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.5829482, "iso": "2025-12-05T00:18:57.582960", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.5831108, "iso": "2025-12-05T00:18:57.583116", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.652031, "iso": "2025-12-05T00:18:57.652044", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893937.652194, "iso": "2025-12-05T00:18:57.652199", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.673429, "iso": "2025-12-05T00:18:57.673452", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.673717, "iso": "2025-12-05T00:18:57.673726", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.704396, "iso": "2025-12-05T00:18:57.704406", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.704534, "iso": "2025-12-05T00:18:57.704539", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.813258, "iso": "2025-12-05T00:18:57.813277", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.8134348, "iso": "2025-12-05T00:18:57.813439", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.835969, "iso": "2025-12-05T00:18:57.835979", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893937.83609, "iso": "2025-12-05T00:18:57.836094", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893937.9812841, "iso": "2025-12-05T00:18:57.981293", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.0194418, "iso": "2025-12-05T00:18:58.019453", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893938.01954, "iso": "2025-12-05T00:18:58.019543", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.09684, "iso": "2025-12-05T00:18:58.096852", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893938.0969632, "iso": "2025-12-05T00:18:58.096968", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.180086, "iso": "2025-12-05T00:18:58.180106", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.180338, "iso": "2025-12-05T00:18:58.180346", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.252188, "iso": "2025-12-05T00:18:58.252210", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.2524061, "iso": "2025-12-05T00:18:58.252412", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.400922, "iso": "2025-12-05T00:18:58.400967", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.4012742, "iso": "2025-12-05T00:18:58.401283", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.431239, "iso": "2025-12-05T00:18:58.431287", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.431583, "iso": "2025-12-05T00:18:58.431592", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.496983, "iso": "2025-12-05T00:18:58.497007", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.4972239, "iso": "2025-12-05T00:18:58.497232", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.521137, "iso": "2025-12-05T00:18:58.521149", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.521282, "iso": "2025-12-05T00:18:58.521286", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.708791, "iso": "2025-12-05T00:18:58.708832", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.709294, "iso": "2025-12-05T00:18:58.709312", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.775279, "iso": "2025-12-05T00:18:58.775324", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.775718, "iso": "2025-12-05T00:18:58.775728", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.8112378, "iso": "2025-12-05T00:18:58.811257", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.811411, "iso": "2025-12-05T00:18:58.811414", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.857994, "iso": "2025-12-05T00:18:58.858014", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.858143, "iso": "2025-12-05T00:18:58.858146", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893938.889052, "iso": "2025-12-05T00:18:58.889063", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893938.8891652, "iso": "2025-12-05T00:18:58.889169", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.0155678, "iso": "2025-12-05T00:18:59.015758", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.01602, "iso": "2025-12-05T00:18:59.016025", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.056192, "iso": "2025-12-05T00:18:59.056203", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.05633, "iso": "2025-12-05T00:18:59.056337", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.21727, "iso": "2025-12-05T00:18:59.217278", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.217362, "iso": "2025-12-05T00:18:59.217364", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.291849, "iso": "2025-12-05T00:18:59.291865", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.291975, "iso": "2025-12-05T00:18:59.291978", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.3419049, "iso": "2025-12-05T00:18:59.341916", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.3420439, "iso": "2025-12-05T00:18:59.342047", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.4429991, "iso": "2025-12-05T00:18:59.443011", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.443191, "iso": "2025-12-05T00:18:59.443194", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.50624, "iso": "2025-12-05T00:18:59.506258", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.506418, "iso": "2025-12-05T00:18:59.506424", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.574854, "iso": "2025-12-05T00:18:59.574863", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.574934, "iso": "2025-12-05T00:18:59.574936", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.710947, "iso": "2025-12-05T00:18:59.710956", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.711029, "iso": "2025-12-05T00:18:59.711031", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.787018, "iso": "2025-12-05T00:18:59.787028", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.787107, "iso": "2025-12-05T00:18:59.787109", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.821127, "iso": "2025-12-05T00:18:59.821137", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.821217, "iso": "2025-12-05T00:18:59.821219", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893939.867094, "iso": "2025-12-05T00:18:59.867101", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.943156, "iso": "2025-12-05T00:18:59.943165", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893939.943276, "iso": "2025-12-05T00:18:59.943279", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.012398, "iso": "2025-12-05T00:19:00.012410", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.045547, "iso": "2025-12-05T00:19:00.045556", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.241614, "iso": "2025-12-05T00:19:00.241627", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.241739, "iso": "2025-12-05T00:19:00.241742", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.2777112, "iso": "2025-12-05T00:19:00.277728", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.277833, "iso": "2025-12-05T00:19:00.277836", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.316776, "iso": "2025-12-05T00:19:00.316785", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.316885, "iso": "2025-12-05T00:19:00.316888", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.3618581, "iso": "2025-12-05T00:19:00.361866", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.36197, "iso": "2025-12-05T00:19:00.361974", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.386316, "iso": "2025-12-05T00:19:00.386332", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.593106, "iso": "2025-12-05T00:19:00.593117", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.593224, "iso": "2025-12-05T00:19:00.593227", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.7144032, "iso": "2025-12-05T00:19:00.714411", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.714473, "iso": "2025-12-05T00:19:00.714476", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.841483, "iso": "2025-12-05T00:19:00.841492", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.841583, "iso": "2025-12-05T00:19:00.841586", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893940.890352, "iso": "2025-12-05T00:19:00.890362", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893940.8904588, "iso": "2025-12-05T00:19:00.890462", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.019619, "iso": "2025-12-05T00:19:01.019631", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893941.019729, "iso": "2025-12-05T00:19:01.019732", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.149343, "iso": "2025-12-05T00:19:01.149355", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893941.149487, "iso": "2025-12-05T00:19:01.149492", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.209953, "iso": "2025-12-05T00:19:01.209970", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893941.210133, "iso": "2025-12-05T00:19:01.210139", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.351804, "iso": "2025-12-05T00:19:01.351840", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893941.352115, "iso": "2025-12-05T00:19:01.352122", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.411374, "iso": "2025-12-05T00:19:01.411418", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893941.4117382, "iso": "2025-12-05T00:19:01.411747", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.481963, "iso": "2025-12-05T00:19:01.482003", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893941.483045, "iso": "2025-12-05T00:19:01.483060", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.629378, "iso": "2025-12-05T00:19:01.629422", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893941.630163, "iso": "2025-12-05T00:19:01.630184", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893941.7645361, "iso": "2025-12-05T00:19:01.764580", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893941.7650502, "iso": "2025-12-05T00:19:01.765069", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.025933, "iso": "2025-12-05T00:19:02.025987", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.0268302, "iso": "2025-12-05T00:19:02.026889", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.091327, "iso": "2025-12-05T00:19:02.091360", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.091628, "iso": "2025-12-05T00:19:02.091637", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.141868, "iso": "2025-12-05T00:19:02.141914", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.1426072, "iso": "2025-12-05T00:19:02.142624", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.22224, "iso": "2025-12-05T00:19:02.222284", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893942.2226932, "iso": "2025-12-05T00:19:02.222753", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.365751, "iso": "2025-12-05T00:19:02.365788", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.366087, "iso": "2025-12-05T00:19:02.366098", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.412158, "iso": "2025-12-05T00:19:02.412179", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893942.4123678, "iso": "2025-12-05T00:19:02.412373", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.443748, "iso": "2025-12-05T00:19:02.443763", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.4439108, "iso": "2025-12-05T00:19:02.443915", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.4840388, "iso": "2025-12-05T00:19:02.484052", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893942.484192, "iso": "2025-12-05T00:19:02.484197", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.574754, "iso": "2025-12-05T00:19:02.574794", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.57521, "iso": "2025-12-05T00:19:02.575222", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.615978, "iso": "2025-12-05T00:19:02.616016", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.61625, "iso": "2025-12-05T00:19:02.616256", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.695801, "iso": "2025-12-05T00:19:02.695842", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.696139, "iso": "2025-12-05T00:19:02.696147", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.838113, "iso": "2025-12-05T00:19:02.838150", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.838412, "iso": "2025-12-05T00:19:02.838418", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.8909922, "iso": "2025-12-05T00:19:02.891029", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.891295, "iso": "2025-12-05T00:19:02.891301", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893942.9739861, "iso": "2025-12-05T00:19:02.974021", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893942.974298, "iso": "2025-12-05T00:19:02.974305", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.028088, "iso": "2025-12-05T00:19:03.028131", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.0284228, "iso": "2025-12-05T00:19:03.028431", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.108313, "iso": "2025-12-05T00:19:03.108347", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.108613, "iso": "2025-12-05T00:19:03.108620", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.22486, "iso": "2025-12-05T00:19:03.224897", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.225206, "iso": "2025-12-05T00:19:03.225216", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.356344, "iso": "2025-12-05T00:19:03.356391", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.3566878, "iso": "2025-12-05T00:19:03.356694", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.401688, "iso": "2025-12-05T00:19:03.401742", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.402061, "iso": "2025-12-05T00:19:03.402068", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.545215, "iso": "2025-12-05T00:19:03.545254", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.54552, "iso": "2025-12-05T00:19:03.545527", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.621863, "iso": "2025-12-05T00:19:03.621912", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.622248, "iso": "2025-12-05T00:19:03.622255", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.667329, "iso": "2025-12-05T00:19:03.667367", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.66769, "iso": "2025-12-05T00:19:03.667696", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.7421598, "iso": "2025-12-05T00:19:03.742198", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.742486, "iso": "2025-12-05T00:19:03.742492", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893943.773855, "iso": "2025-12-05T00:19:03.773876", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893943.774085, "iso": "2025-12-05T00:19:03.774090", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.101571, "iso": "2025-12-05T00:19:04.101617", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.1019258, "iso": "2025-12-05T00:19:04.101932", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.123662, "iso": "2025-12-05T00:19:04.123675", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.123818, "iso": "2025-12-05T00:19:04.123822", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.173185, "iso": "2025-12-05T00:19:04.173224", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.1735182, "iso": "2025-12-05T00:19:04.173525", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.235009, "iso": "2025-12-05T00:19:04.235047", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.235395, "iso": "2025-12-05T00:19:04.235404", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.320066, "iso": "2025-12-05T00:19:04.320102", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.320328, "iso": "2025-12-05T00:19:04.320335", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.471092, "iso": "2025-12-05T00:19:04.471146", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.4717839, "iso": "2025-12-05T00:19:04.471795", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.636673, "iso": "2025-12-05T00:19:04.636688", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.636831, "iso": "2025-12-05T00:19:04.636835", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.725034, "iso": "2025-12-05T00:19:04.725073", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.725395, "iso": "2025-12-05T00:19:04.725405", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.882726, "iso": "2025-12-05T00:19:04.882766", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.8830988, "iso": "2025-12-05T00:19:04.883109", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893944.980831, "iso": "2025-12-05T00:19:04.980881", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893944.981326, "iso": "2025-12-05T00:19:04.981338", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.160505, "iso": "2025-12-05T00:19:05.160513", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.1605859, "iso": "2025-12-05T00:19:05.160589", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.194466, "iso": "2025-12-05T00:19:05.194474", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.194557, "iso": "2025-12-05T00:19:05.194560", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.275425, "iso": "2025-12-05T00:19:05.275433", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.2755141, "iso": "2025-12-05T00:19:05.275517", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.3494568, "iso": "2025-12-05T00:19:05.349466", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893945.3495748, "iso": "2025-12-05T00:19:05.349579", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.3705301, "iso": "2025-12-05T00:19:05.370537", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.370635, "iso": "2025-12-05T00:19:05.370639", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.42834, "iso": "2025-12-05T00:19:05.428365", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.428586, "iso": "2025-12-05T00:19:05.428593", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.472679, "iso": "2025-12-05T00:19:05.472696", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.4728372, "iso": "2025-12-05T00:19:05.472842", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.614363, "iso": "2025-12-05T00:19:05.614401", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.614708, "iso": "2025-12-05T00:19:05.614716", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.661482, "iso": "2025-12-05T00:19:05.661501", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.6617038, "iso": "2025-12-05T00:19:05.661710", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.72932, "iso": "2025-12-05T00:19:05.729353", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.729619, "iso": "2025-12-05T00:19:05.729626", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893945.8516731, "iso": "2025-12-05T00:19:05.851715", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893945.852031, "iso": "2025-12-05T00:19:05.852041", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.003652, "iso": "2025-12-05T00:19:06.003662", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.0037398, "iso": "2025-12-05T00:19:06.003743", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.160322, "iso": "2025-12-05T00:19:06.160345", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.1605818, "iso": "2025-12-05T00:19:06.160589", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.182297, "iso": "2025-12-05T00:19:06.182310", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.182464, "iso": "2025-12-05T00:19:06.182470", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.2215092, "iso": "2025-12-05T00:19:06.221521", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.22167, "iso": "2025-12-05T00:19:06.221676", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.283799, "iso": "2025-12-05T00:19:06.283835", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.284159, "iso": "2025-12-05T00:19:06.284168", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.3521721, "iso": "2025-12-05T00:19:06.352211", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.3525262, "iso": "2025-12-05T00:19:06.352533", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.563701, "iso": "2025-12-05T00:19:06.563736", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.563981, "iso": "2025-12-05T00:19:06.563988", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.716245, "iso": "2025-12-05T00:19:06.716282", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.716623, "iso": "2025-12-05T00:19:06.716632", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.756726, "iso": "2025-12-05T00:19:06.756760", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.7570581, "iso": "2025-12-05T00:19:06.757064", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.7948, "iso": "2025-12-05T00:19:06.794820", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.795001, "iso": "2025-12-05T00:19:06.795006", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893946.8749352, "iso": "2025-12-05T00:19:06.874969", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893946.875199, "iso": "2025-12-05T00:19:06.875206", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.039157, "iso": "2025-12-05T00:19:07.039202", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.039584, "iso": "2025-12-05T00:19:07.039595", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.1303701, "iso": "2025-12-05T00:19:07.130401", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.1306229, "iso": "2025-12-05T00:19:07.130630", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.243847, "iso": "2025-12-05T00:19:07.243889", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.244214, "iso": "2025-12-05T00:19:07.244222", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.295412, "iso": "2025-12-05T00:19:07.295453", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.2958028, "iso": "2025-12-05T00:19:07.295811", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.319558, "iso": "2025-12-05T00:19:07.319571", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.319705, "iso": "2025-12-05T00:19:07.319709", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.463925, "iso": "2025-12-05T00:19:07.463963", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.4642801, "iso": "2025-12-05T00:19:07.464288", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.540243, "iso": "2025-12-05T00:19:07.540284", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.540595, "iso": "2025-12-05T00:19:07.540602", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.5664132, "iso": "2025-12-05T00:19:07.566433", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.56663, "iso": "2025-12-05T00:19:07.566636", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.64077, "iso": "2025-12-05T00:19:07.640804", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.641085, "iso": "2025-12-05T00:19:07.641093", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.744815, "iso": "2025-12-05T00:19:07.744853", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.745152, "iso": "2025-12-05T00:19:07.745158", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.7923899, "iso": "2025-12-05T00:19:07.792409", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893947.7925582, "iso": "2025-12-05T00:19:07.792563", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.883059, "iso": "2025-12-05T00:19:07.883107", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.8835552, "iso": "2025-12-05T00:19:07.883568", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.912883, "iso": "2025-12-05T00:19:07.912896", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893947.913033, "iso": "2025-12-05T00:19:07.913038", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893947.95106, "iso": "2025-12-05T00:19:07.951073", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893947.951222, "iso": "2025-12-05T00:19:07.951227", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.054626, "iso": "2025-12-05T00:19:08.054636", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.054774, "iso": "2025-12-05T00:19:08.054778", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.388213, "iso": "2025-12-05T00:19:08.388266", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.388719, "iso": "2025-12-05T00:19:08.388731", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.530547, "iso": "2025-12-05T00:19:08.530598", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.531043, "iso": "2025-12-05T00:19:08.531055", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.568513, "iso": "2025-12-05T00:19:08.568544", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.568745, "iso": "2025-12-05T00:19:08.568750", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.613643, "iso": "2025-12-05T00:19:08.613680", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.613983, "iso": "2025-12-05T00:19:08.613991", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.6376588, "iso": "2025-12-05T00:19:08.637680", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.637859, "iso": "2025-12-05T00:19:08.637864", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.729429, "iso": "2025-12-05T00:19:08.729459", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.729768, "iso": "2025-12-05T00:19:08.729776", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.877162, "iso": "2025-12-05T00:19:08.877178", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.877347, "iso": "2025-12-05T00:19:08.877352", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893948.9176672, "iso": "2025-12-05T00:19:08.917708", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893948.918032, "iso": "2025-12-05T00:19:08.918038", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.004643, "iso": "2025-12-05T00:19:09.004685", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "TREND_UP", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893949.005056, "iso": "2025-12-05T00:19:09.005067", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.078031, "iso": "2025-12-05T00:19:09.078081", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893949.078551, "iso": "2025-12-05T00:19:09.078564", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.142497, "iso": "2025-12-05T00:19:09.142528", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.1427462, "iso": "2025-12-05T00:19:09.142752", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.190573, "iso": "2025-12-05T00:19:09.190608", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.190901, "iso": "2025-12-05T00:19:09.190908", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.288034, "iso": "2025-12-05T00:19:09.288069", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.2883468, "iso": "2025-12-05T00:19:09.288354", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "wide_spread"}}
+{"ts": 1764893949.3456588, "iso": "2025-12-05T00:19:09.345695", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.3459918, "iso": "2025-12-05T00:19:09.346000", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.44258, "iso": "2025-12-05T00:19:09.442613", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.442836, "iso": "2025-12-05T00:19:09.442844", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.540431, "iso": "2025-12-05T00:19:09.540480", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.540879, "iso": "2025-12-05T00:19:09.540891", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.755572, "iso": "2025-12-05T00:19:09.755608", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.755881, "iso": "2025-12-05T00:19:09.755888", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.784857, "iso": "2025-12-05T00:19:09.784879", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.785075, "iso": "2025-12-05T00:19:09.785081", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.823912, "iso": "2025-12-05T00:19:09.823926", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.824089, "iso": "2025-12-05T00:19:09.824094", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.875445, "iso": "2025-12-05T00:19:09.875477", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.875802, "iso": "2025-12-05T00:19:09.875810", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893949.9504, "iso": "2025-12-05T00:19:09.950432", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893949.9506948, "iso": "2025-12-05T00:19:09.950702", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.024985, "iso": "2025-12-05T00:19:10.025027", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.025433, "iso": "2025-12-05T00:19:10.025445", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.058521, "iso": "2025-12-05T00:19:10.058541", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.0587158, "iso": "2025-12-05T00:19:10.058721", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.195956, "iso": "2025-12-05T00:19:10.196003", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.1964211, "iso": "2025-12-05T00:19:10.196433", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.397883, "iso": "2025-12-05T00:19:10.397921", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.398247, "iso": "2025-12-05T00:19:10.398255", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.442343, "iso": "2025-12-05T00:19:10.442383", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.442709, "iso": "2025-12-05T00:19:10.442717", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.516848, "iso": "2025-12-05T00:19:10.516887", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893950.517233, "iso": "2025-12-05T00:19:10.517241", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.572358, "iso": "2025-12-05T00:19:10.572393", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.5726001, "iso": "2025-12-05T00:19:10.572606", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.773323, "iso": "2025-12-05T00:19:10.773368", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.773761, "iso": "2025-12-05T00:19:10.773772", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.812765, "iso": "2025-12-05T00:19:10.812802", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.813113, "iso": "2025-12-05T00:19:10.813119", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.85633, "iso": "2025-12-05T00:19:10.856360", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.856541, "iso": "2025-12-05T00:19:10.856546", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893950.880665, "iso": "2025-12-05T00:19:10.880691", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893950.8808792, "iso": "2025-12-05T00:19:10.880884", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.097888, "iso": "2025-12-05T00:19:11.097903", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.098034, "iso": "2025-12-05T00:19:11.098040", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.1411588, "iso": "2025-12-05T00:19:11.141168", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893951.141299, "iso": "2025-12-05T00:19:11.141303", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.215938, "iso": "2025-12-05T00:19:11.215968", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.2163079, "iso": "2025-12-05T00:19:11.216317", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.2408588, "iso": "2025-12-05T00:19:11.240874", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.241039, "iso": "2025-12-05T00:19:11.241044", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.296433, "iso": "2025-12-05T00:19:11.296484", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.296822, "iso": "2025-12-05T00:19:11.296829", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.443001, "iso": "2025-12-05T00:19:11.443040", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893951.4432871, "iso": "2025-12-05T00:19:11.443293", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.496166, "iso": "2025-12-05T00:19:11.496208", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893951.496542, "iso": "2025-12-05T00:19:11.496549", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.744252, "iso": "2025-12-05T00:19:11.744296", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.744666, "iso": "2025-12-05T00:19:11.744677", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.803212, "iso": "2025-12-05T00:19:11.803251", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.803755, "iso": "2025-12-05T00:19:11.803771", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.848556, "iso": "2025-12-05T00:19:11.848597", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.848949, "iso": "2025-12-05T00:19:11.848964", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.9141178, "iso": "2025-12-05T00:19:11.914163", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.914508, "iso": "2025-12-05T00:19:11.914516", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.971543, "iso": "2025-12-05T00:19:11.971584", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.9718971, "iso": "2025-12-05T00:19:11.971905", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893951.995059, "iso": "2025-12-05T00:19:11.995079", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893951.995231, "iso": "2025-12-05T00:19:11.995237", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.164447, "iso": "2025-12-05T00:19:12.164477", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.1647959, "iso": "2025-12-05T00:19:12.164803", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.210824, "iso": "2025-12-05T00:19:12.210859", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.2111418, "iso": "2025-12-05T00:19:12.211149", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.2922208, "iso": "2025-12-05T00:19:12.292240", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.2924218, "iso": "2025-12-05T00:19:12.292427", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.315346, "iso": "2025-12-05T00:19:12.315357", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.3154979, "iso": "2025-12-05T00:19:12.315503", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.380727, "iso": "2025-12-05T00:19:12.380754", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.38098, "iso": "2025-12-05T00:19:12.380986", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.46205, "iso": "2025-12-05T00:19:12.462093", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893952.462452, "iso": "2025-12-05T00:19:12.462459", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.5158389, "iso": "2025-12-05T00:19:12.515870", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.516098, "iso": "2025-12-05T00:19:12.516104", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.561823, "iso": "2025-12-05T00:19:12.561869", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.5622258, "iso": "2025-12-05T00:19:12.562237", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.615324, "iso": "2025-12-05T00:19:12.615378", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 70.0, "trail_mult": 1.25}}
+{"ts": 1764893952.6157818, "iso": "2025-12-05T00:19:12.615789", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.672651, "iso": "2025-12-05T00:19:12.672690", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.673038, "iso": "2025-12-05T00:19:12.673047", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.7765381, "iso": "2025-12-05T00:19:12.776587", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.776928, "iso": "2025-12-05T00:19:12.776940", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.818847, "iso": "2025-12-05T00:19:12.818882", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.8191822, "iso": "2025-12-05T00:19:12.819189", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893952.926343, "iso": "2025-12-05T00:19:12.926394", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893952.9267478, "iso": "2025-12-05T00:19:12.926756", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.02751, "iso": "2025-12-05T00:19:13.027542", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.027776, "iso": "2025-12-05T00:19:13.027782", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.111855, "iso": "2025-12-05T00:19:13.111908", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.112303, "iso": "2025-12-05T00:19:13.112311", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.195602, "iso": "2025-12-05T00:19:13.195613", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.195712, "iso": "2025-12-05T00:19:13.195714", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.345948, "iso": "2025-12-05T00:19:13.345982", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.3463209, "iso": "2025-12-05T00:19:13.346332", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.473036, "iso": "2025-12-05T00:19:13.473077", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.4734368, "iso": "2025-12-05T00:19:13.473449", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.529451, "iso": "2025-12-05T00:19:13.529523", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.529906, "iso": "2025-12-05T00:19:13.529914", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.632282, "iso": "2025-12-05T00:19:13.632303", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.632492, "iso": "2025-12-05T00:19:13.632498", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.758112, "iso": "2025-12-05T00:19:13.758142", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.758425, "iso": "2025-12-05T00:19:13.758433", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.80161, "iso": "2025-12-05T00:19:13.801646", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.8019881, "iso": "2025-12-05T00:19:13.801995", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893953.959054, "iso": "2025-12-05T00:19:13.959096", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893953.959399, "iso": "2025-12-05T00:19:13.959406", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893954.0269399, "iso": "2025-12-05T00:19:14.026980", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893954.027336, "iso": "2025-12-05T00:19:14.027342", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893954.0924249, "iso": "2025-12-05T00:19:14.092461", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893954.0928068, "iso": "2025-12-05T00:19:14.092815", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893954.276758, "iso": "2025-12-05T00:19:14.276803", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893954.277211, "iso": "2025-12-05T00:19:14.277222", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893954.566664, "iso": "2025-12-05T00:19:14.566701", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893954.5670002, "iso": "2025-12-05T00:19:14.567006", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893954.739239, "iso": "2025-12-05T00:19:14.739262", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893954.739448, "iso": "2025-12-05T00:19:14.739453", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893954.7763672, "iso": "2025-12-05T00:19:14.776381", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893954.7765372, "iso": "2025-12-05T00:19:14.776543", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.021169, "iso": "2025-12-05T00:19:15.021206", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.021577, "iso": "2025-12-05T00:19:15.021585", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.199295, "iso": "2025-12-05T00:19:15.199338", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.199668, "iso": "2025-12-05T00:19:15.199675", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.2563, "iso": "2025-12-05T00:19:15.256337", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.25658, "iso": "2025-12-05T00:19:15.256587", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.3355038, "iso": "2025-12-05T00:19:15.335541", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.335836, "iso": "2025-12-05T00:19:15.335842", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.48208, "iso": "2025-12-05T00:19:15.482121", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.4824362, "iso": "2025-12-05T00:19:15.482443", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.5529852, "iso": "2025-12-05T00:19:15.553015", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.553248, "iso": "2025-12-05T00:19:15.553254", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.804675, "iso": "2025-12-05T00:19:15.804717", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "TREND_DN", "score": 60.0, "trail_mult": 1.25}}
+{"ts": 1764893955.805008, "iso": "2025-12-05T00:19:15.805015", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.851799, "iso": "2025-12-05T00:19:15.851834", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.8521311, "iso": "2025-12-05T00:19:15.852138", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.872787, "iso": "2025-12-05T00:19:15.872806", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.872973, "iso": "2025-12-05T00:19:15.872978", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893955.924408, "iso": "2025-12-05T00:19:15.924443", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893955.924751, "iso": "2025-12-05T00:19:15.924758", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893956.001237, "iso": "2025-12-05T00:19:16.001248", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893956.00134, "iso": "2025-12-05T00:19:16.001343", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893956.060569, "iso": "2025-12-05T00:19:16.060574", "level": "EVENT", "event": "signal_generated", "data": {"bias": "CALL", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893956.060651, "iso": "2025-12-05T00:19:16.060654", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893956.198064, "iso": "2025-12-05T00:19:16.198093", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893956.1983879, "iso": "2025-12-05T00:19:16.198396", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893956.268071, "iso": "2025-12-05T00:19:16.268109", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893956.26838, "iso": "2025-12-05T00:19:16.268389", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}
+{"ts": 1764893956.4136388, "iso": "2025-12-05T00:19:16.413678", "level": "EVENT", "event": "signal_generated", "data": {"bias": "PUT", "grade": "A", "regime": "RECLAIM", "score": 80.0, "trail_mult": 1.25}}
+{"ts": 1764893956.413953, "iso": "2025-12-05T00:19:16.413960", "level": "EVENT", "event": "entry_blocked", "data": {"reason": "weak_flow"}}

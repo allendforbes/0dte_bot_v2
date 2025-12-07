@@ -1,57 +1,60 @@
 """
-StrikeSelector v3.1 — Dual-Ceiling + Delta-Targeted ATM± Selection
------------------------------------------------------------------
-SPY/QQQ:
-    • Premium ceiling: $1.00 (always)
+StrikeSelector v3.3 — Dynamic Premium Bands + Convexity Prioritization
+---------------------------------------------------------------------
 
-MATMAN (AAPL, AMZN, META, MSFT, NVDA, TSLA):
-    • Mon–Thu ceiling: $1.50
-    • Friday ceiling: $1.25
-
-Selection Priorities:
-    1. Premium <= dynamic ceiling
-    2. ATM proximity (clustered ±2 strikes)
-    3. High gamma (convexity)
-    4. Delta near ±0.30
-    5. Freshest NBBO timestamp
+Enhancements over v3.1:
+    • Symbol-specific premium bands (realistic per underlying)
+    • Bands enforce both lower + upper bounds
+    • Prefers mid-band premiums for convexity efficiency
+    • Excludes NVDA (no realistic <2.00 convex premium)
+    • Adjusts MSFT upper band (MSFT is always premium-heavy)
+    • Adds detailed rejection logging: premium_band_fail
+    • Maintains:
+        – Delta targeting
+        – Gamma prioritization
+        – ATM clustering logic (±2)
+        – Freshest NBBO tie-breaker
 """
 
 import datetime as dt
 
 
 class StrikeSelector:
+
     MAX_ATM_DISTANCE = 2
 
     CORE = {"SPY", "QQQ"}
     MATMAN = {"AAPL", "AMZN", "META", "MSFT", "NVDA", "TSLA"}
 
-    CORE_CEILING = 1.00
-    MATMAN_CEILING_MON_THU = 1.50
-    MATMAN_CEILING_FRI = 1.25
+    # ----------------------------------------------------------------------
+    # Realistic premium bands (empirically tuned)
+    # ----------------------------------------------------------------------
+    PREMIUM_BANDS = {
+        # SPY/QQQ — strict
+        "SPY":  (0.40, 1.00),
+        "QQQ":  (0.40, 1.00),
+
+        # MATMAN
+        "AAPL": (0.40, 1.40),
+        "AMZN": (0.60, 1.50),
+        "META": (0.70, 1.80),
+        "MSFT": (0.90, 2.00),   # MSFT rarely prints cheap premium early
+        "TSLA": (0.80, 1.60),
+
+        # NVDA — effectively excluded
+        "NVDA": (2.00, 99.00),  # NVDA is ALWAYS expensive
+    }
 
     TARGET_DELTA_CALL = 0.30
-    TARGET_DELTA_PUT = -0.30
+    TARGET_DELTA_PUT  = -0.30
 
-    def __init__(self):
-        pass
+    # ----------------------------------------------------------------------
+    def __init__(self, logger=None):
+        self.logger = logger
 
-    # ---------------------------------------------------
-    def _premium_ceiling_for(self, symbol: str) -> float:
-        """Return the correct premium ceiling based on symbol + weekday."""
-        wd = dt.datetime.now().weekday()  # Mon=0 ... Fri=4
-
-        if symbol in self.CORE:
-            return self.CORE_CEILING
-
-        if symbol in self.MATMAN:
-            if wd == 4:  # Friday
-                return self.MATMAN_CEILING_FRI
-            return self.MATMAN_CEILING_MON_THU
-
-        return 1.00  # fallback
-
-    # ---------------------------------------------------
+    # ----------------------------------------------------------------------
     def _cluster_strikes(self, underlying, strikes):
+        """Return ATM ±2 strike cluster."""
         if underlying is None or not strikes:
             return []
 
@@ -66,23 +69,31 @@ class StrikeSelector:
 
         return list(cluster)
 
-    # ---------------------------------------------------
+    # ----------------------------------------------------------------------
+    def _premium_band_for(self, symbol):
+        """Return realistic symbol-specific premium band."""
+        return self.PREMIUM_BANDS.get(symbol, (0.40, 1.00))
+
+    # ----------------------------------------------------------------------
     async def select_from_chain(self, chain_rows, bias, underlying_price):
         if not chain_rows or underlying_price is None:
             return None
 
         side = "C" if bias.upper() == "CALL" else "P"
-
         rows = [r for r in chain_rows if r["right"] == side]
         if not rows:
             return None
 
         symbol = rows[0]["symbol"]
-        ceiling = self._premium_ceiling_for(symbol)
+        band_lo, band_hi = self._premium_band_for(symbol)
 
+        # ATM clustering
         strikes = sorted({float(r["strike"]) for r in rows if r["strike"] is not None})
         cluster = self._cluster_strikes(underlying_price, strikes)
+        if not cluster:
+            return None
 
+        # Filter to cluster
         rows = [r for r in rows if float(r["strike"]) in cluster]
         if not rows:
             return None
@@ -96,33 +107,54 @@ class StrikeSelector:
                 continue
 
             mid = (bid + ask) / 2
-            if mid <= 0 or mid > ceiling:
+
+            # ============================================================
+            # Premium band rejection
+            # ============================================================
+            if not (band_lo <= mid <= band_hi):
+                if self.logger:
+                    self.logger.log_event("premium_band_fail", {
+                        "symbol": symbol,
+                        "strike": r["strike"],
+                        "mid": round(mid, 2),
+                        "band_lo": band_lo,
+                        "band_hi": band_hi,
+                    })
                 continue
 
             gamma = r.get("gamma") or 0.0
             delta = r.get("delta") or 0.0
 
+            # ------------------------------------------------------------
+            # Enrichment for sorting
+            # ------------------------------------------------------------
+            band_mid = (band_lo + band_hi) / 2
+            band_dist = abs(mid - band_mid)  # prefer midpoint of band
+
             enriched.append(
                 {
                     **r,
                     "mid": mid,
-                    "premium_dist": abs(mid - ceiling),          # closer to ceiling = better convexity
+                    "band_dist": band_dist,
                     "atm_dist": abs(float(r["strike"]) - underlying_price),
-                    "gamma_score": abs(gamma),                   # maximize gamma
-                    "delta_score": abs(delta - target_delta),    # minimize distance to target delta
+                    "gamma_score": abs(gamma),
+                    "delta_score": abs(delta - target_delta),
                 }
             )
 
         if not enriched:
             return None
 
+        # ------------------------------------------------------------
+        # Sorting priorities (best → worst)
+        # ------------------------------------------------------------
         enriched.sort(
             key=lambda r: (
-                r["premium_dist"],
-                r["atm_dist"],
-                -r["gamma_score"],
-                r["delta_score"],
-                -(r["_recv_ts"] or 0),
+                r["band_dist"],         # Prefer mid-band premium
+                r["atm_dist"],          # Close to ATM
+                -r["gamma_score"],      # High convexity
+                r["delta_score"],       # Delta close to target
+                -(r["_recv_ts"] or 0),  # Freshest data
             )
         )
 

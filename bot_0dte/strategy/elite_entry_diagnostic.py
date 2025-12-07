@@ -1,15 +1,12 @@
 """
-Elite Entry Engine (Diagnostic Edition)
----------------------------------------
-Purpose:
-    - Validate end-to-end bot pipeline live (today)
-    - Relax thresholds so signals fire in mid-day / holiday chop
-    - Remove time gating
-    - Microstructure optional
-    - Provide explicit debug reasons for rejects
+Elite Entry Engine (Diagnostic Edition + Phase-1 Early Entry Filters)
+--------------------------------------------------------------------
+Adds controlled early-entry logic:
 
-This version is NOT meant for production trading.
-It is meant to prove the entire system behaves correctly.
+    • upvol_pct > 55%
+    • slope acceleration (slope_now > slope_prev)
+    • gamma >= 0.0025
+    • premium_ok flag required for TREND_UP / TREND_DN
 """
 
 from dataclasses import dataclass
@@ -26,25 +23,25 @@ class EliteSignal:
 
 
 class EliteEntryEngine:
-    # Relaxed thresholds for testing
-    SLOPE_MIN = 0.0005        # was 0.005
-    DEV_MIN   = 0.01          # was 0.05
+    # Relaxed VWAP thresholds
+    SLOPE_MIN = 0.0005
+    DEV_MIN   = 0.01
 
-    # TREND / RECLAIM thresholds
+    # RECLAIM thresholds
     SLOPE_RECLAIM = 0.0
     DEV_RECLAIM = 0.10
 
-    # Base scoring
+    # New Phase-1 filters
+    UPVOL_MIN = 55
+    GAMMA_MIN = 0.0025
+    REQUIRE_PREMIUM_OK = True
+
+    # Scoring
     BASE_TREND = 50
     BASE_RECLAIM = 70
-
-    # Scoring boosts
     BOOST_STRONG_SLOPE = 10
 
-    # Grade thresholds
     GRADE_A_PLUS = 85
-
-    # Trail multipliers
     TRAIL_A = 1.25
     TRAIL_A_PLUS = 1.35
 
@@ -56,11 +53,11 @@ class EliteEntryEngine:
         slope = snap.get("vwap_dev_change")
         symbol = snap.get("symbol")
 
-        # Optional microstructure (ignored unless present)
+        # NEW (optional)
         upvol = snap.get("upvol_pct")
-        flow  = snap.get("flow_ratio")
-        ivc   = snap.get("iv_change")
-        skew  = snap.get("skew_shift")
+        gamma = snap.get("gamma")
+        slope_prev = snap.get("slope_prev")  # orchestrator provides this
+        premium_ok = snap.get("premium_ok", False)
 
         # -----------------------------
         # Input validation
@@ -78,41 +75,58 @@ class EliteEntryEngine:
             return None
 
         # -----------------------------
-        # RECLAIM (dominant pattern)
+        # RECLAIM (priority signal)
         # -----------------------------
         bias = None
         score = float(self.BASE_TREND)
         regime = "TREND"
 
-        # CALL reclaim
         if dev > self.DEV_RECLAIM and slope > self.SLOPE_RECLAIM:
             bias = "CALL"
             score = float(self.BASE_RECLAIM)
             regime = "RECLAIM"
 
-        # PUT reclaim
         elif dev < -self.DEV_RECLAIM and slope < -self.SLOPE_RECLAIM:
             bias = "PUT"
             score = float(self.BASE_RECLAIM)
             regime = "RECLAIM"
 
         # -----------------------------
-        # TREND logic (fallback)
+        # TREND logic (EARLY ENTRY path)
         # -----------------------------
         else:
+            # CALL early trend
             if price > vwap and slope > 0:
                 bias = "CALL"
                 regime = "TREND_UP"
 
+            # PUT early trend
             elif price < vwap and slope < 0:
                 bias = "PUT"
                 regime = "TREND_DN"
 
             else:
-                return None   # no alignment
+                return None
 
-        if bias is None:
-            return None
+            # ============================================================
+            # Phase-1 Early Entry Filters (APPLY ONLY TO TREND signals)
+            # ============================================================
+
+            # 1) Upvolume confirmation
+            if upvol is None or upvol < self.UPVOL_MIN:
+                return None
+
+            # 2) Slope acceleration — must be increasing
+            if slope_prev is not None and slope <= slope_prev:
+                return None
+
+            # 3) Gamma convexity requirement
+            if gamma is None or gamma < self.GAMMA_MIN:
+                return None
+
+            # 4) Premium band check (StrikeSelector sets premium_ok)
+            if self.REQUIRE_PREMIUM_OK and not premium_ok:
+                return None
 
         # -----------------------------
         # Scoring
