@@ -1,95 +1,185 @@
-bot_0dte
-├── __init__.py
-├── __pycache__
-│   ├── __init__.cpython-313.pyc
-│   ├── config.cpython-313.pyc
-│   ├── orchestrator.cpython-313.pyc
-│   ├── sizing.cpython-313.pyc
-│   └── universe.cpython-313.pyc
-├── _archive_legacy
-│   ├── ibkr_chain_bridge.py
-│   ├── marketdata_feed.py
-│   ├── marketdata_ws_adapter.py
-│   └── md_app
-│       └── providers
-│           └── marketdata
-│               └── __pycache__
-│                   ├── marketdata_feed.cpython-313.pyc
-│                   └── marketdata_ws_adapter.cpython-313.pyc
-├── bot_start.py
-├── config.py
-├── control
+.
+├── a2m_sim_weakflow_patch.diff
+├── action:auth
+├── bot_0dte
 │   ├── __init__.py
-│   ├── __pycache__
-│   │   └── session_controller.cpython-313.pyc
-│   └── session_controller.py
-├── data
-│   ├── __init__.py
-│   ├── adapters
+│   ├── _archive_legacy
+│   │   ├── ibkr_chain_bridge.py
+│   │   ├── marketdata_feed.py
+│   │   ├── marketdata_ws_adapter.py
+│   │   ├── md_app
+│   │   │   └── providers
+│   │   └── sim
+│   │       └── bot_full_sim.py
+│   ├── bot_start.py
+│   ├── chain
+│   │   └── chain_aggregator.py
+│   ├── config.py
+│   ├── contracts
 │   │   ├── __init__.py
-│   │   └── __pycache__
-│   │       ├── ibkr_chain_bridge.cpython-313.pyc
-│   │       └── massive_ws_adapter.cpython-313.pyc
-│   ├── providers
+│   │   └── massive_contract_engine.py
+│   ├── control
 │   │   ├── __init__.py
-│   │   └── massive
+│   │   └── session_controller.py
+│   ├── data
+│   │   ├── __init__.py
+│   │   ├── adapters
+│   │   │   ├── __init__.py
+│   │   │   └── ib_underlying_adapter.py
+│   │   ├── providers
+│   │   │   ├── __init__.py
+│   │   │   └── massive
+│   │   └── replay
 │   │       ├── __init__.py
-│   │       ├── _archive
-│   │       │   ├── massive_mux.py
-│   │       │   └── massive_ws_adapter.py
-│   │       ├── massive_contract_engine.py
-│   │       ├── massive_mux.py
-│   │       ├── massive_options_ws_adapter.py
-│   │       └── massive_stocks_ws_adapter.py
-│   └── replay
-│       ├── __init__.py
-│       └── replay_engine.py
-├── execution
-│   ├── __init__.py
-│   ├── __pycache__
-│   │   └── engine.cpython-313.pyc
-│   ├── adapters
+│   │       └── replay_engine.py
+│   ├── execution
 │   │   ├── __init__.py
-│   │   ├── __pycache__
-│   │   │   ├── ibkr_exec.cpython-313.pyc
-│   │   │   └── mock_exec.cpython-313.pyc
-│   │   ├── ibkr_exec.py
-│   │   └── mock_exec.py
-│   └── engine.py
-├── infra
-│   ├── __pycache__
-│   │   ├── logger.cpython-313.pyc
-│   │   └── telemetry.cpython-313.pyc
-│   ├── logger.py
-│   └── telemetry.py
-├── orchestrator.py
-├── risk
-│   ├── __init__.py
-│   ├── __pycache__
-│   │   └── trail_logic.cpython-313.pyc
-│   └── trail_logic.py
-├── sim
-│   ├── __init__.py
-│   ├── __pycache__
-│   │   └── bot_full_sim.cpython-313.pyc
-│   └── bot_full_sim.py
-├── sizing.py
-├── strategy
-│   ├── __init__.py
-│   ├── __pycache__
-│   │   ├── latency_precheck.cpython-313.pyc
-│   │   ├── morning_breakout.cpython-313.pyc
-│   │   └── strike_selector.cpython-313.pyc
-│   ├── latency_precheck.py
-│   ├── morning_breakout.py
-│   └── strike_selector.py
-├── tests
-│   └── __init__.py
-├── ui
-│   ├── __init__.py
-│   ├── __pycache__
-│   │   └── live_panel.cpython-313.pyc
-│   └── live_panel.py
-└── universe.py
+│   │   ├── adapters
+│   │   │   ├── __init__.py
+│   │   │   ├── ibkr_exec.py
+│   │   │   └── mock_exec.py
+│   │   └── engine.py
+│   ├── expiry_test.py
+│   ├── indicators
+│   │   └── vwap_tracker.py
+│   ├── inevitability.py
+│   ├── infra
+│   │   ├── logger.py
+│   │   └── telemetry.py
+│   ├── orchestrator.py
+│   ├── risk
+│   │   ├── __init__.py
+│   │   └── trail_logic.py
+│   ├── sim
+│   │   ├── __init__.py
+│   │   ├── bot_ws_sim.py
+│   │   ├── fake_engine.py
+│   │   ├── replay_spy_1059.py
+│   │   ├── replay_spy_681c.py
+│   │   ├── replay_spy_example.py
+│   │   ├── run_a2m_synthetic.py
+│   │   ├── synthetic_mux.py
+│   │   ├── synthetic_nbbo_feed.py
+│   │   └── synthetic_underlying_feed.py
+│   ├── sizing.py
+│   ├── strategy
+│   │   ├── __init__.py
+│   │   ├── elite_entry.py
+│   │   ├── elite_entry_diagnostic.py
+│   │   ├── elite_latency_precheck.py
+│   │   ├── latency_precheck.py
+│   │   ├── morning_breakout.py
+│   │   └── strike_selector.py
+│   ├── ui
+│   │   ├── __init__.py
+│   │   ├── live_panel.py
+│   │   └── ui_state.py
+│   └── universe.py
+├── config.json
+├── data
+│   └── replays
+├── init_builder.sh
+├── logs
+│   ├── latest_run.log
+│   ├── run_20251119_155316.jsonl
+│   ├── run_20251119_155905.jsonl
+│   ├── run_20251119_173401.jsonl
+│   ├── run_20251119_184733.jsonl
+│   ├── run_20251119_185115.jsonl
+│   ├── run_20251120_072852.jsonl
+│   ├── run_20251120_073444.jsonl
+│   ├── run_20251120_073950.jsonl
+│   ├── run_20251120_092058.jsonl
+│   ├── run_20251120_092532.jsonl
+│   ├── run_20251120_092846.jsonl
+│   ├── run_20251120_092956.jsonl
+│   ├── run_20251120_093103.jsonl
+│   ├── run_20251120_104351.jsonl
+│   ├── run_20251120_104550.jsonl
+│   ├── run_20251120_105555.jsonl
+│   ├── run_20251120_111125.jsonl
+│   ├── run_20251120_111611.jsonl
+│   ├── run_20251124_104615.jsonl
+│   ├── run_20251126_162326.jsonl
+│   ├── run_20251126_202614.jsonl
+│   ├── run_20251128_063404.jsonl
+│   ├── run_20251128_070459.jsonl
+│   ├── run_20251128_071047.jsonl
+│   ├── run_20251128_071546.jsonl
+│   ├── run_20251128_072433.jsonl
+│   ├── run_20251128_074534.jsonl
+│   ├── run_20251128_075011.jsonl
+│   ├── run_20251128_091810.jsonl
+│   ├── run_20251202_073533.jsonl
+│   ├── run_20251202_090117.jsonl
+│   ├── run_20251202_090820.jsonl
+│   ├── run_20251202_092344.jsonl
+│   ├── run_20251202_095259.jsonl
+│   ├── run_20251202_103610.jsonl
+│   ├── run_20251202_105845.jsonl
+│   ├── run_20251202_110850.jsonl
+│   ├── run_20251202_124330.jsonl
+│   ├── run_20251202_130017.jsonl
+│   ├── run_20251202_130706.jsonl
+│   ├── run_20251202_131028.jsonl
+│   ├── run_20251202_223820.jsonl
+│   ├── run_20251203_004251.jsonl
+│   ├── run_20251203_065213.jsonl
+│   ├── run_20251203_070713.jsonl
+│   ├── run_20251203_074025.jsonl
+│   ├── run_20251203_074939.jsonl
+│   ├── run_20251203_075247.jsonl
+│   ├── run_20251203_080454.jsonl
+│   ├── run_20251203_080538.jsonl
+│   ├── run_20251203_081640.jsonl
+│   ├── run_20251203_082326.jsonl
+│   ├── run_20251203_091557.jsonl
+│   ├── run_20251203_092114.jsonl
+│   ├── run_20251203_092729.jsonl
+│   ├── run_20251203_093444.jsonl
+│   ├── run_20251203_094734.jsonl
+│   ├── run_20251203_125522.jsonl
+│   ├── run_20251204_092648.jsonl
+│   ├── run_20251204_094208.jsonl
+│   ├── run_20251204_094259.jsonl
+│   ├── run_20251204_094401.jsonl
+│   ├── run_20251204_104341.jsonl
+│   ├── run_20251204_111500.jsonl
+│   ├── run_20251205_064148.jsonl
+│   ├── run_20251206_162153.jsonl
+│   └── run_20251208_062624.jsonl
+├── params:<YOUR_KEY>
+├── project_tree.txt
+├── pyrightconfig.json
+├── pytest.ini
+├── reorg_tests.sh
+├── scripts
+│   ├── pre_market_check.py
+│   └── smoke_test.py
+├── synthetic_replay
+│   ├── run_20251204_155415.jsonl
+│   ├── run_20251204_155834.jsonl
+│   ├── run_20251204_160057.jsonl
+│   ├── run_20251204_160825.jsonl
+│   ├── run_20251204_161222.jsonl
+│   ├── run_20251204_161856.jsonl
+│   ├── run_20251205_054337.jsonl
+│   └── run_20251205_055339.jsonl
+└── tests
+    ├── __init__.py
+    ├── integration
+    │   ├── __init__.py
+    │   ├── test_a2m_readiness.py
+    │   ├── test_chain_snapshot.py
+    │   ├── test_contract_engine_sim.py
+    │   └── test_massive_contract_engine.py
+    ├── shadow
+    │   ├── __init__.py
+    │   ├── config_shadow.yaml
+    │   └── test_shadow_run.py
+    └── unit
+        ├── __init__.py
+        ├── test_elite_entry.py
+        └── test_elite_latency_precheck.py
 
-31 directories, 62 files
+31 directories, 152 files

@@ -1,289 +1,234 @@
 """
-MassiveOptionsWSAdapter — FINAL WORKING VERSION
-------------------------------------------------
-
-Handles Massive OPTIONS WebSocket streaming.
-
-NBBO events:
-    ev = "Q"    (REAL bid/ask NBBO stream)
-    ev = "OQ"   (greeks + extended quote)
-
-Correct Massive subscription format:
-    Q.O:<OCC_CODE>
-
-OCC_CODE must NOT include "O:" — the adapter adds it.
-Example final symbol:  Q.O:SPY251203C00682000
+MassiveOptionsWSAdapter v5.1 — FINAL FIXED (Async Subscriptions)
+---------------------------------------------------------------
+- Async set_occ_subscriptions() (required by MassiveMux v3.5)
+- Immediate application of new OCC topics when WS is live
+- Correct Massive NBBO schema handling
+- Compatible with ContractEngine refresh logic
 """
 
-import os
-import json
-import time
 import asyncio
+import json
 import logging
+import os
+import time
+from typing import Callable, List, Optional
+
 import websockets
-from typing import Dict, Any, List, Callable
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+WS_ENDPOINT = "wss://socket.massive.com/options"
+
+_SUB_PACE_SEC = 0.15
+_PING_INTERVAL = 15
+_RECONNECT_BACKOFF = 2.5
 
 
 class MassiveOptionsWSAdapter:
-    WS_URL = "wss://socket.massive.com/options"
-
-    def __init__(self, api_key: str, loop=None):
-        self.api_key = api_key
-        self.loop = loop or asyncio.get_event_loop()
-
-        self.ws = None
-
-        # Handlers registered by upper layers
-        self._nbbo_handlers: List[Callable] = []
-        self._quote_handlers: List[Callable] = []
-        self._reconnect_handlers: List[Callable] = []
-
-        # State
-        self._connected = asyncio.Event()
-        self._last_heartbeat = time.time()
-        self._router_task = None
-        self._heartbeat_task = None
-        self._reconnect_lock = asyncio.Lock()
-
-        # Reconnect backoff
-        self._retry = 1
-        self._max_retry = 20
-
-    # =============================================================
-    # REGISTRATION
-    # =============================================================
-    def on_nbbo(self, cb: Callable):
-        self._nbbo_handlers.append(cb)
-
-    def on_quote(self, cb: Callable):
-        self._quote_handlers.append(cb)
-
-    def on_reconnect(self, cb: Callable):
-        self._reconnect_handlers.append(cb)
-
-    # =============================================================
     @classmethod
-    def from_env(cls, loop=None):
-        key = os.getenv("MASSIVE_API_KEY")
-        if not key:
-            raise RuntimeError("Missing MASSIVE_API_KEY in environment")
-        return cls(key, loop=loop)
+    def from_env(cls):
+        api_key = os.getenv("MASSIVE_API_KEY")
+        endpoint = os.getenv("MASSIVE_WS_OPTIONS_URL", WS_ENDPOINT)
 
-    # =============================================================
-    # CONNECTION
-    # =============================================================
+        if not api_key:
+            raise RuntimeError("Environment variable MASSIVE_API_KEY is not set.")
+
+        inst = cls(api_key=api_key)
+        inst.endpoint = endpoint
+        return inst
+
+    # --------------------------------------------------------------
+    def __init__(self, api_key: Optional[str] = None, loop=None):
+        self.api_key = api_key or os.getenv("MASSIVE_API_KEY")
+        if not self.api_key:
+            raise RuntimeError("Missing MASSIVE_API_KEY")
+
+        self.loop = loop or asyncio.get_event_loop()
+        self.ws = None
+        self._running = False
+
+        self._on_option_cbs: List[Callable] = []
+        self._target_topics: List[str] = []
+
+        self.parent_orchestrator = None
+        self.endpoint = WS_ENDPOINT
+
+    # --------------------------------------------------------------
+    def on_option(self, cb):
+        self._on_option_cbs.append(cb)
+
+    # --------------------------------------------------------------
     async def connect(self):
-        """Main connection loop with exponential backoff."""
-        async with self._reconnect_lock:
-            while True:
-                try:
-                    logger.info("Connecting to Massive OPTIONS WS...")
+        self._running = True
+        self.loop.create_task(self._router())
+        logger.info("[OPTIONS] Connecting → %s", self.endpoint)
 
-                    self.ws = await websockets.connect(
-                        self.WS_URL,
-                        ping_interval=20,
-                        ping_timeout=10,
-                    )
-
-                    # Authenticate
-                    await self.ws.send(json.dumps({
-                        "action": "auth",
-                        "params": self.api_key
-                    }))
-                    logger.info("Auth message sent to Massive OPTIONS")
-
-                    self._connected.set()
-                    self._last_heartbeat = time.time()
-                    self._retry = 1
-
-                    # Start tasks
-                    self._router_task = self.loop.create_task(self._router())
-                    self._heartbeat_task = self.loop.create_task(self._heartbeat_watchdog())
-
-                    logger.info("Massive OPTIONS WS connected ✓")
-
-                    # Notify reconnect listeners
-                    for cb in self._reconnect_handlers:
-                        self.loop.create_task(cb())
-
-                    return
-
-                except Exception as e:
-                    logger.error(f"[OPTIONS] WS connect failed: {e}")
-                    await asyncio.sleep(self._retry)
-                    self._retry = min(self._retry * 2, self._max_retry)
-
-    # =============================================================
-    # SUBSCRIBE OCC CODES
-    # =============================================================
-    async def subscribe_contracts(self, occ_codes: List[str]):
-        """
-        Accepts PURE OCC codes like:
-            SPY251203C00680000
-
-        Sends:
-            Q.O:<OCC>
-
-        NEVER send "O:O:".
-        """
-
-        if not self.ws:
-            await self.connect()
-
-        BATCH = 4
-
-        for i in range(0, len(occ_codes), BATCH):
-            batch = occ_codes[i : i + BATCH]
-
-            final_codes = []
-            for occ in batch:
-                if occ.startswith("O:"):
-                    occ = occ[2:]     # remove accidental prefix
-                final_codes.append(f"O:{occ}")  # EXACTLY ONE prefix
-
-            syms = [f"Q.{c}" for c in final_codes]
-
-            msg = json.dumps({
-                "action": "subscribe",
-                "params": ",".join(syms)
-            })
-
-            try:
-                await self.ws.send(msg)
-                logger.info(f"[OPTIONS] Subscribed to {syms}")
-            except Exception as e:
-                logger.error(f"[OPTIONS] subscribe failed ({e}) — reconnecting…")
-                await self.connect()
-
-            await asyncio.sleep(0.05)
-
-    # =============================================================
-    # ROUTER
-    # =============================================================
-    async def _router(self):
-        """Reads all incoming WS messages and dispatches them."""
-        try:
-            async for raw in self.ws:
-                now = time.time()
-                self._last_heartbeat = now
-
-                try:
-                    msg = json.loads(raw)
-                except Exception:
-                    continue
-
-                events = msg if isinstance(msg, list) else [msg]
-
-                for ev in events:
-                    await self._dispatch(ev, now)
-
-        except Exception as e:
-            logger.error(f"[OPTIONS] Router crashed: {e}")
-
-        finally:
-            logger.warning("[OPTIONS] Router ending — reconnecting…")
-            await self.connect()
-
-    # =============================================================
-    # DISPATCH (NBBO + OQ)
-    # =============================================================
-    async def _dispatch(self, event: Dict[str, Any], ts: float):
-        ev = event.get("ev")
-
-        # --------------------------------------------------------
-        # MASSIVE NBBO = ev "Q"
-        # --------------------------------------------------------
-        if ev == "Q":
-            occ = event.get("sym", "")
-            if not occ.startswith("O:"):
-                return
-
-            normalized = {
-                "symbol": occ[2:5],
-                "contract": occ,
-                "bid": event.get("bp"),
-                "ask": event.get("ap"),
-                "bid_size": event.get("bs"),
-                "ask_size": event.get("as"),
-                "iv": event.get("iv"),
-                "delta": event.get("delta"),
-                "gamma": event.get("gamma"),
-                "theta": event.get("theta"),
-                "vega": event.get("vega"),
-                "volume": event.get("vol"),
-                "open_interest": event.get("oi"),
-                "_recv_ts": ts,
-                "ev": "Q",
-            }
-
-            for cb in self._nbbo_handlers:
-                self.loop.create_task(cb(normalized))
-
-            return
-
-        # --------------------------------------------------------
-        # MASSIVE OQ (extended quote)
-        # --------------------------------------------------------
-        if ev == "OQ":
-            occ = event.get("sym", "")
-            if not occ.startswith("O:"):
-                return
-
-            normalized = {
-                "symbol": occ[2:5],
-                "contract": occ,
-                "bid": event.get("bp"),
-                "ask": event.get("ap"),
-                "bid_size": event.get("bs"),
-                "ask_size": event.get("as"),
-                "iv": event.get("iv"),
-                "delta": event.get("delta"),
-                "gamma": event.get("gamma"),
-                "theta": event.get("theta"),
-                "vega": event.get("vega"),
-                "volume": event.get("vol"),
-                "open_interest": event.get("oi"),
-                "_recv_ts": ts,
-                "ev": "OQ",
-            }
-
-            # NBBO listeners ALSO get OQ
-            for cb in self._nbbo_handlers:
-                self.loop.create_task(cb(normalized))
-
-            # Specialized quote listeners
-            for cb in self._quote_handlers:
-                self.loop.create_task(cb(normalized))
-
-            return
-
-        # Ignore status packets / heartbeats / unknown events
-        return
-
-    # =============================================================
-    # HEARTBEAT WATCHDOG
-    # =============================================================
-    async def _heartbeat_watchdog(self):
-        try:
-            while True:
-                await asyncio.sleep(5)
-                if time.time() - self._last_heartbeat > 15:
-                    logger.error("[OPTIONS] Heartbeat stale — reconnecting")
-                    await self.connect()
-        except asyncio.CancelledError:
-            pass
-
-    # =============================================================
-    # CLEAN SHUTDOWN
-    # =============================================================
     async def close(self):
+        self._running = False
         if self.ws:
-            await self.ws.close()
-        if self._router_task:
-            self._router_task.cancel()
-        if self._heartbeat_task:
-            self._heartbeat_task.cancel()
+            try:
+                await self.ws.close()
+            except:
+                pass
 
-        logger.info("[OPTIONS] Massive WS closed")
+    # --------------------------------------------------------------
+    # ASYNC — REQUIRED BY MassiveMux + ContractEngine
+    # --------------------------------------------------------------
+    async def set_occ_subscriptions(self, occ_codes):
+        """
+        Convert OCC codes → Massive WS topics and store them.
+
+        If WS already connected → immediately subscribe.
+        """
+        topics = []
+        for c in occ_codes:
+            s = str(c)
+            if not s.startswith("Q.O:"):
+                s = "Q.O:" + s
+            topics.append(s)
+
+        self._target_topics = topics
+
+        print("\n===== DEBUG OCC SUBSCRIPTIONS =====")
+        for t in topics:
+            print(t)
+        print("===== END OCC SUBSCRIPTIONS =====\n")
+
+        # ⭐ CRITICAL FIX — apply subs immediately if WS is already connected
+        if self.ws:
+            await self._subscribe_current_topics()
+
+        return True  # ⭐ REQUIRED so MassiveMux can safely `await` this
+
+
+    # --------------------------------------------------------------
+    async def _router(self):
+        backoff = _RECONNECT_BACKOFF
+
+        while self._running:
+            try:
+                async with websockets.connect(self.endpoint, ping_interval=None) as ws:
+                    self.ws = ws
+                    logger.info("[OPTIONS] Connected ✓")
+
+                    await self._send({"action": "auth", "params": self.api_key})
+                    logger.info("[OPTIONS] Auth sent")
+
+                    await self._subscribe_current_topics()
+                    ping_task = self.loop.create_task(self._pinger())
+
+                    # ---------------- MAIN READ LOOP -----------------
+                    async for raw in ws:
+                        print("RAW WS MSG:", raw)  # DEBUG
+
+                        try:
+                            msgs = json.loads(raw)
+                        except Exception:
+                            logger.exception("[OPTIONS] JSON decode failed")
+                            continue
+
+                        if isinstance(msgs, dict):
+                            msgs = [msgs]
+
+                        for msg in msgs:
+                            if msg.get("ev") == "Q":
+                                self._handle_nbbo_message(msg)
+
+                    ping_task.cancel()
+
+            except Exception as e:
+                logger.warning("[OPTIONS] Router disconnected: %s", e)
+
+            await asyncio.sleep(backoff)
+
+    # --------------------------------------------------------------
+    async def _pinger(self):
+        while self._running and self.ws:
+            try:
+                await asyncio.sleep(_PING_INTERVAL)
+                await self._send({"action": "ping"})
+            except:
+                return
+
+    async def _send(self, obj):
+        if self.ws:
+            await self.ws.send(json.dumps(obj))
+
+    # --------------------------------------------------------------
+    async def _subscribe_current_topics(self):
+        if not self._target_topics:
+            logger.warning("[OPTIONS] No OCC topics set.")
+            return
+
+        logger.info("[OPTIONS] Subscribing to %d topics", len(self._target_topics))
+
+        for topic in self._target_topics:
+            frame = {"action": "subscribe", "params": topic}
+            await self._send(frame)
+            print("[OPTIONS] Subscribed →", topic)
+            await asyncio.sleep(_SUB_PACE_SEC)
+
+    # --------------------------------------------------------------
+    # NEW MASSIVE NBBO FORMAT
+    # --------------------------------------------------------------
+    def _handle_nbbo_message(self, msg):
+        try:
+            raw_sym = msg.get("sym")  # Example: "O:SPY251212C00500000"
+            if not raw_sym or not raw_sym.startswith("O:"):
+                return
+
+            occ = raw_sym[2:]  # remove "O:"
+            root = self._parse_root_from_occ(occ)
+            if not root:
+                return
+
+            bp = msg.get("bp")
+            ap = msg.get("ap")
+            if bp is None or ap is None:
+                return
+
+            ts_recv = time.time()
+
+            event = {
+                "ev": "Q",
+                "symbol": root,
+                "contract": occ,
+                "bid": float(bp),
+                "ask": float(ap),
+                "bs": msg.get("bs"),
+                "as": msg.get("as"),
+                "t": msg.get("t"),
+                "_recv_ts": ts_recv,
+            }
+
+            # Freshness update
+            orch = self.parent_orchestrator
+            if orch and orch.freshness and root in orch.freshness:
+                orch.freshness[root].update(int(ts_recv * 1000))
+
+            print("[WS → CALLBACK] NBBO event:", event)
+
+            for cb in self._on_option_cbs:
+                self.loop.create_task(self._safe_cb(cb, event))
+
+        except Exception:
+            logger.exception("[OPTIONS] NBBO handler failed")
+
+    async def _safe_cb(self, cb, event):
+        try:
+            if asyncio.iscoroutinefunction(cb):
+                await cb(event)
+            else:
+                cb(event)
+        except Exception:
+            logger.exception("[OPTIONS] Option callback failed")
+
+
+    @staticmethod
+    def _parse_root_from_occ(occ):
+        for i, ch in enumerate(occ):
+            if ch.isdigit():
+                return occ[:i]
+        return None

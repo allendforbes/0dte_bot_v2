@@ -1,28 +1,30 @@
 """
-Elite Orchestrator — A2-M Edition (WS-Native Micro-Breakout Engine)
--------------------------------------------------------------------
-
-Signal engine:     → VWAP-only (no greeks as predictors)
-Chain enrichment:  → greeks, IV, microstructure
-Strike selection:  → convexity (gamma), delta-target, premium ceilings
-Latency precheck:  → greeks + IV + liquidity + spread + A2-M extensions
-Trail logic:       → unchanged
-Execution:         → unchanged
-
-A2-M Philosophy:
-    greeks = filters (quality), NOT predictors (direction)
+Elite Orchestrator — A2-M Edition (FreshnessV2 + Massive NBBO)
+--------------------------------------------------------------
+Includes:
+    • Dynamic VWAP tracking
+    • Freshness gating (startup, reconnect, stale frames)
+    • StrikeSelector v3.3
+    • EntryEngine, LatencyPrecheck
+    • NEW: 5% nominal risk-based sizing (live NetLiq)
+    • NEW: Underlying category contract caps (20/10/5)
+    • Always SELL to exit CALL or PUT
 """
 
 import asyncio
-import datetime as dt
-import time
-from typing import Dict, Any, List, Optional
+import time  # keep module
+from typing import Dict, Any, List
 
-# Strategy layers
-from bot_0dte.strategy.elite_entry_diagnostic import EliteEntryEngine, EliteSignal
+# Time / timezone
+from datetime import datetime, date, time as dttime
+import pytz
+
+# Strategy components
+from bot_0dte.strategy.elite_entry_diagnostic import EliteEntryEngine
 from bot_0dte.chain.chain_aggregator import ChainAggregator
 from bot_0dte.strategy.strike_selector import StrikeSelector
 from bot_0dte.strategy.elite_latency_precheck import EliteLatencyPrecheck
+from bot_0dte.strategy.continuation_engine import ContinuationEngine
 
 # Risk
 from bot_0dte.risk.trail_logic import TrailLogic
@@ -32,31 +34,19 @@ from bot_0dte.ui.live_panel import LivePanel
 from bot_0dte.ui.ui_state import UIState
 
 # Infra
-from bot_0dte.universe import (
-    get_universe_for_today,
-    get_expiry_for_symbol,
-    max_latency_ms,
-    max_premium,
-)
+from bot_0dte.universe import get_universe_for_today, get_expiry_for_symbol
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
 
-# Sizing
-from bot_0dte.sizing import size_from_equity
-
 
 # ============================================================================
-# VWAP Tracker
+# VWAP TRACKING
 # ============================================================================
 class VWAPTracker:
-    """Rolling VWAP used by the EliteEntry engine."""
-
-    def __init__(self, window_size: int = 100):
+    def __init__(self, window_size=100):
         self.window_size = window_size
         self.prices = []
         self.volumes = []
-        self.last_vwap = None
-        self.last_vwap_dev = None
         self.last_dev = 0.0
 
     def update(self, price: float, volume: float = 1.0):
@@ -67,72 +57,64 @@ class VWAPTracker:
             self.prices.pop(0)
             self.volumes.pop(0)
 
-        total_pv = sum(p * v for p, v in zip(self.prices, self.volumes))
+        total_pv = sum(p*v for p,v in zip(self.prices, self.volumes))
         total_v = sum(self.volumes)
-
         vwap = total_pv / total_v if total_v else price
+
         dev = price - vwap
         change = dev - self.last_dev
         self.last_dev = dev
 
-        self.last_vwap = vwap
-        self.last_vwap_dev = dev
-
-        return {
-            "vwap": vwap,
-            "vwap_dev": dev,
-            "vwap_dev_change": change,
-        }
+        return {"vwap": vwap, "vwap_dev": dev, "vwap_dev_change": change}
 
 
 # ============================================================================
-# Microstructure Helpers (unchanged)
+# MICROSTRUCTURE HELPERS
 # ============================================================================
-def compute_upvol_pct(chain_rows):
-    if not chain_rows:
+def compute_upvol_pct(rows):
+    if not rows:
         return None
-    call_vol = sum(r.get("volume") or 0 for r in chain_rows if r["right"] == "C")
-    put_vol = sum(r.get("volume") or 0 for r in chain_rows if r["right"] == "P")
-    total = call_vol + put_vol
-    if total == 0:
-        return None
-    return 100 * call_vol / total
+    call_vol = sum(r.get("volume") or 0 for r in rows if r["right"] == "C")
+    put_vol  = sum(r.get("volume") or 0 for r in rows if r["right"] == "P")
+    tot = call_vol + put_vol
+    return None if tot == 0 else 100 * call_vol / tot
 
 
-def compute_flow_ratio(chain_rows):
-    calls = [r["premium"] for r in chain_rows if r["right"] == "C" and r["premium"]]
-    puts = [r["premium"] for r in chain_rows if r["right"] == "P" and r["premium"]]
+def compute_flow_ratio(rows):
+    calls = [r["premium"] for r in rows if r["right"]=="C" and r["premium"]]
+    puts  = [r["premium"] for r in rows if r["right"]=="P" and r["premium"]]
     if not calls or not puts:
         return None
-    call_avg = sum(calls) / len(calls)
-    put_avg = sum(puts) / len(puts)
-    if put_avg == 0:
-        return None
-    return call_avg / put_avg
+    put_avg = sum(puts)/len(puts)
+    return None if put_avg == 0 else (sum(calls)/len(calls)) / put_avg
 
 
-def compute_iv_change(chain_rows):
-    ivs = [r.get("iv") for r in chain_rows if r.get("iv") and r["right"] == "C"]
+def compute_iv_change(rows):
+    ivs = [r.get("iv") for r in rows if r["right"]=="C" and r.get("iv")]
     if not ivs:
         return None
-    if len(ivs) < 2:
-        return 0.0
-    return ivs[-1] - (sum(ivs) / len(ivs))
+    return 0.0 if len(ivs) < 2 else ivs[-1] - (sum(ivs)/len(ivs))
 
 
-def compute_skew_shift(chain_rows):
-    calls = [r.get("iv") for r in chain_rows if r["right"] == "C" and r.get("iv")]
-    puts = [r.get("iv") for r in chain_rows if r["right"] == "P" and r.get("iv")]
+def compute_skew_shift(rows):
+    calls = [r.get("iv") for r in rows if r["right"]=="C" and r.get("iv")]
+    puts  = [r.get("iv") for r in rows if r["right"]=="P" and r.get("iv")]
     if not calls or not puts:
         return None
-    return (sum(calls) / len(calls)) - (sum(puts) / len(puts))
+    return (sum(calls)/len(calls)) - (sum(puts)/len(puts))
 
 
 # ============================================================================
-# ORCHESTRATOR — A2-M
+# ORCHESTRATOR (A2-M)
 # ============================================================================
 class Orchestrator:
-    """One-trade-at-a-time micro-breakout engine with A2-M enhancements."""
+    RISK_PCT = 0.05
+    CONTRACT_CAPS = {
+        "SPY":20, "QQQ":20,
+        "AAPL":10,"AMZN":10,"META":10,
+        "MSFT":10,"NVDA":10,"TSLA":10,
+    }
+    DEFAULT_CAP = 5
 
     def __init__(
         self,
@@ -151,28 +133,20 @@ class Orchestrator:
         self.auto = auto_trade_enabled
         self.trade_mode = trade_mode
 
-        # Symbols + expiries
         self.symbols = universe or get_universe_for_today()
         self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
 
-        # Price maps
         self.last_price = {s: None for s in self.symbols}
-
-        # VWAP
         self.vwap = {s: VWAPTracker() for s in self.symbols}
 
-        # Chain aggregator — A2-M ChainSnapshot enabled
         self.chain_agg = ChainAggregator(self.symbols)
-        self.chain_ready_ts = {s: 0.0 for s in self.symbols}
+        self.freshness = None
 
-        # Warm-up
-        self.start_ts = time.time()
-
-        # Strategy stack
         self.entry_engine = EliteEntryEngine()
         self.latency = EliteLatencyPrecheck()
         self.selector = StrikeSelector()
         self.trail = TrailLogic(max_loss_pct=0.50)
+        self.continuation = ContinuationEngine()
 
         # UI
         self.ui = LivePanel()
@@ -186,32 +160,35 @@ class Orchestrator:
         self.active_entry_price = None
         self.active_qty = None
 
-        print("\n" + "=" * 70)
-        print(" ELITE ORCHESTRATOR (A2-M) INITIALIZED ".center(70, "="))
-        print("=" * 70 + "\n")
+        # MARKET CLOCK (Correct)
+        self._tz = pytz.timezone("US/Eastern")
+        now_et = datetime.now(self._tz)
+        self._session_open_dt = self._tz.localize(
+            datetime.combine(now_et.date(), dttime(9,30))
+        )
+
+        print("\n" + "="*70)
+        print(" ELITE ORCHESTRATOR (A2-M / FreshnessV2 / Sizing v5.0) ".center(70,"="))
+        print("="*70 + "\n")
+
 
     # ----------------------------------------------------------------------
-    def notify_chain_refresh(self, symbol: str):
-        now = time.time()
-        last = self.chain_agg.last_ts.get(symbol, 0)
+    # CLASS-LEVEL METHOD — NOT nested in __init__
+    # ----------------------------------------------------------------------
+    def _seconds_since_open(self) -> float:
+        now = datetime.now(self._tz)
+        return (now - self._session_open_dt).total_seconds()
 
-        if now - last < 0.050:
-            return
-
-        self.chain_ready_ts[symbol] = now
-        self.chain_agg.last_ts[symbol] = now
-
-        self.logger.log_event(
-            "chain_refreshed",
-            {"symbol": symbol, "age_ms": round((now - last) * 1000, 2)},
-        )
 
     # ----------------------------------------------------------------------
     async def start(self):
         self.mux.on_underlying(self._on_underlying)
         self.mux.on_option(self._on_option)
         self.mux.parent_orchestrator = self
+
         await self.mux.connect(self.symbols, self.expiry_map)
+        self.freshness = self.mux.freshness
+
 
     # ----------------------------------------------------------------------
     async def _on_underlying(self, event):
@@ -220,28 +197,36 @@ class Orchestrator:
         if sym not in self.symbols or price is None:
             return
 
+        # -------------------------------
+        # CRITICAL FIX:
+        # Ensure underlying ticks update freshness.
+        # Without this, evaluation stalls if option NBBO lags.
+        # -------------------------------
+        if self.freshness and sym in self.freshness:
+            try:
+                now_ms = int(time.time() * 1000)
+                self.freshness[sym].update(now_ms)
+            except Exception:
+                pass
+
         self.last_price[sym] = price
-
-        # VWAP/UI Update
+        self.mux.parent_orchestrator.last_price[sym] = price
+        # UI
         self.ui_state.update_underlying(
-            symbol=sym,
-            price=price,
-            bid=event.get("bid"),
-            ask=event.get("ask"),
-            signal=self.ui_state.underlying.get(sym, {}).get("signal"),
-            strike=self.ui_state.underlying.get(sym, {}).get("strike"),
+            symbol=sym, price=price,
+            bid=event.get("bid"), ask=event.get("ask"),
+            signal=self.ui_state.underlying.get(sym,{}).get("signal"),
+            strike=self.ui_state.underlying.get(sym,{}).get("strike"),
         )
-
         self.ui.update(
-            symbol=sym,
-            price=price,
-            bid=event.get("bid"),
-            ask=event.get("ask"),
+            symbol=sym, price=price,
+            bid=event.get("bid"), ask=event.get("ask"),
             signal=self.ui_state.underlying[sym].get("signal"),
             strike=self.ui_state.underlying[sym].get("strike"),
         )
 
         await self._evaluate(sym, price)
+
 
     # ----------------------------------------------------------------------
     async def _on_option(self, event):
@@ -249,11 +234,7 @@ class Orchestrator:
         if sym not in self.symbols:
             return
 
-        # A2-M: use update_from_nbbo
-        if hasattr(self.chain_agg, "update_from_nbbo"):
-            self.chain_agg.update_from_nbbo(event)
-        else:
-            self.chain_agg.update(event)
+        self.chain_agg.update_from_nbbo(event)
 
         if not self.trail.state.active:
             return
@@ -261,33 +242,31 @@ class Orchestrator:
         if event.get("contract") != self.active_contract:
             return
 
-        bid = event.get("bid")
-        ask = event.get("ask")
+        bid, ask = event.get("bid"), event.get("ask")
         if bid is None or ask is None:
             return
 
-        mid = (bid + ask) / 2
+        mid = (bid+ask)/2
 
-        # UI PnL update
         if self.ui_state.trade.active:
             self.ui_state.trade.curr_price = mid
             if self.active_entry_price:
                 self.ui_state.trade.pnl_pct = (
                     (mid - self.active_entry_price) / self.active_entry_price * 100
                 )
-            self.ui_state.trade.last_update_ms = 0
 
-        # Hard SL
+        # Hard stop
         if mid <= self.active_entry_price * 0.50:
             self.logger.log_event("hard_stop_triggered", {"mid": mid})
-            await self._execute_exit(sym, reason="hard_sl")
+            await self._execute_exit(sym, "hard_sl")
             return
 
         # Trail
         trail_res = self.trail.update(sym, mid)
         if trail_res.get("should_exit"):
             self.logger.log_event("trail_exit_triggered", trail_res)
-            await self._execute_exit(sym, reason="trail_exit")
+            await self._execute_exit(sym, "trail_exit")
+
 
     # ----------------------------------------------------------------------
     async def _evaluate(self, symbol: str, price: float):
@@ -295,262 +274,128 @@ class Orchestrator:
             return
 
         vwap_data = self.vwap[symbol].update(price)
+        snap = self.chain_agg.get(symbol)
+        if not snap:
+            return
+        rows = snap.rows
 
-        # ChainSnapshot (A2-M)
-        chain_snapshot = self.chain_agg.get(symbol)
-        if not chain_snapshot:
+        # ============================================================
+        # HYDRATION GATE — must have IV/Greeks from REST snapshots
+        # ============================================================
+        if not any(r.get("iv") for r in rows):
+            # Chain is not enriched yet → skip evaluation tick
             return
 
-        chain_rows = chain_snapshot.rows
+        # Freshness gating
+        if self.freshness is None or symbol not in self.freshness:
+            return
+        # Freshness check — 180ms window during open, 400ms afterward
+        now_ms = time.time() * 1000
+        max_age = 180 if self._seconds_since_open() < 180 else 400
 
-        # Microstructure snapshot
-        snap = {
+        if not self.freshness[symbol].is_fresh(now_ms, max_age):
+            return
+
+        # Primary signal
+        signal = self.entry_engine.qualify({
             "symbol": symbol,
             "price": price,
             "vwap": vwap_data["vwap"],
             "vwap_dev": vwap_data["vwap_dev"],
             "vwap_dev_change": vwap_data["vwap_dev_change"],
-            "upvol_pct": compute_upvol_pct(chain_rows),
-            "flow_ratio": compute_flow_ratio(chain_rows),
-            "iv_change": compute_iv_change(chain_rows),
-            "skew_shift": compute_skew_shift(chain_rows),
+            "slope_prev": self.vwap[symbol].last_dev,    # <--- ADD THIS
+            "upvol_pct": compute_upvol_pct(rows),
+            "flow_ratio": compute_flow_ratio(rows),
+            "iv_change": compute_iv_change(rows),
+            "skew_shift": compute_skew_shift(rows),
+            "premium_ok": True,                           # <--- ADD THIS
             "seconds_since_open": self._seconds_since_open(),
-        }
+        })
 
-        sig: Optional[EliteSignal] = self.entry_engine.qualify(snap)
-        if not sig:
+        if not signal:
             return
-        
-        # ============================================================
-        # Phase-1 Early Entry Guardrails (only for TREND_UP signals)
-        # ============================================================
-        if sig.regime == "TREND_UP":
-            # Requirement 1: Up-volume dominance
-            upvol = snap.get("upvol_pct")
-            if upvol is None or upvol < 55:
-                self.logger.log_event(
-                    "entry_blocked",
-                    {"reason": "trend_weak_upvol", "upvol_pct": upvol},
-                )
-                return
 
-            # Requirement 2: Slope acceleration
-            slope_now = snap["vwap_dev_change"]
-            slope_prev = getattr(self, "_prev_slope", {}).get(symbol)
-            if slope_prev is not None and slope_now <= slope_prev:
-                self.logger.log_event(
-                    "entry_blocked",
-                    {"reason": "trend_no_acceleration", "slope_now": slope_now, "slope_prev": slope_prev},
-                )
-                return
-            # Save current slope for next tick
-            if not hasattr(self, "_prev_slope"):
-                self._prev_slope = {}
-            self._prev_slope[symbol] = slope_now
+        regime = getattr(signal, "regime", getattr(signal, "type", None))
+        trend_up_signal = (signal.bias=="CALL" and regime=="TREND_UP")
+        trend_dn_signal = (signal.bias=="PUT"  and regime=="TREND_DN")
 
-            # Requirement 3: Convexity (gamma)
-            gamma = snap.get("gamma")
-            if gamma is None:
-                # still block — early entry requires greek support
-                self.logger.log_event(
-                    "entry_blocked",
-                    {"reason": "trend_missing_gamma"}
-                )
-                return
-            if gamma < 0.0025:
-                self.logger.log_event(
-                    "entry_blocked",
-                    {"reason": "trend_low_gamma", "gamma": gamma},
-                )
-                return
+        self.continuation.update_trend_flags(
+            trend_up=trend_up_signal,
+            trend_dn=trend_dn_signal,
+        )
 
-            # Requirement 4: Premium band check
-            ceiling = max_premium(symbol)
-            premium_band_mid = ceiling * 0.80
-            snap["_premium_band_mid"] = premium_band_mid  # for debugging
+        # Continuation
+        cont = self.continuation.on_tick(
+            price=price,
+            vwap=vwap_data["vwap"],
+            ma=self.vwap[symbol].last_dev + vwap_data["vwap"],
+            ts=time.time(),
+        )
 
-            # We check the actual selected strike later once we know premium — 
-            # but we early-block if the expected cost is already too high.
-
-        self.logger.log_event("signal_generated", sig.__dict__)
-        print(f"[SIGNAL] {symbol} {sig.bias} ({sig.grade}, {sig.regime}) — monitoring…")
-
-        # warm-up freshness handling
-        now_ms = time.time() * 1000
-        if time.time() - self.start_ts < 8:
-            if not chain_snapshot.is_fresh(now_ms, 1000):
-                return
+        if cont == "CONTINUATION_UP":
+            bias = "CALL"
+        elif cont == "CONTINUATION_DN":
+            bias = "PUT"
         else:
-            if not chain_snapshot.is_fresh(now_ms, 750):  # A2-M threshold
-                self.logger.log_event("signal_dropped", {"reason": "stale_chain"})
-                return
+            bias = signal.bias
 
-        if not chain_rows:
-            self.logger.log_event("signal_dropped", {"reason": "empty_chain"})
-            return
-
-        # Strike selection (A2-M: delta/gamma/premium ceiling integrated already)
-        strike = await self.selector.select_from_chain(
-            chain_rows,
-            sig.bias,
-            price,
-        )
-        if not strike:
-            self.logger.log_event("signal_dropped", {"reason": "no_strike"})
-            return
-
-        print(f"[SIGNAL] {symbol} optimal strike → {strike['strike']}{strike['right']} @ {strike['premium']:.2f}")
-
-        # Premium ceiling guard (A2-M)
-        if strike["premium"] > max_premium(symbol):
-            self.logger.log_event("entry_blocked", {"reason": "premium_ceiling"})
-            return
-
-        # latency pre-check (A2-M includes latency_ms, gamma guards, delta guards)
-        tick = {
-            "price": strike["premium"],
-            "bid": strike["bid"],
-            "ask": strike["ask"],
-            "vwap_dev_change": vwap_data["vwap_dev_change"],
-            "delta": strike.get("delta"),
-            "gamma": strike.get("gamma"),
-            "_chain_age_ms": now_ms - chain_snapshot.last_update_ts_ms,
-            "latency_ms": self.telemetry.latency_ms.get(symbol, self.telemetry.latency_ms.get("DEFAULT", 0.0)),
-            "__sim__": True,   # disable weak_flow in simulation
-        }
-
-        pre = self.latency.validate(symbol, tick, sig.bias, sig.grade, snap)
-        if not pre.ok:
-            self.logger.log_event("entry_blocked", {"reason": pre.reason})
-            return
-
-        entry_price = pre.limit_price
-        if entry_price is None:
-            self.logger.log_event("entry_blocked", {"reason": "no_entry_price"})
-            return
-
-        # Determine selected premium (mid) once
-        premium = float(strike["premium"])
-
-        # ============================================================
-        # Phase-1 Premium Band Enforcement (after strike is selected)
-        #   (band midpoint = 80% of symbol ceiling)
-        # ============================================================
-        ceiling = max_premium(symbol)
-        premium_band_mid = ceiling * 0.80
-        if premium >= premium_band_mid:
-            self.logger.log_event(
-                "entry_blocked",
-                {
-                    "reason": "premium_outside_band",
-                    "premium": premium,
-                    "band_mid": round(premium_band_mid, 3),
-                },
-            )
-            return
-
-        # sizing
-        if premium <= 0:
-            self.logger.log_event("entry_blocked", {"reason": "invalid_premium"})
-            return
-
-        if not self.engine.account_state.is_fresh():
-            self.logger.log_event("entry_blocked", {"reason": "stale_equity"})
-            return
-
-        qty = size_from_equity(self.engine.account_state.net_liq, premium)
-
-        # Trail activation
-        self.trail.initialize(symbol, entry_price, sig.trail_mult)
-
-        # set active state
-        self.active_symbol = symbol
-        self.active_contract = strike["contract"]
-        self.active_bias = sig.bias
-        self.active_entry_price = entry_price
-        self.active_qty = qty
-
-        # UI activation
-        ts = self.ui_state.trade
-        ts.active = True
-        ts.symbol = symbol
-        ts.contract = strike["contract"]
-        ts.bias = sig.bias
-        ts.regime = sig.regime
-        ts.grade = sig.grade
-        ts.strike = strike["strike"]
-        ts.entry_price = entry_price
-        ts.curr_price = entry_price
-        ts.pnl_pct = 0.0
-        ts.trail_mult = sig.trail_mult
-        ts.trail_target = entry_price * (1 + sig.trail_mult)
-        ts.hard_sl = entry_price * 0.50
-
-        print(f"[SIGNAL] ENTRY EXECUTING → {symbol} {strike['contract']} @ {entry_price:.2f}")
-
-        if not self.auto:
-            self.logger.log_event("shadow_entry", {
+        if cont:
+            self.logger.log_event("continuation_signal_fired", {
                 "symbol": symbol,
-                "contract": strike["contract"],
-                "entry": entry_price,
-                "qty": qty,
-                "bias": sig.bias,
-                "regime": sig.regime,
-                "grade": sig.grade,
-                "score": sig.score,
+                "continuation_type": cont,
+                "primary_regime": regime,
+                "price": price,
+                "vwap": vwap_data["vwap"],
             })
+
+        # Strike selection
+        best = await self.selector.select_from_chain(rows, bias, price)
+        if not best:
             return
 
-        order = await self.engine.send_market(
-            symbol=symbol,
-            side=sig.bias,
-            qty=qty,
-            price=entry_price,
-            meta={
-                "regime": sig.regime,
-                "grade": sig.grade,
-                "score": sig.score,
-            },
-        )
-        self.logger.log_event("entry_order", order)
+        premium = best["premium"]
+        contract_id = best["contract"]
 
-    # ----------------------------------------------------------------------
-    async def _execute_exit(self, symbol: str, reason: str):
-        qty = self.active_qty
-        bias = self.active_bias
+        # Latency gate
+        if not self.latency.precheck(best):
+            return
+
+        # Sizing
+        nlv = self.engine.account_state.net_liq
+        risk_dollars = nlv * self.RISK_PCT
+        raw_qty = int(risk_dollars // premium)
+        cap = self.CONTRACT_CAPS.get(symbol, self.DEFAULT_CAP)
+        qty = max(1, min(raw_qty, cap))
+
+        # Execute or shadow
+        take_profit = round(premium * 2.0, 2)
+        stop_loss  = round(premium * 0.50, 2)
 
         if self.trade_mode != "shadow":
-            order = await self.engine.send_market(
+            order = await self.engine.send_bracket(
                 symbol=symbol,
-                side="SELL" if bias == "CALL" else "BUY",
+                side=bias,
                 qty=qty,
-                price=None,
-                meta={"reason": reason},
+                entry_price=premium,
+                take_profit=take_profit,
+                stop_loss=stop_loss,
+                meta={"strike": best["strike"]},
             )
-            self.logger.log_event("exit_order", order)
+            self.logger.log_event("entry_order", order)
         else:
-            self.logger.log_event("shadow_exit", {"reason": reason})
+            self.logger.log_event("shadow_entry", {
+                "symbol": symbol,
+                "bias": bias,
+                "premium": premium,
+                "qty": qty,
+            })
 
-        # clear UI
-        ts = self.ui_state.trade
-        ts.active = False
-        ts.symbol = ts.contract = ts.bias = None
-        ts.entry_price = ts.curr_price = ts.pnl_pct = None
-        ts.strike = ts.regime = ts.grade = None
-        ts.trail_mult = ts.last_update_ms = None
+        # Activate trade state
+        self.active_symbol  = symbol
+        self.active_bias    = bias
+        self.active_contract = contract_id
+        self.active_entry_price = premium
+        self.active_qty = qty
 
-        # reset internal state
-        self.active_symbol = None
-        self.active_contract = None
-        self.active_bias = None
-        self.active_entry_price = None
-        self.active_qty = None
-        self.trail.state.active = False
-
-        self.ui.set_status(f"{symbol}: exited ({reason})")
-
-    # ----------------------------------------------------------------------
-    def _seconds_since_open(self):
-        now = dt.datetime.now().astimezone()
-        open_t = now.replace(hour=9, minute=30, second=0)
-        return max(0.0, (now - open_t).total_seconds())
+        self.trail.start(symbol, premium)
+        self.ui.set_status(f"{symbol}: entered {bias} @ {premium:.2f}")

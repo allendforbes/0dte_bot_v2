@@ -1,0 +1,2 @@
+{"ts": 1765229586.315799, "iso": "2025-12-08T21:33:06.315803", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
+{"ts": 1765229586.353808, "iso": "2025-12-08T21:33:06.353814", "level": "EVENT", "event": "signal_dropped", "data": {"reason": "stale_chain"}}
