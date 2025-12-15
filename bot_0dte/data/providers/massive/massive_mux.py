@@ -1,15 +1,17 @@
 """
-MassiveMux v3.5 — Underlying Router FIXED
------------------------------------------
-✓ Underlying ticks → engine.on_underlying → orchestrator.on_underlying
-✓ Proper await set_occ_subscriptions
-✓ Underlying warmup supported
-✓ Freshness trackers preserved
+MassiveMux v3.6 — FULLY CORRECTED + INSTRUMENTED
+------------------------------------------------
+✔ Deterministic WS shutdown
+✔ No orphan adapters
+✔ Proper orchestrator ownership
+✔ Clean Ctrl+C exit
+✔ INSTRUMENTED: Precise await boundary logging
 """
 
 import asyncio
 import logging
 from typing import Dict, List
+import time
 
 from bot_0dte.contracts.massive_contract_engine import MassiveContractEngine
 from bot_0dte.infra.freshness import FreshnessTracker
@@ -20,7 +22,6 @@ logger.setLevel(logging.INFO)
 
 class MassiveMux:
     def __init__(self, options_ws=None, ib_underlying=None, loop=None, **kwargs):
-
         if options_ws is None:
             options_ws = kwargs.pop("options_adapter", None)
         if options_ws is None:
@@ -30,7 +31,7 @@ class MassiveMux:
         self.ib = ib_underlying
         self.loop = loop or asyncio.get_event_loop()
 
-        self.parent_orchestrator = None
+        self._parent = None
         self._on_option_cb = None
         self._on_underlying_cb = None
 
@@ -38,22 +39,30 @@ class MassiveMux:
         self.engines: Dict[str, MassiveContractEngine] = {}
 
     # ---------------------------------------------------------
+    def set_parent(self, orch):
+        """Explicit parent assignment with NO side effects."""
+        self._parent = orch
+
+    @property
+    def parent_orchestrator(self):
+        """Read-only access to parent."""
+        return self._parent
+
+    # ---------------------------------------------------------
     def on_option(self, cb):
+        """Store callback reference only - no work."""
         self._on_option_cb = cb
         self.options.on_option(cb)
 
     # ---------------------------------------------------------
     def on_underlying(self, cb):
+        """Store callback reference only - NO side effects."""
         self._on_underlying_cb = cb
-        if self.ib:
-            # underlying now routed through mux
-            self.ib.on_underlying(self._handle_underlying_event)
 
     # ---------------------------------------------------------
     async def _handle_underlying_event(self, event):
         sym = event.get("symbol")
 
-        # ---- 1) engine receives underlying ticks ----
         eng = self.engines.get(sym)
         if eng:
             try:
@@ -61,53 +70,161 @@ class MassiveMux:
             except Exception:
                 logger.exception("[MUX] Engine underlying handler failed")
 
-        # ---- 2) orchestrator receives underlying ticks ----
         if self._on_underlying_cb:
             try:
-                await self._on_underlying_cb(event)
+                cb = self._on_underlying_cb
+                if asyncio.iscoroutinefunction(cb):
+                    await cb(event)
+                else:
+                    cb(event)
             except Exception:
                 logger.exception("[MUX] Orchestrator underlying handler failed")
 
     # ---------------------------------------------------------
     async def connect(self, symbols: List[str], expiry_map: Dict[str, str]):
-        logger.info("[MUX] Connecting w/ symbols: %s", symbols)
-
-        # Build engines + OCC windows (requires warmed underlying price)
+        import time as time_module
+        
+        print("[MUX] connect() ENTRY")
+        print(f"[MUX] Symbols: {symbols}")
+        print(f"[MUX] Expiry map: {expiry_map}")
+        
+        logger.info("[MUX] Connecting with symbols: %s", symbols)
+        
+        # ============================================================
+        # PHASE 0.5: Register IB underlying handler
+        # ============================================================
+        if self.ib:
+            print("[MUX] Registering IB underlying handler")
+            self.ib.on_underlying(self._handle_underlying_event)
+        
+        # ============================================================
+        # PHASE 1: Build OCC subscription lists
+        # ============================================================
+        print("[MUX] PHASE 1: Building OCC subscription lists")
+        t_phase1 = time_module.monotonic()
+        
         final_topics = []
-        for sym in symbols:
+
+        for i, sym in enumerate(symbols):
+            print(f"[MUX] → Symbol {i+1}/{len(symbols)}: {sym}")
+            t_symbol = time_module.monotonic()
+            
+            print(f"[MUX]   Creating MassiveContractEngine for {sym}")
             eng = MassiveContractEngine(symbol=sym, ws=self.options)
             self.engines[sym] = eng
             self.freshness[sym] = FreshnessTracker()
+            print(f"[MUX]   ✓ Engine created")
 
+            print(f"[MUX]   → await eng.build_occ_list_for_symbol({sym}, {expiry_map[sym]})")
+            t_occ = time_module.monotonic()
             occ_codes = await eng.build_occ_list_for_symbol(
                 symbol=sym,
                 expiry=expiry_map[sym],
-                inc_strikes=1
+                inc_strikes=1,
             )
+            print(f"[MUX]   ✓ OCC list built: {len(occ_codes)} contracts in {time_module.monotonic() - t_occ:.3f}s")
 
             logger.info("[OCC_INIT] %s → %d contracts", sym, len(occ_codes))
             final_topics.extend(occ_codes)
+            
+            print(f"[MUX] ✓ {sym} complete in {time_module.monotonic() - t_symbol:.3f}s")
+        
+        print(f"[MUX] ✓ PHASE 1 complete: {len(final_topics)} total contracts in {time_module.monotonic() - t_phase1:.3f}s")
 
-        # MUST AWAIT — async subscription setter
+        # ============================================================
+        # PHASE 2: Set OCC subscriptions
+        # ============================================================
+        print("[MUX] PHASE 2: Setting OCC subscriptions")
+        print(f"[MUX] → await self.options.set_occ_subscriptions({len(final_topics)} topics)")
+        t_phase2 = time_module.monotonic()
         await self.options.set_occ_subscriptions(final_topics)
+        print(f"[MUX] ✓ PHASE 2 complete in {time_module.monotonic() - t_phase2:.3f}s")
 
-        # Connect Massive WS
+        # ============================================================
+        # PHASE 3: Connect Massive WebSocket
+        # ============================================================
+        print("[MUX] PHASE 3: Connecting Massive WebSocket")
+        logger.info("[MUX] Connecting Massive WS…")
+        print("[MUX] → await self.options.connect()")
+        t_phase3 = time_module.monotonic()
         await self.options.connect()
+        print(f"[MUX] ✓ PHASE 3 complete: WebSocket connected in {time_module.monotonic() - t_phase3:.3f}s")
 
+        # ============================================================
+        # PHASE 4: Verify underlying feed
+        # ============================================================
+        print("[MUX] PHASE 4: Verifying underlying feed")
         if self.ib:
-            logger.info("[MUX] Underlying feed active via IBKR")
+            logger.info("[MUX] Underlying feed active")
+            print("[MUX] ✓ Underlying feed active")
+        else:
+            print("[MUX] ⚠ No underlying feed configured")
 
-        logger.info("[MUX] Ready — orchestrator may begin evaluation ticks.")
+        logger.info("[MUX] Ready")
+        print("[MUX] connect() EXIT - all phases complete")
+
+    # ---------------------------------------------------------
+    async def fetch_snapshot_and_hydrate(self, chain_agg):
+        if not self.parent_orchestrator:
+            return
+        if not hasattr(self.parent_orchestrator, "snapshot_client"):
+            return
+
+        snap_client = self.parent_orchestrator.snapshot_client
+
+        print("\n================ REST SNAPSHOT WARMUP ================\n")
+
+        for sym, eng in self.engines.items():
+            occ_list = eng.current_subs.get(sym, [])
+            print(f"[WARMUP] {sym}: {len(occ_list)} contracts")
+
+            for occ in occ_list:
+                rest = await snap_client.fetch_contract(sym, occ)
+                if not rest:
+                    continue
+
+                enriched = {
+                    "symbol": sym,
+                    "contract": occ,
+                    "bid": None,
+                    "ask": None,
+                    "iv": rest.get("iv"),
+                    "delta": rest.get("delta"),
+                    "gamma": rest.get("gamma"),
+                    "theta": rest.get("theta"),
+                    "vega": rest.get("vega"),
+                    "open_interest": rest.get("open_interest"),
+                    "volume": rest.get("volume"),
+                    "_hydrated": True,
+                    "_recv_ts": time.time(),
+                }
+
+                chain_agg.update_from_nbbo(enriched)
+
+        print("\n================ WARMUP COMPLETE =================\n")
 
     # ---------------------------------------------------------
     async def close(self):
-        try:
-            await self.options.close()
-        except:
-            pass
+        logger.info("[MUX] Shutdown requested")
 
+        # ✅ STOP ALL ENGINE TASKS FIRST (CRITICAL)
+        for eng in self.engines.values():
+            try:
+                await eng.stop()
+            except Exception:
+                logger.exception("[MUX] Engine stop failed")
+
+        # Shutdown Massive options adapter
+        if hasattr(self.options, "shutdown"):
+            await self.options.shutdown()
+        else:
+            await self.options.close()
+
+        # Shutdown IB underlying
         if self.ib:
             try:
                 await self.ib.close()
-            except:
+            except Exception:
                 pass
+
+        logger.info("[MUX] Shutdown complete")
