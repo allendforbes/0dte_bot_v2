@@ -6,6 +6,7 @@ Aligned with: MassiveMux v3.4, OptionsWSAdapter v5.0, MassiveContractEngine v3.2
 
 import asyncio
 import logging
+import signal
 
 from bot_0dte.data.adapters.ib_underlying_adapter import IBUnderlyingAdapter
 from bot_0dte.data.providers.massive.massive_options_ws_adapter import MassiveOptionsWSAdapter
@@ -40,9 +41,9 @@ async def main():
     print("[BOOT] Subscribing to underlying tickers (IBKR)...")
     await ib_underlying.subscribe(["SPY", "QQQ"])
 
-    # ⭐ CRITICAL FIX — ensure underlying ticks arrive BEFORE MassiveMux builds OCC list
+    # Ensure underlying ticks start before MassiveMux subscriptions
     print("[BOOT] Waiting for initial underlying ticks...")
-    await asyncio.sleep(0.75)   # 0.50–1.0s recommended; IBKR tick arrival varies
+    await asyncio.sleep(0.75)
 
     # ---------------------------------------------------------
     # 2. MASSIVE OPTIONS WS
@@ -55,7 +56,7 @@ async def main():
     # ---------------------------------------------------------
     print("[BOOT] Creating MassiveMux (IBKR underlying + Massive NBBO)...")
     mux = MassiveMux(
-        options_ws=options_ws,       # correct argument name
+        options_ws=options_ws,
         ib_underlying=ib_underlying
     )
 
@@ -81,23 +82,59 @@ async def main():
     )
 
     print("\n🚀 Starting hybrid bot (IBKR + Massive OPTIONS)...\n")
-    await orch.start()
+    
+    try:
+        await orch.start()
+    except Exception as e:
+        print(f"\n❌ FATAL: Orchestrator.start() failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
     print("✅ Bot running in PAPER mode.")
+
+    # Start dashboard ONLY after async startup is complete
+    orch.dashboard.start()
+
     print("Press Ctrl+C to stop.\n")
 
     # ---------------------------------------------------------
-    # 6. MAIN LOOP
+    # 6. WAIT FOR SHUTDOWN SIGNAL
     # ---------------------------------------------------------
+    # Safety check: ensure _shutdown Event was created
+    if orch._shutdown is None:
+        print("❌ FATAL: _shutdown Event was not created in start()")
+        return
+    
+    # This event is triggered by orchestrator or by ctrl+C via signal handler
+    await orch._shutdown.wait()
+
+    print("\n🛑 Shutdown signal received. Cleaning up…")
+
+    # Orchestrator cleanup (dashboard, tasks, trail logic, etc.)
+    await orch.shutdown()
+
+    # Close data feeds
     try:
-        while True:
-            await asyncio.sleep(1)
-    except KeyboardInterrupt:
-        print("\n🛑 Shutting down...")
         await mux.close()
+    except Exception:
+        pass
+
+    try:
         await ib_underlying.close()
-        print("✅ Shutdown complete.")
+    except Exception:
+        pass
+
+    print("✅ Shutdown complete.")
 
 
+# ---------------------------------------------------------
+# ENTRYPOINT
+# ---------------------------------------------------------
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        # Guarantee terminal cursor restored even if Rich crashes
+        print("\033[?25h")
+        print("Force exit.")

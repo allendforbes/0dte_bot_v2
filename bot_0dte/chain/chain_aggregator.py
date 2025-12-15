@@ -134,6 +134,76 @@ class ChainAggregator:
         self.cache[symbol][contract] = row
         self.last_ts[symbol] = time.time()
 
+        # ============================================================
+        #   REST SNAPSHOT MERGE — called by MassiveContractEngine v4.0
+        # ============================================================
+        def update_from_snapshot(self, symbol: str, contract: str, snap: Dict[str, Any]):
+            """
+            Merge REST Greeks/IV/OI/volume into an existing NBBO row.
+            Creates the row if needed (but will only become usable once NBBO arrives).
+
+            REST payload example:
+                {
+                    "iv": 0.22,
+                    "delta": 0.41,
+                    "gamma": 0.032,
+                    "theta": -0.05,
+                    "vega": 0.12,
+                    "open_interest": 8211,
+                    "volume": 1192
+                }
+            """
+
+            if symbol not in self.symbols:
+                return None
+
+            book = self.cache[symbol]
+
+            # If row exists (NBBO arrived), enrich it
+            row = book.get(contract)
+            if row:
+                # Inject REST Greeks / IV
+                for k in ("iv", "delta", "gamma", "theta", "vega",
+                        "open_interest", "volume"):
+                    val = snap.get(k)
+                    if val is not None:
+                        row[k] = val
+
+                # mark as hydrated
+                row["_hydrated"] = True
+                row["_hydrated_ts"] = time.time()
+
+                self.last_ts[symbol] = time.time()
+                return row
+
+            # NBBO hasn't arrived yet → create a placeholder
+            # This allows partial hydration before NBBO completes the row.
+            new_row = {
+                "symbol": symbol,
+                "contract": contract,
+                "strike": self.parse_occ_strike(contract),
+                "right": self.parse_occ_right(contract),
+                "bid": None,
+                "ask": None,
+                "premium": None,
+
+                # REST fields
+                "iv": snap.get("iv"),
+                "delta": snap.get("delta"),
+                "gamma": snap.get("gamma"),
+                "theta": snap.get("theta"),
+                "vega": snap.get("vega"),
+                "volume": snap.get("volume"),
+                "open_interest": snap.get("open_interest"),
+
+                "_hydrated": True,
+                "_hydrated_ts": time.time(),
+            }
+
+            book[contract] = new_row
+            self.last_ts[symbol] = time.time()
+            return new_row        
+
     # ============================================================
     def is_fresh(self, symbol: str, threshold: float = 2.0) -> bool:
         return (time.time() - self.last_ts.get(symbol, 0.0)) <= threshold
