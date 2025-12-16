@@ -19,3 +19,4 @@ config.py
 logs/
 params:<YOUR_KEY>
 action:auth
+diffs/
