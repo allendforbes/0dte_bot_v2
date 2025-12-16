@@ -11,6 +11,7 @@ import asyncio
 import time
 from dataclasses import dataclass, field
 from ib_insync import IB, Option, MarketOrder
+from bot_0dte.infra.phase import ExecutionPhase
 
 
 # ================================================================
@@ -41,12 +42,13 @@ class ExecutionEngine:
         • IBKR required ONLY for routing orders
     """
 
-    def __init__(self, use_mock: bool = True):
+    def __init__(self, use_mock: bool = True, execution_phase: ExecutionPhase = None):
         self.use_mock = use_mock
+        self.execution_phase = execution_phase or ExecutionPhase.SHADOW
         self.ib: IB | None = None
         self.account_state = AccountState()
         self.expiry_map = {}  # filled by orchestrator
-        print(f"[EXEC] Engine initialized (mock={use_mock}).")
+        print(f"[EXEC] Engine initialized (phase={self.execution_phase.value}, mock={use_mock}).")
 
     # ------------------------------------------------------------
     async def attach_ib(self, ib: IB):
@@ -89,6 +91,15 @@ class ExecutionEngine:
             "SMART",
         )
 
+    # ------------------------------------------------------------
+    def _enforce_execution_phase(self):
+        """Hard guard: SHADOW phase cannot execute orders."""
+        if self.execution_phase == ExecutionPhase.SHADOW:
+            raise RuntimeError(
+                "FATAL: Order execution attempted in SHADOW phase. "
+                "SHADOW mode is log-only and must never place orders."
+            )
+
     # ============================================================
     # MAIN BRACKET EXECUTION
     # ============================================================
@@ -106,6 +117,8 @@ class ExecutionEngine:
         Entry execution for CALL/PUT.
         IBKR → Limit order at entry_price with adaptive timeout.
         """
+
+        self._enforce_execution_phase()
 
         # ------------------------------
         # MOCK MODE
@@ -171,6 +184,8 @@ class ExecutionEngine:
         meta: dict,
     ):
         """Used for exits (trail_exit, hard_stop, etc.)."""
+
+        self._enforce_execution_phase()
 
         # MOCK MODE
         if self.use_mock or not self.ib:

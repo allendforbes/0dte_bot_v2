@@ -31,6 +31,8 @@ from bot_0dte.ui.market_state import MarketStatePublisher
 from bot_0dte.universe import get_universe_for_today, get_expiry_for_symbol
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
+from bot_0dte.infra.phase import ExecutionPhase
+from bot_0dte.infra.decision_logger import DecisionLogger, ConvexityLogger
 
 
 # ======================================================================
@@ -102,7 +104,7 @@ def compute_skew_shift(rows):
     return (sum(calls)/len(calls)) - (sum(puts)/len(puts))
 
 # ======================================================================
-# ORCHESTRATOR — UI-ALIGNED VERSION (UI-ONLY CHANGES)
+# ORCHESTRATOR
 # ======================================================================
 class Orchestrator:
 
@@ -122,8 +124,20 @@ class Orchestrator:
         logger: StructuredLogger,
         universe=None,
         auto_trade_enabled=False,
-        trade_mode="shadow",
+        execution_phase: ExecutionPhase = None,
     ):
+        # -------------------------------------------------
+        # Phase resolution
+        # -------------------------------------------------
+        if execution_phase is None:
+            execution_phase = ExecutionPhase.from_env(default="shadow")
+        
+        self.execution_phase = execution_phase
+        
+        print("\n" + "=" * 70)
+        print(f" EXECUTION PHASE: {self.execution_phase.value.upper()} ".center(70, "="))
+        print("=" * 70 + "\n")
+        
         # -------------------------------------------------
         # Core
         # -------------------------------------------------
@@ -132,22 +146,27 @@ class Orchestrator:
         self.logger = logger
         self.telemetry = telemetry
         self.auto = auto_trade_enabled
-        self.trade_mode = trade_mode
+        
+        # -------------------------------------------------
+        # Decision + Convexity Loggers
+        # -------------------------------------------------
+        self.decision_log = DecisionLogger(self.execution_phase.value)
+        self.convexity_log = ConvexityLogger(self.execution_phase.value)
 
         # -------------------------------------------------
-        # Universe (ROOT STATE — must come first)
+        # Universe
         # -------------------------------------------------
         self.symbols = universe or get_universe_for_today()
         self.expiry_map = {s: get_expiry_for_symbol(s) for s in self.symbols}
 
         # -------------------------------------------------
-        # Underlying tracking (DERIVED STATE)
+        # Underlying tracking
         # -------------------------------------------------
         self.last_price = {s: None for s in self.symbols}
         self.vwap = {s: VWAPTracker() for s in self.symbols}
 
         # -------------------------------------------------
-        # UI market state publisher (UI-only, no formatting)
+        # UI market state publisher
         # -------------------------------------------------
         self.market_state = MarketStatePublisher(self.symbols)
 
@@ -187,8 +206,11 @@ class Orchestrator:
         # Dashboard
         # -------------------------------------------------
         self.console = Console()
-        self.dashboard = LiveDashboard(self.console, self.market_state)
-        # DO NOT start dashboard here - must wait for event loop
+        self.dashboard = LiveDashboard(
+            self.console,
+            self.market_state,
+            execution_phase=self.execution_phase.value
+        )
 
         # -------------------------------------------------
         # Market clock
@@ -202,7 +224,7 @@ class Orchestrator:
         # -------------------------------------------------
         # Shutdown coordination
         # -------------------------------------------------
-        self._shutdown = None  # Created in async start() to avoid Python 3.12 deadlock
+        self._shutdown = None
         self._tasks: list[asyncio.Task] = []
 
         print("\n" + "=" * 70)
@@ -220,14 +242,12 @@ class Orchestrator:
         """Start market data streams + hydration."""
         import time
         
-        # Create asyncio primitives ONLY in async context (Python 3.12 requirement)
         print("[START] Creating asyncio.Event()")
         t0 = time.monotonic()
         if self._shutdown is None:
             self._shutdown = asyncio.Event()
         print(f"[OK] asyncio.Event() in {time.monotonic() - t0:.3f}s")
         
-        # Register signal handlers ONLY after event loop exists
         print("[START] Registering signal handlers")
         t0 = time.monotonic()
         loop = asyncio.get_running_loop()
@@ -260,7 +280,6 @@ class Orchestrator:
         self.mux.set_parent(self)
         print(f"[OK] AFTER mux.set_parent in {time.monotonic() - t0:.3f}s")
 
-        # Connect
         print("[START] mux.connect()")
         t0 = time.monotonic()
         task = asyncio.create_task(self.mux.connect(self.symbols, self.expiry_map))
@@ -268,7 +287,6 @@ class Orchestrator:
         await task
         print(f"[OK] mux.connect() in {time.monotonic() - t0:.2f}s")
 
-        # Initial REST snapshot → hydrate Greeks
         print("[START] fetch_snapshot_and_hydrate()")
         t0 = time.monotonic()
         await self.mux.fetch_snapshot_and_hydrate(self.chain_agg)
@@ -288,7 +306,6 @@ class Orchestrator:
         if sym not in self.symbols or price is None:
             return
 
-        # Freshness update
         if self.freshness and sym in self.freshness:
             try:
                 self.freshness[sym].update(int(time.time() * 1000))
@@ -296,10 +313,6 @@ class Orchestrator:
                 pass
 
         self.last_price[sym] = price
-
-        # --------------------------
-        # UI-ONLY: Update market state (no formatting, no Rich calls)
-        # --------------------------
         self.market_state.update_price(sym, price)
 
         await self._evaluate(sym, price)
@@ -312,17 +325,11 @@ class Orchestrator:
 
         self.chain_agg.update_from_nbbo(event)
 
-        # --------------------------
-        # UI-ONLY: Update market state (no formatting, no Rich calls)
-        # --------------------------
         bid = event.get("bid")
         ask = event.get("ask")
         
         self.market_state.update_nbbo(sym, bid=bid, ask=ask)
 
-        # --------------------------
-        # Active trade management
-        # --------------------------
         if not self.trail.state.active:
             return
 
@@ -334,28 +341,20 @@ class Orchestrator:
 
         mid = (bid + ask) / 2
 
-        # Hard stop
         if mid <= self.active_entry_price * 0.50:
             await self._execute_exit(sym, "hard_sl")
             return
 
-        # Trailing exit
         trail_res = self.trail.update(sym, mid)
         if trail_res.get("should_exit"):
             await self._execute_exit(sym, "trail_exit")
 
     # ------------------------------------------------------------
     async def _evaluate(self, symbol: str, price: float):
-        # Your existing evaluate code preserved exactly.
-        # (You requested we NOT replace it yet.)
-        ...
-        # (Keep your full evaluate implementation here exactly as before)
-        ...
+        pass
 
     # ------------------------------------------------------------
     async def _execute_exit(self, symbol: str, reason: str):
-        """Placeholder for exit logic (preserved from original)"""
-        # Original implementation would go here
         pass
 
     # ------------------------------------------------------------
@@ -363,7 +362,12 @@ class Orchestrator:
         """Coordinated shutdown: cancel tasks, close data, restore UI."""
         print("[SYS] Shutdown requested…")
 
-        # 1. Cancel tasks
+        try:
+            self.decision_log.close()
+            self.convexity_log.close()
+        except:
+            pass
+
         for t in self._tasks:
             if not t.done():
                 t.cancel()
@@ -373,7 +377,6 @@ class Orchestrator:
 
         print("[SYS] Background tasks cancelled.")
 
-        # 2. Shutdown mux
         if hasattr(self.mux, "shutdown"):
             try:
                 await self.mux.shutdown()
@@ -381,21 +384,18 @@ class Orchestrator:
             except Exception as e:
                 print(f"[SYS] Mux shutdown error: {e}")
 
-        # 3. Selector cleanup
         if hasattr(self.selector, "shutdown"):
             try:
                 await self.selector.shutdown()
             except:
                 pass
 
-        # 4. Trail stop
         with contextlib.suppress(Exception):
             self.trail.stop()
 
-        # 5. Dashboard stop
         try:
             self.dashboard.stop()
         except:
-            print("\033[?25h")  # failsafe cursor restore
+            print("\033[?25h")
 
         print("[SYS] Shutdown complete.")

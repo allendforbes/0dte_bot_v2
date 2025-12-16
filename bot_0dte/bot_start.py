@@ -1,3 +1,8 @@
+# CHANGES:
+# - Mechanical wiring only
+# - No strategy or convexity logic modified
+# - Pass ExecutionPhase enum, not .value string
+
 # bot_0dte/bot_start.py
 """
 Hybrid Bot Launcher (IBKR Underlying + Massive Options)
@@ -17,33 +22,46 @@ from bot_0dte.orchestrator import Orchestrator
 
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
+from bot_0dte.infra.phase import ExecutionPhase
 
 logging.basicConfig(level=logging.INFO)
 
 
 async def main():
+    # ========================================
+    # PHASE: Resolve from environment
+    # ========================================
+    execution_phase = ExecutionPhase.from_env(default="shadow")
+    
+    print("\n" + "=" * 70)
+    print(f" BOOTING IN {execution_phase.value.upper()} MODE ".center(70, "="))
+    print("=" * 70 + "\n")
+    
     logger = StructuredLogger()
     telemetry = Telemetry()
 
     # ---------------------------------------------------------
-    # 1. IBKR UNDERLYING FEED
+    # 1. IBKR UNDERLYING FEED (Paper/Live only)
     # ---------------------------------------------------------
-    print("[BOOT] Initializing IBKR underlying adapter...")
-    ib_underlying = IBUnderlyingAdapter(
-        host="127.0.0.1",
-        port=4002,
-        client_id=11,
-    )
+    if execution_phase in (ExecutionPhase.PAPER, ExecutionPhase.LIVE):
+        print("[BOOT] Initializing IBKR underlying adapter...")
+        ib_underlying = IBUnderlyingAdapter(
+            host="127.0.0.1",
+            port=4002,
+            client_id=11,
+        )
 
-    print("[BOOT] Connecting IBKR underlying...")
-    await ib_underlying.connect()
+        print("[BOOT] Connecting IBKR underlying...")
+        await ib_underlying.connect()
 
-    print("[BOOT] Subscribing to underlying tickers (IBKR)...")
-    await ib_underlying.subscribe(["SPY", "QQQ"])
+        print("[BOOT] Subscribing to underlying tickers (IBKR)...")
+        await ib_underlying.subscribe(["SPY", "QQQ"])
 
-    # Ensure underlying ticks start before MassiveMux subscriptions
-    print("[BOOT] Waiting for initial underlying ticks...")
-    await asyncio.sleep(0.75)
+        print("[BOOT] Waiting for initial underlying ticks...")
+        await asyncio.sleep(0.75)
+    else:
+        print("[BOOT] SHADOW mode - skipping IBKR connection")
+        ib_underlying = None
 
     # ---------------------------------------------------------
     # 2. MASSIVE OPTIONS WS
@@ -52,7 +70,7 @@ async def main():
     options_ws = MassiveOptionsWSAdapter.from_env()
 
     # ---------------------------------------------------------
-    # 3. MUX — Hybrid Market Data Layer
+    # 3. MUX – Hybrid Market Data Layer
     # ---------------------------------------------------------
     print("[BOOT] Creating MassiveMux (IBKR underlying + Massive NBBO)...")
     mux = MassiveMux(
@@ -60,13 +78,39 @@ async def main():
         ib_underlying=ib_underlying
     )
 
-    # ---------------------------------------------------------
+   # ---------------------------------------------------------
     # 4. EXECUTION ENGINE
     # ---------------------------------------------------------
-    print("[BOOT] Initializing ExecutionEngine (PAPER mode)...")
-    engine = ExecutionEngine(use_mock=False)
-    engine.ib = ib_underlying.ib
-    await engine.start()
+    print("[BOOT] Initializing ExecutionEngine...")
+    engine = ExecutionEngine(
+        use_mock=(execution_phase == ExecutionPhase.SHADOW),
+        execution_phase=execution_phase,
+    )
+
+    # ---------------------------------------------------------
+    # OPTIONAL SAFETY SELF-TEST (SHADOW ONLY)
+    # ---------------------------------------------------------
+    if execution_phase == ExecutionPhase.SHADOW:
+        try:
+            await engine.send_bracket(
+                symbol="SPY",
+                side="CALL",
+                qty=1,
+                entry_price=0.01,
+                take_profit=0.02,
+                stop_loss=0.005,
+                meta={"strike": 0},
+            )
+            raise AssertionError("FATAL: SHADOW execution did not raise")
+        except RuntimeError:
+            print("[BOOT] SHADOW execution guard verified.")
+
+    # ---------------------------------------------------------
+    # START ENGINE (Paper / Live only)
+    # ---------------------------------------------------------
+    if execution_phase in (ExecutionPhase.PAPER, ExecutionPhase.LIVE):
+        engine.ib = ib_underlying.ib
+        await engine.start()
 
     # ---------------------------------------------------------
     # 5. ORCHESTRATOR
@@ -78,40 +122,22 @@ async def main():
         telemetry=telemetry,
         logger=logger,
         auto_trade_enabled=True,
-        trade_mode="paper",
+        execution_phase=execution_phase,  # enum, not string
     )
 
-    print("\n🚀 Starting hybrid bot (IBKR + Massive OPTIONS)...\n")
-    
-    try:
-        await orch.start()
-    except Exception as e:
-        print(f"\n❌ FATAL: Orchestrator.start() failed: {e}")
-        import traceback
-        traceback.print_exc()
-        raise
-
-    print("✅ Bot running in PAPER mode.")
-
-    # Start dashboard ONLY after async startup is complete
-    orch.dashboard.start()
-
-    print("Press Ctrl+C to stop.\n")
 
     # ---------------------------------------------------------
     # 6. WAIT FOR SHUTDOWN SIGNAL
     # ---------------------------------------------------------
-    # Safety check: ensure _shutdown Event was created
     if orch._shutdown is None:
         print("❌ FATAL: _shutdown Event was not created in start()")
         return
     
-    # This event is triggered by orchestrator or by ctrl+C via signal handler
     await orch._shutdown.wait()
 
     print("\n🛑 Shutdown signal received. Cleaning up…")
 
-    # Orchestrator cleanup (dashboard, tasks, trail logic, etc.)
+    # Orchestrator cleanup
     await orch.shutdown()
 
     # Close data feeds
@@ -120,10 +146,11 @@ async def main():
     except Exception:
         pass
 
-    try:
-        await ib_underlying.close()
-    except Exception:
-        pass
+    if ib_underlying:
+        try:
+            await ib_underlying.close()
+        except Exception:
+            pass
 
     print("✅ Shutdown complete.")
 
@@ -135,6 +162,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        # Guarantee terminal cursor restored even if Rich crashes
         print("\033[?25h")
         print("Force exit.")
