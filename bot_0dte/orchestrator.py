@@ -24,7 +24,8 @@ from bot_0dte.chain.greek_injector import GreekInjector
 
 # UI
 from rich.console import Console
-from bot_0dte.ui.dashboard import LiveDashboard
+from bot_0dte.ui.live_panel import LivePanel
+from bot_0dte.ui.ui_state import UIState, TradeState
 from bot_0dte.ui.market_state import MarketStatePublisher
 
 # Infra
@@ -201,16 +202,20 @@ class Orchestrator:
         self.active_bias = None
         self.active_entry_price = None
         self.active_qty = None
+        self.active_grade = None  # Store tier for EXIT logging
+        self.active_score = None  # Store convexity_score for EXIT logging
+        
+        # -------------------------------------------------
+        # Hydration state
+        # -------------------------------------------------
+        self.hydration_complete = False
 
         # -------------------------------------------------
-        # Dashboard
+        # Dashboard (Simple ASCII panel)
         # -------------------------------------------------
-        self.console = Console()
-        self.dashboard = LiveDashboard(
-            self.console,
-            self.market_state,
-            execution_phase=self.execution_phase.value
-        )
+        self.ui_state = UIState()
+        self.panel = LivePanel()
+        self.panel.attach_ui_state(self.ui_state)
 
         # -------------------------------------------------
         # Market clock
@@ -224,8 +229,9 @@ class Orchestrator:
         # -------------------------------------------------
         # Shutdown coordination
         # -------------------------------------------------
-        self._shutdown = None
+        self._shutdown = None  # Will be created in start()
         self._tasks: list[asyncio.Task] = []
+        self._shutdown_created = False
 
         print("\n" + "=" * 70)
         print(" ELITE ORCHESTRATOR (A2-M / FreshnessV2 / Sizing v5.0) ".center(70, "="))
@@ -246,6 +252,7 @@ class Orchestrator:
         t0 = time.monotonic()
         if self._shutdown is None:
             self._shutdown = asyncio.Event()
+            self._shutdown_created = True
         print(f"[OK] asyncio.Event() in {time.monotonic() - t0:.3f}s")
         
         print("[START] Registering signal handlers")
@@ -289,15 +296,73 @@ class Orchestrator:
 
         print("[START] fetch_snapshot_and_hydrate()")
         t0 = time.monotonic()
-        await self.mux.fetch_snapshot_and_hydrate(self.chain_agg)
+        
+        # Skip blocking REST hydration at startup - too slow
+        # Instead, launch background task to fetch Greeks gradually
+        print("[WARMUP] Skipping startup hydration - launching background Greek fetcher")
+        
+        # Start background Greek fetcher
+        greek_task = asyncio.create_task(self._fetch_greeks_background())
+        self.track(greek_task)
+        
         print(f"[OK] fetch_snapshot_and_hydrate() in {time.monotonic() - t0:.2f}s")
         
+        print("[START] Marking hydration complete")
+        self.hydration_complete = True
+        print("[OK] Hydration complete flag set - background Greek fetcher running")
+        
+        # Assign freshness tracker
         print("[START] Assigning freshness")
-        t0 = time.monotonic()
         self.freshness = self.mux.freshness
-        print(f"[OK] Freshness assigned in {time.monotonic() - t0:.3f}s")
+        print("[OK] Freshness assigned")
+        
+        # LivePanel is ready (renders on update() calls from callbacks)
+        print("[INFO] LivePanel initialized - will render on price updates")
         
         print("[ORCHESTRATOR] start() completed successfully")
+    
+    # ------------------------------------------------------------
+    async def _fetch_greeks_background(self):
+        """Background task to gradually fetch Greeks via REST and merge into chain."""
+        print("[GREEKS] Background Greek fetcher started")
+        
+        # Wait 5 seconds for NBBO to populate first
+        await asyncio.sleep(5)
+        
+        if not hasattr(self.mux, 'engines'):
+            return
+        
+        snap_client = self.mux.parent_orchestrator.snapshot_client if self.mux.parent_orchestrator else None
+        if not snap_client:
+            print("[GREEKS] No snapshot client available")
+            return
+        
+        for sym, eng in self.mux.engines.items():
+            occ_list = eng.current_subs.get(sym, [])
+            print(f"[GREEKS] Fetching Greeks for {sym}: {len(occ_list)} contracts")
+            
+            for occ in occ_list:
+                try:
+                    # Fetch with timeout
+                    rest = await asyncio.wait_for(
+                        snap_client.fetch_contract(sym, occ),
+                        timeout=10.0
+                    )
+                    
+                    if rest:
+                        # Merge Greeks into existing chain row
+                        self.chain_agg.update_from_snapshot(sym, occ, rest)
+                        print(f"[GREEKS] ✓ {occ}")
+                    
+                    # Small delay between requests to avoid rate limiting
+                    await asyncio.sleep(0.5)
+                    
+                except asyncio.TimeoutError:
+                    print(f"[GREEKS] Timeout {occ}")
+                except Exception as e:
+                    print(f"[GREEKS] Error {occ}: {e}")
+                    
+        print(f"[GREEKS] Background fetcher complete for all symbols")
 
     # ------------------------------------------------------------
     async def _on_underlying(self, event):
@@ -314,6 +379,17 @@ class Orchestrator:
 
         self.last_price[sym] = price
         self.market_state.update_price(sym, price)
+        
+        # Update LivePanel (throttled internally to 0.25s)
+        self.panel.update(
+            symbol=sym,
+            price=price,
+            bid=None,  # Will add later
+            ask=None,
+            signal=None,
+            strike=None,
+            expiry=None
+        )
 
         await self._evaluate(sym, price)
 
@@ -351,11 +427,295 @@ class Orchestrator:
 
     # ------------------------------------------------------------
     async def _evaluate(self, symbol: str, price: float):
-        pass
+        """Main strategy evaluation on each underlying tick."""       
+
+        # Initialize decision tracking
+        decision = "HOLD"
+        reason = "no_signal"
+        convexity_score = 0.0
+        tier = "L0"
+        
+        # Skip if hydration not complete
+        if not self.hydration_complete:
+            decision = "BLOCK"
+            reason = "hydration_incomplete"
+        
+        # Skip if already in position
+        elif self.trail.state.active:
+            decision = "BLOCK"
+            reason = "position_active"
+        
+        else:
+            # Build snapshot for entry engine
+            vwap_data = self.vwap[symbol].update(price)
+            
+            # Log the evaluation
+            self.logger.log_event("evaluation_tick", {
+                "symbol": symbol,
+                "price": price,
+                "vwap": round(vwap_data["vwap"], 2),
+                "vwap_dev": round(vwap_data["vwap_dev"], 4),
+                "vwap_dev_change": round(vwap_data["vwap_dev_change"], 4),
+            })
+            
+            # Get chain data for Greeks
+            chain_rows = self.chain_agg.get_chain(symbol)
+            
+            # DEBUG: Check what's in the cache
+            cache_size = len(self.chain_agg.cache.get(symbol, {}))
+            self.logger.log_event("evaluation_chain_debug", {
+                "symbol": symbol,
+                "chain_rows_returned": len(chain_rows),
+                "cache_contracts": cache_size,
+                "cache_keys": list(self.chain_agg.cache.get(symbol, {}).keys())[:3] if cache_size > 0 else []
+            })
+            
+            if not chain_rows:
+                self.logger.log_event("evaluation_no_chain", {"symbol": symbol})
+                # decision remains "HOLD", reason remains "no_signal"
+            
+            else:
+                # Calculate aggregated Greeks (handle None from NBBO-only rows)
+                atm_calls = [r for r in chain_rows if r["right"] == "C" and r.get("delta") is not None]
+                atm_puts = [r for r in chain_rows if r["right"] == "P" and r.get("delta") is not None]
+                
+                avg_call_delta = sum(r["delta"] for r in atm_calls) / len(atm_calls) if atm_calls else None
+                avg_put_delta = sum(r["delta"] for r in atm_puts) / len(atm_puts) if atm_puts else None
+                
+                # Filter for rows with gamma before calculating average
+                gamma_rows = [r for r in chain_rows if r.get("gamma") is not None]
+                avg_gamma = sum(r["gamma"] for r in gamma_rows) / len(gamma_rows) if gamma_rows else None
+                
+                # Build snapshot
+                now_et = datetime.now(self._tz)
+                seconds_since_open = int((now_et - self._session_open_dt).total_seconds())
+                
+                snap = {
+                    "symbol": symbol,
+                    "price": price,
+                    "vwap": vwap_data["vwap"],
+                    "vwap_dev": vwap_data["vwap_dev"],
+                    "vwap_dev_change": vwap_data["vwap_dev_change"],
+                    "seconds_since_open": seconds_since_open,
+                    "delta": avg_call_delta if avg_call_delta else avg_put_delta,
+                    "gamma": avg_gamma,
+                    "iv": None,  # Would need to calculate from chain
+                    "iv_change": None,
+                }
+                
+                # Log the snapshot before qualification
+                self.logger.log_event("evaluation_snapshot", {
+                    "symbol": symbol,
+                    "price": price,
+                    "vwap_dev": round(vwap_data["vwap_dev"], 4),
+                    "slope": round(vwap_data["vwap_dev_change"], 4),
+                    "seconds_since_open": seconds_since_open,
+                    "avg_gamma": round(avg_gamma, 4) if avg_gamma else None,
+                    "call_delta": round(avg_call_delta, 4) if avg_call_delta else None,
+                    "put_delta": round(avg_put_delta, 4) if avg_put_delta else None,
+                })
+                
+                # Check for entry signal
+                signal = self.entry_engine.qualify(snap)
+                if not signal:
+                    self.logger.log_event("evaluation_no_signal", {
+                        "symbol": symbol,
+                        "reason": "entry_engine_rejected"
+                    })
+                    # decision remains "HOLD", reason remains "no_signal"
+                
+                else:
+                    # Extract convexity metrics from signal
+                    convexity_score = signal.score
+                    tier = signal.grade
+                    
+                    # Log the signal
+                    self.logger.log_event("elite_signal", {
+                        "symbol": symbol,
+                        "bias": signal.bias,
+                        "grade": signal.grade,
+                        "regime": signal.regime,
+                        "score": signal.score,
+                    })
+                    
+                    # Select strike
+                    strike_result = await self.selector.select_from_chain(
+                        chain_rows=chain_rows,
+                        bias=signal.bias,
+                        underlying_price=price
+                    )
+                    
+                    if not strike_result:
+                        self.logger.log_event("strike_selection_failed", {"symbol": symbol})
+                        decision = "BLOCK"
+                        reason = "strike_selection_failed"
+                    
+                    else:
+                        # Calculate position size
+                        cap = self.CONTRACT_CAPS.get(symbol, self.DEFAULT_CAP)
+                        qty = min(cap, max(1, int(10000 * self.RISK_PCT / strike_result["premium"])))
+                        
+                        # Set ENTER decision
+                        decision = "ENTER"
+                        reason = f"{signal.bias.lower()}_entry"
+                        
+                        # Execute entry
+                        await self._execute_entry(symbol, signal, strike_result, qty)
+        
+        # Canonical decision log (exactly once per evaluation)
+        self.decision_log.log(
+            decision=decision,
+            symbol=symbol,
+            reason=reason,
+            convexity_score=convexity_score,
+            tier=tier,
+            price=price
+        )
+    
+    # ------------------------------------------------------------
+    async def _execute_entry(self, symbol: str, signal, strike_result: dict, qty: int):
+        """Execute entry with bracket order."""
+        
+        entry_price = strike_result["premium"]
+        
+        # Calculate bracket levels
+        take_profit = entry_price * signal.trail_mult
+        stop_loss = entry_price * 0.50
+        
+        # Send to execution engine
+        try:
+            await self.engine.send_bracket(
+                symbol=symbol,
+                side=signal.bias,
+                qty=qty,
+                entry_price=entry_price,
+                take_profit=take_profit,
+                stop_loss=stop_loss,
+                meta={
+                    "strike": strike_result["strike"],
+                    "contract": strike_result["contract"],
+                    "grade": signal.grade,
+                },
+            )
+            
+        except RuntimeError as e:
+            # SHADOW mode raises RuntimeError - this is expected and correct
+            if "SHADOW" not in str(e):
+                raise
+            
+            # Log shadow execution
+            self.logger.log_event("shadow_execution", {
+                "symbol": symbol,
+                "action": "entry",
+                "contract": strike_result["contract"],
+                "entry_price": entry_price,
+                "qty": qty,
+            })
+        
+        # CRITICAL: Set active state AFTER execution attempt (works in all modes)
+        # This allows SHADOW mode to track positions and run trail logic
+        self.active_symbol = symbol
+        self.active_contract = strike_result["contract"]
+        self.active_bias = signal.bias
+        self.active_entry_price = entry_price
+        self.active_qty = qty
+        self.active_grade = signal.grade  # Store for EXIT logging
+        self.active_score = signal.score  # Store for EXIT logging
+        
+        # Start trail logic
+        self.trail.start(symbol, entry_price)
+        
+        self.logger.log_event("entry_executed", {
+            "symbol": symbol,
+            "contract": strike_result["contract"],
+            "qty": qty,
+            "entry": entry_price,
+        })
 
     # ------------------------------------------------------------
     async def _execute_exit(self, symbol: str, reason: str):
-        pass
+        """Execute exit and log results."""
+        
+        if not self.trail.state.active:
+            return
+        
+        # Get current contract price from chain
+        chain_rows = self.chain_agg.get_chain(symbol)
+        contract_row = next(
+            (r for r in chain_rows if r["contract"] == self.active_contract),
+            None
+        )
+        
+        if not contract_row:
+            self.logger.log_event("exit_no_price", {"symbol": symbol})
+            return
+        
+        bid = contract_row.get("bid")
+        ask = contract_row.get("ask")
+        
+        if bid is None or ask is None:
+            return
+        
+        exit_price = (bid + ask) / 2
+        
+        # Calculate PnL
+        pnl_per_contract = exit_price - self.active_entry_price
+        total_pnl = pnl_per_contract * self.active_qty
+        pnl_pct = (pnl_per_contract / self.active_entry_price) * 100
+        
+        # Get underlying price at exit time
+        underlying_price = self.last_price.get(symbol, 0.0)
+        
+        # Canonical EXIT decision log
+        self.decision_log.log(
+            decision="EXIT",
+            symbol=symbol,
+            reason=str(reason),
+            convexity_score=float(self.active_score or 0.0),
+            tier=str(self.active_grade or "L0"),
+            price=float(underlying_price),
+        )
+        
+        # Send exit order
+        try:
+            await self.engine.close_position(
+                symbol=symbol,
+                contract=self.active_contract,
+                qty=self.active_qty,
+                exit_price=exit_price,
+            )
+        except RuntimeError as e:
+            if "SHADOW" not in str(e):
+                raise
+            
+            # Log shadow exit
+            self.logger.log_event("shadow_execution", {
+                "symbol": symbol,
+                "action": "exit",
+                "reason": reason,
+                "pnl": round(total_pnl, 2),
+                "pnl_pct": round(pnl_pct, 2),
+            })
+        
+        # Log exit execution
+        self.logger.log_event("exit_executed", {
+            "symbol": symbol,
+            "reason": reason,
+            "pnl": round(total_pnl, 2),
+            "pnl_pct": round(pnl_pct, 2),
+        })
+        
+        # Clear active state AFTER logging
+        self.active_symbol = None
+        self.active_contract = None
+        self.active_bias = None
+        self.active_entry_price = None
+        self.active_qty = None
+        self.active_grade = None
+        self.active_score = None
+        
+        # Stop trail
+        self.trail.stop()
 
     # ------------------------------------------------------------
     async def shutdown(self):
@@ -393,9 +753,7 @@ class Orchestrator:
         with contextlib.suppress(Exception):
             self.trail.stop()
 
-        try:
-            self.dashboard.stop()
-        except:
-            print("\033[?25h")
+        # Restore cursor (LivePanel doesn't hide it)
+        print("\033[?25h")
 
         print("[SYS] Shutdown complete.")

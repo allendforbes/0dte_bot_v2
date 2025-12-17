@@ -106,11 +106,21 @@ class LiveDashboard:
         if not getattr(self, '_initialized', False):
             return self.layout
         
+        # DEBUG: Verify this is being called
+        if not hasattr(self, '_render_count'):
+            self._render_count = 0
+        self._render_count += 1
+        
+        if self._render_count % 25 == 0:  # Every 5 seconds at 5 FPS
+            print(f"[UI DEBUG] __rich__ called {self._render_count} times")
+        
         try:
             self.refresh_market()
         except Exception as e:
             # Never crash the render loop
             print(f"[UI] __rich__ error: {e}")
+            import traceback
+            traceback.print_exc()
         
         return self.layout
     
@@ -123,26 +133,48 @@ class LiveDashboard:
         try:
             # Create Live instance lazily (CRITICAL: only after event loop exists)
             if self.live is None:
-                self.live = Live(self, refresh_per_second=5)
+                self.live = Live(self, refresh_per_second=5, console=self.console)
             
-            # CRITICAL: Live.start() is BLOCKING - must run in background thread
+            # CRITICAL: Live must be used as context manager
             import threading
-            self._thread = threading.Thread(
-                target=self.live.start,
-                daemon=True
-            )
+            
+            def run_live():
+                """Thread target that properly enters/exits Live context."""
+                try:
+                    with self.live:
+                        # Live.start() has already been called by __enter__
+                        # Just keep the thread alive
+                        import time
+                        while not getattr(self, '_stop_requested', False):
+                            time.sleep(0.1)
+                except Exception as e:
+                    print(f"[UI] Live rendering error: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            self._stop_requested = False
+            self._thread = threading.Thread(target=run_live, daemon=True)
             self._thread.start()
+            
+            print(f"[UI] Dashboard rendering thread started")
+            
         except Exception as e:
             print(f"[UI] Dashboard start failed: {e}")
+            import traceback
+            traceback.print_exc()
     
     def stop(self):
         """Stop the live rendering and restore cursor."""
         try:
-            if self.live is not None:
-                self.live.stop()
-                # Give thread time to clean up
-                if hasattr(self, '_thread') and self._thread.is_alive():
-                    self._thread.join(timeout=1.0)
+            # Signal thread to stop
+            self._stop_requested = True
+            
+            # Wait for thread to finish
+            if hasattr(self, '_thread') and self._thread.is_alive():
+                self._thread.join(timeout=1.0)
+            
+            # Live context manager handles cleanup automatically
+            
         except Exception:
             pass
         finally:

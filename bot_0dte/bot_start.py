@@ -41,27 +41,23 @@ async def main():
     telemetry = Telemetry()
 
     # ---------------------------------------------------------
-    # 1. IBKR UNDERLYING FEED (Paper/Live only)
+    # 1. IBKR UNDERLYING FEED (All modes for market data)
     # ---------------------------------------------------------
-    if execution_phase in (ExecutionPhase.PAPER, ExecutionPhase.LIVE):
-        print("[BOOT] Initializing IBKR underlying adapter...")
-        ib_underlying = IBUnderlyingAdapter(
-            host="127.0.0.1",
-            port=4002,
-            client_id=11,
-        )
+    print("[BOOT] Initializing IBKR underlying adapter...")
+    ib_underlying = IBUnderlyingAdapter(
+        host="127.0.0.1",
+        port=4002,
+        client_id=11,
+    )
 
-        print("[BOOT] Connecting IBKR underlying...")
-        await ib_underlying.connect()
+    print("[BOOT] Connecting IBKR underlying...")
+    await ib_underlying.connect()
 
-        print("[BOOT] Subscribing to underlying tickers (IBKR)...")
-        await ib_underlying.subscribe(["SPY", "QQQ"])
+    print("[BOOT] Subscribing to underlying tickers (IBKR)...")
+    await ib_underlying.subscribe(["SPY", "QQQ"])
 
-        print("[BOOT] Waiting for initial underlying ticks...")
-        await asyncio.sleep(0.75)
-    else:
-        print("[BOOT] SHADOW mode - skipping IBKR connection")
-        ib_underlying = None
+    print("[BOOT] Waiting for initial underlying ticks...")
+    await asyncio.sleep(0.75)
 
     # ---------------------------------------------------------
     # 2. MASSIVE OPTIONS WS
@@ -127,7 +123,13 @@ async def main():
 
 
     # ---------------------------------------------------------
-    # 6. WAIT FOR SHUTDOWN SIGNAL
+    # 6. START ORCHESTRATOR
+    # ---------------------------------------------------------
+    print("[BOOT] Starting orchestrator...")
+    await orch.start()
+
+    # ---------------------------------------------------------
+    # 7. WAIT FOR SHUTDOWN SIGNAL
     # ---------------------------------------------------------
     if orch._shutdown is None:
         print("❌ FATAL: _shutdown Event was not created in start()")

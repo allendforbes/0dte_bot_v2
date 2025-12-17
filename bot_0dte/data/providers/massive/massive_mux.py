@@ -166,8 +166,10 @@ class MassiveMux:
     # ---------------------------------------------------------
     async def fetch_snapshot_and_hydrate(self, chain_agg):
         if not self.parent_orchestrator:
+            print("[HYDRATE] ERROR: No parent orchestrator")
             return
         if not hasattr(self.parent_orchestrator, "snapshot_client"):
+            print("[HYDRATE] ERROR: Parent has no snapshot_client")
             return
 
         snap_client = self.parent_orchestrator.snapshot_client
@@ -177,31 +179,55 @@ class MassiveMux:
         for sym, eng in self.engines.items():
             occ_list = eng.current_subs.get(sym, [])
             print(f"[WARMUP] {sym}: {len(occ_list)} contracts")
+            print(f"[WARMUP] {sym} strikes: {occ_list[:3]}...")  # Show first 3
+            
+            if not occ_list:
+                print(f"[WARMUP] WARNING: No contracts for {sym}")
+                continue
 
+            hydrated_count = 0
             for occ in occ_list:
-                rest = await snap_client.fetch_contract(sym, occ)
-                if not rest:
+                try:
+                    print(f"[HYDRATE] Fetching {sym} {occ}...")
+                    
+                    # Add timeout to prevent hanging
+                    rest = await asyncio.wait_for(
+                        snap_client.fetch_contract(sym, occ),
+                        timeout=5.0
+                    )
+                    
+                    if not rest:
+                        print(f"[HYDRATE] No data returned for {occ}")
+                        continue
+
+                    print(f"[HYDRATE] Got data: {list(rest.keys())[:5]}")
+                    
+                    # Use update_from_snapshot for REST-only data (no bid/ask yet)
+                    result = chain_agg.update_from_snapshot(sym, occ, rest)
+                    if result:
+                        hydrated_count += 1
+                        print(f"[HYDRATE] ✓ Hydrated {occ}")
+                    else:
+                        print(f"[HYDRATE] ✗ update_from_snapshot returned None for {occ}")
+                        
+                except asyncio.TimeoutError:
+                    print(f"[HYDRATE] TIMEOUT (5s) for {occ} - skipping")
                     continue
-
-                enriched = {
-                    "symbol": sym,
-                    "contract": occ,
-                    "bid": None,
-                    "ask": None,
-                    "iv": rest.get("iv"),
-                    "delta": rest.get("delta"),
-                    "gamma": rest.get("gamma"),
-                    "theta": rest.get("theta"),
-                    "vega": rest.get("vega"),
-                    "open_interest": rest.get("open_interest"),
-                    "volume": rest.get("volume"),
-                    "_hydrated": True,
-                    "_recv_ts": time.time(),
-                }
-
-                chain_agg.update_from_nbbo(enriched)
+                except Exception as e:
+                    print(f"[HYDRATE] ERROR for {occ}: {e}")
+                    continue
+            
+            print(f"[WARMUP] {sym}: Hydrated {hydrated_count}/{len(occ_list)} contracts")
 
         print("\n================ WARMUP COMPLETE =================\n")
+        
+        # Debug: Check what's actually in the cache
+        for sym in ['SPY', 'QQQ']:
+            cache_size = len(chain_agg.cache.get(sym, {}))
+            print(f"[HYDRATE] Final cache for {sym}: {cache_size} contracts")
+            if cache_size > 0:
+                sample_keys = list(chain_agg.cache[sym].keys())[:3]
+                print(f"[HYDRATE] Sample keys: {sample_keys}")
 
     # ---------------------------------------------------------
     async def close(self):
