@@ -24,8 +24,9 @@ class ChainAggregator:
       ✓ Preserves proper microstructure
     """
 
-    def __init__(self, symbols: List[str]):
+    def __init__(self, symbols: List[str], market_state=None):
         self.symbols = symbols
+        self.market_state = market_state  # <-- ADD THIS
         self.cache: Dict[str, Dict[str, Dict[str, Any]]] = {s: {} for s in symbols}
         self.last_ts: Dict[str, float] = {s: 0.0 for s in symbols}
         self.delta_windows: Dict[str, Tuple[float, float]] = {}
@@ -129,6 +130,16 @@ class ChainAggregator:
 
         self.cache[symbol][contract] = row
         self.last_ts[symbol] = time.time()
+
+        # ------------------------------------------------------------
+        # UI NOTIFICATION (non-blocking, optional)
+        # ------------------------------------------------------------
+        if self.market_state is not None:
+            self.market_state.update_nbbo(
+                symbol=symbol,
+                bid=bid,
+                ask=ask
+            )
 
     # ============================================================
     #   REST SNAPSHOT MERGE — called by MassiveContractEngine v4.0

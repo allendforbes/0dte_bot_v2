@@ -16,12 +16,13 @@ from rich.console import Console
 from rich.text import Text
 
 
-def _fmt(x: Any) -> str:
+def _fmt(x: Any, decimals: int = 2) -> str:
     """
     Safely format a value for display, handling None and type errors.
     
     Args:
         x: Value to format (may be None, float, int, or other)
+        decimals: Number of decimal places (default 2)
         
     Returns:
         Formatted string, or "--" if value cannot be formatted
@@ -30,7 +31,7 @@ def _fmt(x: Any) -> str:
         return "--"
     if isinstance(x, (int, float)):
         try:
-            return f"{x:.2f}"
+            return f"{x:.{decimals}f}"
         except Exception:
             return "--"
     return str(x)
@@ -45,6 +46,11 @@ class LiveDashboard:
     - __rich__() pulls state from MarketStatePublisher and returns layout
     - Layout structure created once in __init__, never recreated
     - No Rich calls in async callbacks
+    
+    Display phases:
+    - PRE-TRADE: Show price, VWAP dev (rounded), signal if detected
+    - IN-TRADE: Show contract bid/ask, PnL, trail level, tier
+    - POST-TRADE: Show exit reason and final PnL
     """
     
     def __init__(self, console: Console, market_state):
@@ -74,18 +80,19 @@ class LiveDashboard:
         self.trade_panel = Panel("No active trade", title="🟢 ACTIVE TRADE")
         
         # Create left column layout with children
-        left = Layout(name="left_container")
-        left.split_column(
+        self.layout["left"].split_column(
             Layout(self.market_panel, name="market", ratio=3),
             Layout(self.signal_panel, name="signal", ratio=2),
             Layout(self.trade_panel, name="trade", ratio=2),
         )
-        self.layout["left"].update(left)
-        
+
         # Initialize log stream
         self.log_lines: List[str] = []
         self.max_logs = 150
-        self.layout["right"].update(Panel("", title="📝 LOG STREAM"))
+        self.layout["right"].update(Panel("", title="📋 LOG STREAM"))
+        
+        # Repaint suppression (avoid flickering on micro-changes)
+        self._last_snapshot_hash = None
         
         # Mark as initialized
         self._initialized = True
@@ -106,14 +113,6 @@ class LiveDashboard:
         if not getattr(self, '_initialized', False):
             return self.layout
         
-        # DEBUG: Verify this is being called
-        if not hasattr(self, '_render_count'):
-            self._render_count = 0
-        self._render_count += 1
-        
-        if self._render_count % 25 == 0:  # Every 5 seconds at 5 FPS
-            print(f"[UI DEBUG] __rich__ called {self._render_count} times")
-        
         try:
             self.refresh_market()
         except Exception as e:
@@ -125,44 +124,36 @@ class LiveDashboard:
         return self.layout
     
     # -------------------------------------------------
-    # Lifecycle
+    # Lifecycle (CORRECT – NO THREADS)
     # -------------------------------------------------
-    
+
     def start(self):
-        """Start the live rendering loop in a background thread."""
-        try:
-            # Create Live instance lazily (CRITICAL: only after event loop exists)
-            if self.live is None:
-                self.live = Live(self, refresh_per_second=5, console=self.console)
-            
-            # CRITICAL: Live must be used as context manager
-            import threading
-            
-            def run_live():
-                """Thread target that properly enters/exits Live context."""
-                try:
-                    with self.live:
-                        # Live.start() has already been called by __enter__
-                        # Just keep the thread alive
-                        import time
-                        while not getattr(self, '_stop_requested', False):
-                            time.sleep(0.1)
-                except Exception as e:
-                    print(f"[UI] Live rendering error: {e}")
-                    import traceback
-                    traceback.print_exc()
-            
-            self._stop_requested = False
-            self._thread = threading.Thread(target=run_live, daemon=True)
-            self._thread.start()
-            
-            print(f"[UI] Dashboard rendering thread started")
-            
-        except Exception as e:
-            print(f"[UI] Dashboard start failed: {e}")
-            import traceback
-            traceback.print_exc()
-    
+        """
+        Start Rich Live rendering.
+        MUST run in the main thread.
+        """
+        if self.live is not None:
+            return  # already started
+
+        self.live = Live(
+            self,
+            refresh_per_second=5,
+            console=self.console,
+            transient=False,
+        )
+        self.live.start()
+        print("[UI] Dashboard live rendering started")
+
+
+    def stop(self):
+        """
+        Stop Rich Live rendering cleanly.
+        """
+        if self.live:
+            self.live.stop()
+            self.live = None
+            print("[UI] Dashboard live rendering stopped")
+  
     def stop(self):
         """Stop the live rendering and restore cursor."""
         try:
@@ -189,31 +180,61 @@ class LiveDashboard:
         """
         Pull market snapshot from publisher and render.
         Called automatically by __rich__().
+        
+        Display logic:
+        - PRE-TRADE: Show price, signal if any
+        - IN-TRADE: Show contract bid/ask (if available)
+        - Always show signal/strike when detected
         """
         try:
             rows = self.market_state.snapshot()
+            
+            # Suppress repaint if nothing material changed
+            snapshot_hash = hash(str([(r.get("symbol"), r.get("price"), r.get("bid"), 
+                                       r.get("ask"), r.get("signal")) for r in rows]))
+            
+            if snapshot_hash == self._last_snapshot_hash:
+                return
+            
+            self._last_snapshot_hash = snapshot_hash
+            
+            # Build table
             table = Table(box=None, expand=True)
-            table.add_column("Symbol")
+            table.add_column("Symbol", style="bold")
             table.add_column("Price", justify="right")
             table.add_column("Bid", justify="right")
             table.add_column("Ask", justify="right")
-            table.add_column("Signal")
-            table.add_column("Strike")
+            table.add_column("Signal", justify="center")
+            table.add_column("Strike", justify="right")
             
             for r in rows:
+                # Determine if in-trade (bid/ask populated)
+                in_trade = r.get("bid") is not None and r.get("ask") is not None
+                
+                # Signal display
+                signal_str = str(r.get("signal", "--"))
+                if signal_str != "--":
+                    if signal_str == "CALL":
+                        signal_str = "[green]CALL[/green]"
+                    elif signal_str == "PUT":
+                        signal_str = "[red]PUT[/red]"
+                
+                # Strike display (defensive: handle numeric or string)
+                strike = r.get("strike")
+                strike_str = _fmt(strike, decimals=0) if isinstance(strike, (int, float)) else "--"
+                
                 table.add_row(
                     str(r.get("symbol", "")),
-                    _fmt(r.get("price")),
-                    _fmt(r.get("bid")),
-                    _fmt(r.get("ask")),
-                    str(r.get("signal", "--")),
-                    str(r.get("strike", "--")),
+                    _fmt(r.get("price"), decimals=2),
+                    _fmt(r.get("bid"), decimals=2) if in_trade else "--",
+                    _fmt(r.get("ask"), decimals=2) if in_trade else "--",
+                    signal_str,
+                    strike_str,
                 )
             
             self.market_panel = Panel(table, title="📡 LIVE MARKET")
-            # Defensive access; keys exist because we created them in __init__
-            left = self.layout["left"]
-            left["market"].update(self.market_panel)
+            self.layout["left"]["left_container"]["market"].update(self.market_panel)
+            
         except Exception as e:
             # UI-only failure should never bubble
             print(f"[UI] refresh_market error: {e}")
@@ -239,7 +260,7 @@ class LiveDashboard:
                 Text(combined),
                 title="📊 SIGNAL PIPELINE",
             )
-            self.layout["left"]["signal"].update(self.signal_panel)
+            self.layout["left"]["left_container"]["signal"].update(self.signal_panel)
         except Exception as e:
             print(f"[UI] update_signal error: {e}")
     
@@ -256,7 +277,8 @@ class LiveDashboard:
         """
         try:
             self.trade_panel = Panel(panel_text, title="🟢 ACTIVE TRADE")
-            self.layout["left"]["trade"].update(self.trade_panel)
+            self.layout["left"]["left_container"]["trade"].update(self.trade_panel)
+
         except Exception as e:
             print(f"[UI] update_trade error: {e}")
     
@@ -278,7 +300,7 @@ class LiveDashboard:
             self.log_lines.append(line)
             
             self.layout["right"].update(
-                Panel("\n".join(self.log_lines[-self.max_logs:]), title="📝 LOG STREAM")
+                Panel("\n".join(self.log_lines[-self.max_logs:]), title="📋 LOG STREAM")
             )
         except Exception as e:
             # UI-only failure should never bubble

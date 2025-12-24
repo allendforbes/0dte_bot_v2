@@ -1,133 +1,177 @@
 """
-LatencyPrecheck — Ensures Early Movement Detection
+PATCHED: latency_precheck.py
+-------------------------------
+Converts permission-based blocking to measurement-based observability.
 
-WS-Native Compatible:
-    • No ms timestamp requirement (removed)
-    • Accepts _recv_ts (seconds) if available
-    • Guards vwap_dev_change with default 0
-    • Freshness guaranteed by WS heartbeat watchdog
-
-This module enforces:
-    1. Spread sanity
-    2. Slippage bound between signal-price and current bid/ask
-    3. Microstructure alignment (no abrupt reversal ticks)
-
-Output schema:
-{
-    "ok": bool,
-    "limit_price": float | None,
-    "reason": str | None
-}
+Changes:
+- validate() returns measurements dict (no "ok" boolean)
+- Spread/slippage/reversal are metrics, not gates
+- All measurements logged, none block entry
+- limit_price still provided for execution
 """
 
 from dataclasses import dataclass
+from typing import Dict, Any
 
 
 @dataclass
-class PrecheckResult:
-    """Result object for latency pre-check."""
-
-    ok: bool
-    limit_price: float = None
-    reason: str = None
+class LatencyMetrics:
+    """Execution quality measurements (observability only)."""
+    
+    spread_pct: float
+    slippage_pct: float
+    reversal_slope: float
+    limit_price: float
+    
+    # Error field for missing data
+    error: str = None
 
 
 class LatencyPrecheck:
     """
-    WS-native latency pre-check.
-
-    Validates market conditions before entry without requiring
-    precise timestamps (freshness guaranteed by WS adapter).
+    WS-native latency measurement.
+    
+    Measures market conditions for observability.
+    Does NOT block entry - all measurements are logged.
     """
 
     def __init__(self):
-        # Spread sanity
-        self.MAX_SPREAD_PCT = 0.25  # 25% of premium max
-
-        # Slippage protection
-        self.MAX_SLIPPAGE = 0.15  # 15% adverse movement
-
-        # Microstructure reversal detection
-        self.MAX_REVERSE_SLOPE = -0.01  # No micro flip
+        # Measurement thresholds (for logging severity)
+        self.SPREAD_THRESHOLD = 0.25
+        self.SLIPPAGE_THRESHOLD = 0.15
+        self.REVERSAL_THRESHOLD = 0.01
 
     # ------------------------------------------------------------------
-    def validate(self, symbol: str, tick: dict, bias: str) -> PrecheckResult:
+    def measure(self, symbol: str, tick: dict, bias: str) -> LatencyMetrics:
         """
-        Validate market conditions for entry.
-
+        Measure execution quality metrics.
+        
         Args:
             symbol: Trading symbol
             tick: Market data dict
             bias: "CALL" or "PUT"
-
-        Tick format (from Orchestrator):
+        
+        Tick format:
         {
             "price": float,
             "bid": float,
             "ask": float,
-            "vwap_dev_change": float | None,  # Optional
-            "_recv_ts": float | None,         # Optional (seconds)
+            "vwap_dev_change": float | None,
+            "_recv_ts": float | None,
         }
-
+        
         Returns:
-            PrecheckResult with ok flag, limit_price, and reason
+            LatencyMetrics with measurements (never blocks)
         """
-
+        
         # =====================================================
         # EXTRACT PRICES
         # =====================================================
         price = tick.get("price")
         bid = tick.get("bid")
         ask = tick.get("ask")
-
+        
         if price is None or bid is None or ask is None:
-            return PrecheckResult(False, reason="missing_prices")
-
-        mid = (bid + ask) / 2
-
-        # =====================================================
-        # 1) SPREAD SANITY
-        # =====================================================
-        # Avoid cases where bid=0.00 (illiquid or stale)
-        if bid <= 0 or ask <= 0:
-            return PrecheckResult(False, reason="zero_bid_or_ask")
-
-        spread = ask - bid
-        if spread / max(mid, 0.01) > self.MAX_SPREAD_PCT:
-            return PrecheckResult(False, reason="spread_too_wide")
-
-        # =====================================================
-        # 2) SLIPPAGE PROTECTION
-        # =====================================================
-        # CALL: ensure price didn't already rip
-        if bias == "CALL":
-            if (ask - price) / max(price, 0.01) > self.MAX_SLIPPAGE:
-                return PrecheckResult(False, reason="call_slippage")
-        # PUT: ensure price didn't already tank
-        else:
-            if (price - bid) / max(price, 0.01) > self.MAX_SLIPPAGE:
-                return PrecheckResult(False, reason="put_slippage")
-
-        # =====================================================
-        # 3) MICROSTRUCTURE REVERSAL VETO
-        # =====================================================
-        # Only check if vwap_dev_change is available
-        slope = tick.get("vwap_dev_change")
-
-        if slope is not None and slope != 0:
-            # Check for reversal against bias
-            reverse_flip = (bias == "CALL" and slope < self.MAX_REVERSE_SLOPE) or (
-                bias == "PUT" and slope > -self.MAX_REVERSE_SLOPE
+            return LatencyMetrics(
+                spread_pct=0.0,
+                slippage_pct=0.0,
+                reversal_slope=0.0,
+                limit_price=None,
+                error="missing_prices"
             )
-
-            if reverse_flip:
-                return PrecheckResult(False, reason="reversal_tick")
-
+        
+        if bid <= 0 or ask <= 0:
+            return LatencyMetrics(
+                spread_pct=0.0,
+                slippage_pct=0.0,
+                reversal_slope=0.0,
+                limit_price=None,
+                error="zero_bid_or_ask"
+            )
+        
+        mid = (bid + ask) / 2
+        
         # =====================================================
-        # 4) CONSTRUCT EXECUTION LIMIT PRICE
+        # MEASURE: Spread
         # =====================================================
-        # CALL → enter at ask
-        # PUT  → enter at bid
+        spread = ask - bid
+        spread_pct = spread / max(mid, 0.01)
+        
+        # =====================================================
+        # MEASURE: Slippage
+        # =====================================================
+        if bias == "CALL":
+            slippage_pct = (ask - price) / max(price, 0.01)
+        else:
+            slippage_pct = (price - bid) / max(price, 0.01)
+        
+        # =====================================================
+        # MEASURE: Reversal slope
+        # =====================================================
+        reversal_slope = tick.get("vwap_dev_change", 0.0)
+        
+        # =====================================================
+        # CONSTRUCT LIMIT PRICE
+        # =====================================================
         limit_price = ask if bias == "CALL" else bid
+        
+        # =====================================================
+        # RETURN MEASUREMENTS (NO VETO)
+        # =====================================================
+        return LatencyMetrics(
+            spread_pct=spread_pct,
+            slippage_pct=slippage_pct,
+            reversal_slope=reversal_slope,
+            limit_price=limit_price
+        )
+    
+    # ------------------------------------------------------------------
+    # DEPRECATED: Keep for backward compatibility
+    # ------------------------------------------------------------------
+    def validate(self, symbol: str, tick: dict, bias: str) -> Dict[str, Any]:
+        """
+        DEPRECATED: Use measure() instead.
+        
+        Returns dict with measurements for backward compatibility.
+        """
+        metrics = self.measure(symbol, tick, bias)
+        
+        return {
+            "spread_pct": metrics.spread_pct,
+            "slippage_pct": metrics.slippage_pct,
+            "reversal_slope": metrics.reversal_slope,
+            "limit_price": metrics.limit_price,
+            "error": metrics.error,
+            # For backward compat: always "ok"
+            "ok": True,
+            "reason": metrics.error or "measured"
+        }
 
-        return PrecheckResult(True, limit_price=limit_price)
+
+# ======================================================================
+# ORCHESTRATOR USAGE EXAMPLE
+# ======================================================================
+"""
+# In orchestrator _evaluate_entry():
+
+try:
+    metrics = self.latency.measure(symbol, tick, signal.bias)
+    
+    # Log measurements (observability)
+    self.logger.log_event("latency_metrics", {
+        "symbol": symbol,
+        "spread_pct": round(metrics.spread_pct * 100, 2),
+        "slippage_pct": round(metrics.slippage_pct * 100, 2),
+        "reversal_slope": round(metrics.reversal_slope, 4),
+        "limit_price": metrics.limit_price,
+        "error": metrics.error,
+    })
+    
+    # Note: No branching on metrics - always proceed to entry
+    
+except Exception as e:
+    self.logger.log_event("latency_measurement_failed", {
+        "symbol": symbol,
+        "error": str(e)
+    })
+"""

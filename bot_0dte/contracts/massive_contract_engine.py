@@ -11,6 +11,7 @@ Adds:
 import asyncio
 import time
 import logging
+import math
 from typing import List, Dict, Optional
 
 from bot_0dte.universe import get_expiry_for_symbol
@@ -201,7 +202,15 @@ class MassiveContractEngine:
             logger.error(f"[OCC_INIT] No expiry for {self.symbol}")
             return
 
+        # ⛔ Guard: market closed / bad tick
+        if price is None or math.isnan(price):
+            logger.info(
+                f"[OCC_INIT] Skipping initialization — invalid price: {price}"
+            )
+            return
+
         strikes = self._compute_strikes(price)
+
 
         occs = [
             self.encode_occ(self.symbol, self.expiry, side, k)
@@ -223,6 +232,10 @@ class MassiveContractEngine:
 
     # ----------------------------------------------------------------------
     async def _refresh(self, price: float):
+        # ⛔ Guard: market closed / bad tick
+        if price is None or math.isnan(price):
+            return
+
         strikes = self._compute_strikes(price)
 
         occs = [

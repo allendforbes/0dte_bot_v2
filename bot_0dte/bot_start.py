@@ -1,17 +1,11 @@
-# CHANGES:
-# - Mechanical wiring only
-# - No strategy or convexity logic modified
-# - Pass ExecutionPhase enum, not .value string
-
 # bot_0dte/bot_start.py
 """
 Hybrid Bot Launcher (IBKR Underlying + Massive Options)
-Aligned with: MassiveMux v3.4, OptionsWSAdapter v5.0, MassiveContractEngine v3.2
+ASCII UI - Rich completely removed
 """
 
 import asyncio
 import logging
-import signal
 
 from bot_0dte.data.adapters.ib_underlying_adapter import IBUnderlyingAdapter
 from bot_0dte.data.providers.massive.massive_options_ws_adapter import MassiveOptionsWSAdapter
@@ -66,15 +60,15 @@ async def main():
     options_ws = MassiveOptionsWSAdapter.from_env()
 
     # ---------------------------------------------------------
-    # 3. MUX – Hybrid Market Data Layer
+    # 3. MUX — Hybrid Market Data Layer
     # ---------------------------------------------------------
     print("[BOOT] Creating MassiveMux (IBKR underlying + Massive NBBO)...")
     mux = MassiveMux(
         options_ws=options_ws,
-        ib_underlying=ib_underlying
+        ib_underlying=ib_underlying,
     )
 
-   # ---------------------------------------------------------
+    # ---------------------------------------------------------
     # 4. EXECUTION ENGINE
     # ---------------------------------------------------------
     print("[BOOT] Initializing ExecutionEngine...")
@@ -120,7 +114,6 @@ async def main():
         auto_trade_enabled=True,
         execution_phase=execution_phase,  # enum, not string
     )
-
 
     # ---------------------------------------------------------
     # 6. START ORCHESTRATOR
