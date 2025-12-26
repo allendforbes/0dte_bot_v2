@@ -382,7 +382,12 @@ class Orchestrator:
         """
         Strategy evaluation on underlying tick.
         """
-        
+
+        # --------------------------------------------------
+        # TIME-BASED ACCEPTANCE CONFIG
+        # --------------------------------------------------
+        HOLD_INTERVAL = 5  # seconds ≈ one bar
+
         if not self.hydration_complete:
             return
         
@@ -497,27 +502,24 @@ class Orchestrator:
         # HOLD BAR TRACKING (TIME-BASED, NOT TICK-BASED)
         # ---------------------------------------------------------------
         vwap = snap.get("vwap")
-        now = snap.get("timestamp")
+        now = time.monotonic()
 
-        if "last_hold_ts" not in state:
-            state["last_hold_ts"] = 0
-
-        HOLD_INTERVAL = 5  # seconds ≈ one bar
+        if state.get("last_hold_ts") is None:
+            state["last_hold_ts"] = now
 
         if vwap is not None:
-            if regime.bias == "CALL" and price > vwap:
+            aligned = (
+                (regime.bias == "CALL" and price > vwap) or
+                (regime.bias == "PUT"  and price < vwap)
+            )
+
+            if aligned:
                 if now - state["last_hold_ts"] >= HOLD_INTERVAL:
                     state["hold_bars"] += 1
                     state["last_hold_ts"] = now
-
-            elif regime.bias == "PUT" and price < vwap:
-                if now - state["last_hold_ts"] >= HOLD_INTERVAL:
-                    state["hold_bars"] += 1
-                    state["last_hold_ts"] = now
-
             else:
                 state["hold_bars"] = 0
-                state["last_hold_ts"] = 0
+                state["last_hold_ts"] = None
 
         # ---------------------------------------------------------------
         # RANGE TRACKING (INDEPENDENT OF HOLD)
@@ -536,42 +538,67 @@ class Orchestrator:
         
         # PRIORITY 1: TREND (daily participation, enabled from 9:35+)
         TREND_SESSION_START = 300  # 5 minutes after open
-        
+
         if regime.regime == "TREND" and self.seconds_since_open >= TREND_SESSION_START:
             try:
                 if self.entry_engine.acceptance_ok(snap, state):
                     signal = self.entry_engine.build_signal(regime, snap)
+                else:
+                    # 🔍 Log only once acceptance is actually forming
+                    if state["hold_bars"] > 0:
+                        self.logger.log_event("acceptance_blocked", {
+                            "symbol": symbol,
+                            "bias": regime.bias,
+                            "regime": regime.regime,
+                            "hold_bars": state["hold_bars"],
+                            "range_high": state["range_high"],
+                            "range_low": state["range_low"],
+                            "price": price,
+                            "vwap": snap.get("vwap"),
+                        })
             except Exception:
                 self.logger.exception("[ENTRY] TREND acceptance failed")
-        
+
+    
         # PRIORITY 2: RECLAIM (convexity enhancement, any time)
         if not signal and regime.regime == "RECLAIM":
             try:
                 if self.entry_engine.acceptance_ok(snap, state):
                     signal = self.entry_engine.build_signal(regime, snap)
+                else:
+                    self.logger.log_event("acceptance_blocked", {
+                        "symbol": symbol,
+                        "bias": regime.bias,
+                        "regime": regime.regime,
+                        "hold_bars": state["hold_bars"],
+                        "range_high": state["range_high"],
+                        "range_low": state["range_low"],
+                        "price": price,
+                        "vwap": snap.get("vwap"),
+                    })
             except Exception:
                 self.logger.exception("[ENTRY] RECLAIM acceptance failed")
-      
-        if not signal:
-            return
-        
+       
         # Log entry snapshot for audit
-        self.logger.log_event("entry_snapshot", {
-            "symbol": symbol,
-            "snap": snap,
-            "signal": {
-                "bias": signal.bias,
-                "grade": signal.grade,
-                "regime": signal.regime,
-                "score": signal.score,
-                "trail_mult": signal.trail_mult,
-            },
-            "acceptance_state": {
-                "hold_bars": state["hold_bars"],
-                "range_high": state["range_high"],
-                "range_low": state["range_low"],
-            }
-        })
+        if signal:
+            self.logger.log_event("entry_snapshot", {
+                "symbol": symbol,
+                "snap": snap,
+                "signal": {
+                    "bias": signal.bias,
+                    "grade": signal.grade,
+                    "regime": signal.regime,
+                    "score": signal.score,
+                    "trail_mult": signal.trail_mult,
+                },
+                "acceptance_state": {
+                    "hold_bars": state["hold_bars"],
+                    "range_high": state["range_high"],
+                    "range_low": state["range_low"],
+                }
+            })
+        else:
+            return
         
         # Strike selection
         strike_result = await self.selector.select(
@@ -591,18 +618,8 @@ class Orchestrator:
         if qty < 1:
             return
         
-        # Log entry decision
-        self.decision_log.log(
-            decision="ENTRY",
-            symbol=symbol,
-            reason=str(signal.regime),  # Use regime field (e.g., "VWAP_RECLAIM", "FORCED")
-            convexity_score=float(signal.score),
-            tier=str(signal.grade),
-            price=float(price),
-        )
-        
-        # Execute
-        await self._execute_entry(symbol, signal, strike_result, qty)
+        # Execute (decision log moved inside _execute_entry after successful execution)
+        await self._execute_entry(symbol, signal, strike_result, qty, price)
 
     async def _manage_trade(self, symbol: str, price: float):
         """
@@ -720,20 +737,53 @@ class Orchestrator:
             })
 
     # ------------------------------------------------------------
-    async def _execute_entry(self, symbol: str, signal, strike_result: dict, qty: int):
+    async def _execute_entry(self, symbol: str, signal, strike_result: dict, qty: int, price: float):
         """
         Execute entry with bracket order.
+        STATE MANAGEMENT:
+        1. Set active state BEFORE execution
+        2. Log execution_attempt
+        3. Call IBKR
+        4. On success: decision_log + trail
+        5. On failure: rollback state
         """
         
         entry_price = strike_result["premium"]
+        
+        # ================================================================
+        # STEP 1: COMMIT STATE BEFORE EXECUTION
+        # ================================================================
+        self.active_symbol = symbol
+        self.active_contract = strike_result["contract"]
+        self.active_bias = signal.bias
+        self.active_entry_price = entry_price
+        self.active_qty = qty
+        self.active_grade = getattr(signal, 'grade', 'L0')
+        self.active_score = getattr(signal, 'score', 0.0)
+        
+        # ================================================================
+        # STEP 2: LOG EXECUTION ATTEMPT
+        # ================================================================
+        self.logger.log_event("execution_attempt", {
+            "symbol": symbol,
+            "contract": strike_result["contract"],
+            "qty": qty,
+            "entry_price": entry_price,
+            "phase": self.execution_phase.value,
+        })
+        
+        # ================================================================
+        # STEP 3: EXECUTE VIA IBKR
+        # ================================================================
+        execution_success = False
+        is_forced = strike_result.get("contract") == "SPY_FORCED_TEST"
         
         # Calculate bracket levels
         take_profit = entry_price * getattr(signal, 'trail_mult', 2.0)
         stop_loss = entry_price * 0.50
         
-        # Send to execution engine
         try:
-            await self.engine.send_bracket(
+            result = await self.engine.send_bracket(
                 symbol=symbol,
                 side=signal.bias,
                 qty=qty,
@@ -743,53 +793,122 @@ class Orchestrator:
                 meta={
                     "strike": strike_result["strike"],
                     "contract": strike_result["contract"],
-                    "grade": getattr(signal, 'grade', 'L0'),
+                    "grade": getattr(signal, "grade", "L0"),
                 },
             )
-            
+
+            # ================================================================
+            # GUARD: Handle None result from send_bracket
+            # ================================================================
+            if not result:
+                self.logger.log_event("order_failed", {
+                    "symbol": symbol,
+                    "error": "send_bracket returned None",
+                })
+                execution_success = False
+
+            else:
+                status = result.get("status", "unknown")
+
+                if status in ["filled", "mock-filled"]:
+                    execution_success = True
+
+                    self.logger.log_event("order_sent", {
+                        "symbol": symbol,
+                        "status": status,
+                        "phase": self.execution_phase.value,
+                        "mock": status == "mock-filled",
+                    })
+
+                else:
+                    self.logger.log_event("order_blocked", {
+                        "symbol": symbol,
+                        "status": status,
+                        "reason": result.get("error", "unknown"),
+                    })
+                    execution_success = False
+
         except RuntimeError as e:
-            if "SHADOW" not in str(e):
-                raise
-            
-            # Detect forced trades
-            is_forced = strike_result.get("contract") == "SPY_FORCED_TEST"
-            
-            self.logger.log_event("shadow_execution", {
+            # ------------------------------------------------
+            # SHADOW MODE GUARD
+            # ------------------------------------------------
+            if "SHADOW" in str(e):
+                self.logger.log_event("shadow_execution", {
+                    "symbol": symbol,
+                    "action": "entry",
+                    "contract": strike_result["contract"],
+                    "entry_price": entry_price,
+                    "qty": qty,
+                })
+                execution_success = True
+
+            else:
+                self.logger.log_event("order_failed", {
+                    "symbol": symbol,
+                    "error": str(e),
+                })
+                execution_success = False
+
+        except Exception as e:
+            self.logger.log_event("order_failed", {
                 "symbol": symbol,
-                "action": "entry",
-                "contract": strike_result["contract"],
-                "entry_price": entry_price,
-                "qty": qty,
-                "forced": is_forced,
+                "error": str(e),
             })
+            execution_success = False
         
-        # Set active state
-        self.active_symbol = symbol
-        self.active_contract = strike_result["contract"]
-        self.active_bias = signal.bias
-        self.active_entry_price = entry_price
-        self.active_qty = qty
-        self.active_grade = getattr(signal, 'grade', 'L0')
-        self.active_score = getattr(signal, 'score', 0.0)
+        # ================================================================
+        # STEP 4: ON SUCCESS - FINALIZE ENTRY
+        # ================================================================
+        if execution_success:
+            # ✅ Log decision ONLY after successful execution
+            self.decision_log.log(
+                decision="ENTRY",
+                symbol=symbol,
+                reason=str(signal.regime),
+                convexity_score=float(signal.score),
+                tier=str(signal.grade),
+                price=float(price),
+            )
+            
+            # ✅ Initialize trail
+            self.trail.initialize(symbol, entry_price, getattr(signal, 'trail_mult', 2.0))
+            self.trail.state.oneR = entry_price * 0.50
+            self.trail.state.entry_ts = time.monotonic()
+            
+            # ✅ Set trading phase
+            self.trading_phase = TradingPhase.IN_TRADE
+            
+            self.logger.log_event("entry_executed", {
+                "symbol": symbol,
+                "contract": strike_result["contract"],
+                "qty": qty,
+                "entry": entry_price,
+            })
+            
+            return  # Success path
         
-        # Start trail logic
-        self.trail.initialize(symbol, entry_price, getattr(signal, 'trail_mult', 2.0))
-        
-        # Persist oneR for R-multiple calculation (canonical risk)
-        self.trail.state.oneR = entry_price * 0.50
-        
-        # Persist entry timestamp for forced exit timing
-        self.trail.state.entry_ts = time.monotonic()
-        
-        # Set trading phase
-        self.trading_phase = TradingPhase.IN_TRADE
-        
-        self.logger.log_event("entry_executed", {
+        # ================================================================
+        # STEP 5: ON FAILURE - ROLLBACK STATE
+        # ================================================================
+        self.logger.log_event("execution_rollback", {
             "symbol": symbol,
-            "contract": strike_result["contract"],
-            "qty": qty,
-            "entry": entry_price,
+            "reason": "execution_failed",
         })
+        
+        # Clear all active state
+        self.active_symbol = None
+        self.active_contract = None
+        self.active_bias = None
+        self.active_entry_price = None
+        self.active_qty = None
+        self.active_grade = None
+        self.active_score = None
+        
+        # Clear trail state to prevent phantom trailing
+        self.trail.state.active = False
+        
+        # Reset trading phase
+        self.trading_phase = TradingPhase.HUNTING
 
     # ------------------------------------------------------------
     async def _execute_exit(self, symbol: str, reason: str):

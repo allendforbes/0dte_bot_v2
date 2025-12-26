@@ -55,6 +55,10 @@ class ExecutionEngine:
         """Attach connected IBKR instance."""
         self.ib = ib
         print("[EXEC] Attached IBKR instance.")
+        
+        # Log IBKR ready state for debugging
+        client_id = getattr(ib.client, 'clientId', 'unknown') if hasattr(ib, 'client') else 'unknown'
+        print(f"[EXEC] IBKR execution ready: client_id={client_id}")
 
     # ------------------------------------------------------------
     async def start(self):
@@ -62,7 +66,11 @@ class ExecutionEngine:
         if self.use_mock or not self.ib:
             print("[EXEC] Mock engine initialized — NetLiq=25,000.")
             self.account_state.update(25000)
+            print("[EXEC] ibkr_execution_ready: mock=True, connected=False")
             return
+
+        if not self.ib:
+            raise RuntimeError("ExecutionEngine.start() called but self.ib is None")
 
         acct = await self.ib.accountSummaryAsync()
         for row in acct:
@@ -70,7 +78,10 @@ class ExecutionEngine:
                 self.account_state.update(float(row.value))
                 break
 
+        # Log execution ready
+        client_id = getattr(self.ib.client, 'clientId', 'unknown') if hasattr(self.ib, 'client') else 'unknown'
         print(f"[EXEC] Live IBKR NetLiq loaded: {self.account_state.net_liq}")
+        print(f"[EXEC] ibkr_execution_ready: connected=True, client_id={client_id}")
 
     # ============================================================
     # CONTRACT CONSTRUCTION
@@ -127,6 +138,17 @@ class ExecutionEngine:
             return await self._mock_fill(
                 symbol, side, qty, entry_price, take_profit, stop_loss, meta
             )
+
+        # ------------------------------
+        # IBKR VERIFICATION (CRITICAL)
+        # ------------------------------
+        if not self.ib:
+            print("[EXEC][ERROR] send_bracket() called but self.ib is None")
+            return {
+                "status": "error",
+                "error": "IBKR not connected",
+                "symbol": symbol,
+            }
 
         # ------------------------------
         # LIVE / PAPER MODE
@@ -258,6 +280,7 @@ class ExecutionEngine:
     # ============================================================
     async def _mock_fill(self, symbol, side, qty, entry, tp, sl, meta):
         print(f"[EXEC][MOCK] Bracket simulated for {symbol}: entry={entry:.2f}")
+        print(f"[EXEC][MOCK] Phase={self.execution_phase.value}, Mock=True")
         await asyncio.sleep(0.10)
         return {
             "symbol": symbol,
@@ -268,4 +291,6 @@ class ExecutionEngine:
             "sl": sl,
             "meta": meta,
             "status": "mock-filled",
+            "phase": self.execution_phase.value,
+            "mock": True,
         }
