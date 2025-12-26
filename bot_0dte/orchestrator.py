@@ -85,9 +85,8 @@ class VWAPTracker:
 
         vwap = total_pv / total_v if total_v else price
         
-        # Normalized deviation: (price - vwap) / vwap
-        # This gives percentage deviation (e.g., 0.01 = 1% above VWAP)
-        dev = (price - vwap) / vwap if vwap != 0 else 0.0
+        # Raw deviation: price - vwap
+        dev = price - vwap
         change = dev - self.last_dev
         
         # Cache for read-only access
@@ -196,6 +195,21 @@ class Orchestrator:
         self.active_qty = None
         self.active_grade = None
         self.active_score = None
+        
+        # Acceptance state tracking (per symbol, orchestrator-owned)
+        self.acceptance_state = {
+            s: {
+                "hold_bars": 0,
+                "range_high": None,
+                "range_low": None,
+                "bias": None,
+                "regime": None,
+            }
+            for s in self.symbols
+        }
+        
+        # Post-exit micro cooldown (30 seconds, mechanical only)
+        self.last_exit_ts = None
         
         # Trading phase (PRE/IN/POST)
         self.trading_phase = TradingPhase.PRE_TRADE
@@ -419,6 +433,11 @@ class Orchestrator:
         if not self.auto:
             return
         
+        # Post-exit micro cooldown (30 seconds, mechanical only)
+        if self.last_exit_ts is not None:
+            if time.monotonic() - self.last_exit_ts < 30.0:
+                return
+        
         # Get chain
         chain_rows = self.chain_agg.get_chain(symbol)
         if not chain_rows:
@@ -427,7 +446,7 @@ class Orchestrator:
         # VWAP data
         vwap_data = self.vwap[symbol].update(price)
         
-        # Entry signal check (structure-only: price/VWAP/time)
+        # Market snapshot (structure-only)
         snap = {
             "symbol": symbol,
             "price": price,
@@ -437,11 +456,101 @@ class Orchestrator:
             "seconds_since_open": self.seconds_since_open,
         }
 
+        # ----------------------------------------------------------------
+        # REGIME DETECTION
+        # ----------------------------------------------------------------
         try:
-            signal = self.entry_engine.qualify(snap)
+            regime = self.entry_engine.detect_regime(snap)
         except Exception:
-            self.logger.exception("[ENTRY] qualify() failed")
+            self.logger.exception("[ENTRY] detect_regime() failed")
             return
+        
+        if not regime:
+            # Pinned at VWAP - reset acceptance state
+            self.acceptance_state[symbol] = {
+                "hold_bars": 0,
+                "range_high": None,
+                "range_low": None,
+                "bias": None,
+                "regime": None,
+            }
+            return
+        
+        # ----------------------------------------------------------------
+        # ACCEPTANCE STATE MANAGEMENT (orchestrator-owned)
+        # ----------------------------------------------------------------
+        state = self.acceptance_state[symbol]
+
+        # Reset acceptance ONLY on bias flip (not regime transitions)
+        if state["bias"] != regime.bias:
+            state["hold_bars"] = 0
+            state["range_high"] = price
+            state["range_low"] = price
+            state["bias"] = regime.bias
+            state["regime"] = regime.regime
+            state["last_hold_ts"] = 0
+        else:
+            # Update regime without resetting acceptance
+            state["regime"] = regime.regime
+
+        # ---------------------------------------------------------------
+        # HOLD BAR TRACKING (TIME-BASED, NOT TICK-BASED)
+        # ---------------------------------------------------------------
+        vwap = snap.get("vwap")
+        now = snap.get("timestamp")
+
+        if "last_hold_ts" not in state:
+            state["last_hold_ts"] = 0
+
+        HOLD_INTERVAL = 5  # seconds ≈ one bar
+
+        if vwap is not None:
+            if regime.bias == "CALL" and price > vwap:
+                if now - state["last_hold_ts"] >= HOLD_INTERVAL:
+                    state["hold_bars"] += 1
+                    state["last_hold_ts"] = now
+
+            elif regime.bias == "PUT" and price < vwap:
+                if now - state["last_hold_ts"] >= HOLD_INTERVAL:
+                    state["hold_bars"] += 1
+                    state["last_hold_ts"] = now
+
+            else:
+                state["hold_bars"] = 0
+                state["last_hold_ts"] = 0
+
+        # ---------------------------------------------------------------
+        # RANGE TRACKING (INDEPENDENT OF HOLD)
+        # ---------------------------------------------------------------
+        if state["range_high"] is None or price > state["range_high"]:
+            state["range_high"] = price
+
+        if state["range_low"] is None or price < state["range_low"]:
+            state["range_low"] = price
+
+        
+        # ----------------------------------------------------------------
+        # TREND-FIRST PRIORITY ROUTING
+        # ----------------------------------------------------------------
+        signal = None
+        
+        # PRIORITY 1: TREND (daily participation, enabled from 9:35+)
+        TREND_SESSION_START = 300  # 5 minutes after open
+        
+        if regime.regime == "TREND" and self.seconds_since_open >= TREND_SESSION_START:
+            try:
+                if self.entry_engine.acceptance_ok(snap, state):
+                    signal = self.entry_engine.build_signal(regime, snap)
+            except Exception:
+                self.logger.exception("[ENTRY] TREND acceptance failed")
+        
+        # PRIORITY 2: RECLAIM (convexity enhancement, any time)
+        if not signal and regime.regime == "RECLAIM":
+            try:
+                if self.entry_engine.acceptance_ok(snap, state):
+                    signal = self.entry_engine.build_signal(regime, snap)
+            except Exception:
+                self.logger.exception("[ENTRY] RECLAIM acceptance failed")
       
         if not signal:
             return
@@ -456,6 +565,11 @@ class Orchestrator:
                 "regime": signal.regime,
                 "score": signal.score,
                 "trail_mult": signal.trail_mult,
+            },
+            "acceptance_state": {
+                "hold_bars": state["hold_bars"],
+                "range_high": state["range_high"],
+                "range_low": state["range_low"],
             }
         })
         
@@ -782,6 +896,9 @@ class Orchestrator:
         self.trading_phase = TradingPhase.POST_TRADE
         self._post_trade_ts = time.monotonic()
         
+        # Set exit timestamp for micro cooldown
+        self.last_exit_ts = time.monotonic()
+        
         # Clear active state
         self.active_symbol = None
         self.active_contract = None
@@ -791,8 +908,8 @@ class Orchestrator:
         self.active_grade = None
         self.active_score = None
         
-        # Stop trail
-        self.trail = None
+        # Reset trail state (preserve object, reset state)
+        self.trail.state.active = False
 
     # ------------------------------------------------------------
     async def shutdown(self):
@@ -826,9 +943,6 @@ class Orchestrator:
                 await self.selector.shutdown()
             except:
                 pass
-
-        with contextlib.suppress(Exception):
-            self.trail.stop()
 
         print("\033[?25h")
         print("[SYS] Shutdown complete.")

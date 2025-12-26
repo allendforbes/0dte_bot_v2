@@ -51,21 +51,28 @@ class EliteEntryEngine:
     TRAIL_A = 1.30
     TRAIL_A_PLUS = 1.40
     
+    # Trend participation mode (activated after convexity fails)
+    TREND_MIN_CONSECUTIVE_BARS = 3  # Bars of aligned VWAP
+    TREND_MIN_SLOPE = 0.02  # Minimum VWAP slope
+    TREND_SESSION_START = 600  # 10 minutes after open (in seconds)
+    TREND_SCORE = 60.0  # Lower score than convexity
+    TREND_TRAIL_MULT = 1.25  # Tighter trail for trend
+    
     # ========================================================================
     # STAGE 1: REGIME DETECTION (STRUCTURE ONLY)
     # ========================================================================
     
     def detect_regime(self, snap: dict) -> Optional[RegimeDetection]:
         """
-        BINARY regime detection: RECLAIM vs NOT.
+        Regime detection: RECLAIM vs TREND.
         
-        No time gates, no slope mins, no dev mins.
-        Entry quality is handled by acceptance + trail, not detection.
+        RECLAIM = slope-aligned transition (convexity enhancement)
+        TREND = location only (daily participation default)
+        
+        Detection is BINARY and FAST. Quality gates live in acceptance.
         
         Returns:
-            RegimeDetection if price/VWAP show directional alignment, None otherwise
-        
-        This is NOT a quality filter - it's a regime classifier.
+            RegimeDetection or None
         """
         
         # Extract structure-only fields
@@ -77,25 +84,45 @@ class EliteEntryEngine:
             return None
         
         # ----------------------------------------------------------------
-        # BINARY RECLAIM DETECTION
+        # RECLAIM DETECTION (slope-aligned transition - CHECK FIRST)
         # ----------------------------------------------------------------
-        # Price above VWAP AND rising = CALL reclaim
+        # This is the ENHANCEMENT path for displacement days
+        # Rising above VWAP with momentum = CALL reclaim
         if dev > 0 and slope > 0:
             return RegimeDetection(
                 bias="CALL",
                 regime="RECLAIM",
-                confidence=0.5  # Fixed confidence, no gating
+                confidence=0.5
             )
         
-        # Price below VWAP AND falling = PUT reclaim
+        # Falling below VWAP with momentum = PUT reclaim
         if dev < 0 and slope < 0:
             return RegimeDetection(
                 bias="PUT",
                 regime="RECLAIM",
-                confidence=0.5  # Fixed confidence, no gating
+                confidence=0.5
             )
         
-        # No directional alignment = no regime
+        # ----------------------------------------------------------------
+        # TREND DETECTION (location-based fallback - pure location)
+        # ----------------------------------------------------------------
+        # Price above VWAP (no slope requirement) = CALL TREND
+        if dev > 0:
+            return RegimeDetection(
+                bias="CALL",
+                regime="TREND",
+                confidence=0.5
+            )
+        
+        # Price below VWAP (no slope requirement) = PUT TREND
+        if dev < 0:
+            return RegimeDetection(
+                bias="PUT",
+                regime="TREND",
+                confidence=0.5
+            )
+        
+        # Pinned at VWAP = no regime
         return None
     
     # ========================================================================
@@ -104,7 +131,9 @@ class EliteEntryEngine:
     
     def acceptance_ok(self, snap: dict, state: dict) -> bool:
         """
-        Acceptance gate to avoid early failed reclaims.
+        Acceptance gate: structural fakeout filter only.
+        
+        Answers: "Is this HOLDING?" (not "Is this STRONG?")
         
         Args:
             snap: Current market snapshot (structure-only)
@@ -117,11 +146,11 @@ class EliteEntryEngine:
         Returns:
             True if acceptance criteria met, False to wait
         
-        Criteria:
-            - Hold above/below VWAP for N bars
-            - OR break range high/low (shows momentum follow-through)
+        Criteria (structural only):
+            - Hold above/below VWAP for ≥2 bars, OR
+            - Break range high/low (momentum follow-through)
         
-        No Greeks, no IV, no chain quality.
+        No slope minimums. No deviation minimums. No Greeks.
         """
         
         price = snap.get("price")
@@ -139,13 +168,13 @@ class EliteEntryEngine:
             return False
         
         # ----------------------------------------------------------------
-        # ACCEPTANCE CRITERION 1: Hold Bars
+        # CRITERION 1: Hold Bars (≥2 = confirmed hold)
         # ----------------------------------------------------------------
         if hold_bars >= self.ACCEPTANCE_HOLD_BARS:
             return True
         
         # ----------------------------------------------------------------
-        # ACCEPTANCE CRITERION 2: Range Break (momentum follow-through)
+        # CRITERION 2: Range Break (momentum follow-through)
         # ----------------------------------------------------------------
         if self.ACCEPTANCE_RANGE_BREAK and range_high and range_low:
             if bias == "CALL" and price > range_high:
@@ -164,7 +193,8 @@ class EliteEntryEngine:
         """
         Construct EliteSignal from accepted regime.
         
-        Scoring uses VWAP energy only (no Greeks/IV).
+        TREND: Daily participation mode (lower score, tighter trail)
+        RECLAIM: Convexity enhancement (higher score, looser trail)
         
         Args:
             regime: Detected regime from detect_regime()
@@ -177,33 +207,33 @@ class EliteEntryEngine:
         dev = snap.get("vwap_dev", 0.0)
         slope = snap.get("vwap_dev_change", 0.0)
         
-        # Start with base score
-        score = self.BASE_SCORE
-        
         # ----------------------------------------------------------------
-        # VWAP ENERGY BOOSTS (structure-only, no double-counting)
+        # REGIME-BASED SCORING
         # ----------------------------------------------------------------
+        if regime.regime == "TREND":
+            # TREND mode: default participation path
+            score = self.TREND_SCORE  # 60.0
+            trail_mult = self.TREND_TRAIL_MULT  # 1.25
+            grade = "B"  # Standard grade for trends
         
-        # Strong slope = strong momentum
-        if abs(slope) > 0.05:
-            score += self.BOOST_STRONG_SLOPE
-        
-        # High deviation = strong displacement
-        if abs(dev) > 0.15:
-            score += self.BOOST_HIGH_DEV
-        
-        # Note: regime.confidence is fixed at 0.5 (no dev-based gating)
-        # No need to add it to score (would double-count dev)
-        
-        # ----------------------------------------------------------------
-        # GRADING (score-based)
-        # ----------------------------------------------------------------
-        if score >= self.GRADE_A_PLUS:
-            grade = "A+"
-            trail_mult = self.TRAIL_A_PLUS
-        else:
-            grade = "A"
-            trail_mult = self.TRAIL_A
+        else:  # RECLAIM
+            # RECLAIM mode: convexity enhancement
+            score = self.BASE_SCORE  # 70.0
+            
+            # VWAP energy boosts (displacement quality)
+            if abs(slope) > 0.05:
+                score += self.BOOST_STRONG_SLOPE  # +15
+            
+            if abs(dev) > 0.15:
+                score += self.BOOST_HIGH_DEV  # +10
+            
+            # Grading based on total score
+            if score >= self.GRADE_A_PLUS:  # 90+
+                grade = "A+"
+                trail_mult = self.TRAIL_A_PLUS  # 1.40
+            else:
+                grade = "A"
+                trail_mult = self.TRAIL_A  # 1.30
         
         # ----------------------------------------------------------------
         # CONSTRUCT SIGNAL
