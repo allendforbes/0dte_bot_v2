@@ -25,6 +25,7 @@ import pytz
 # Strategy (data-only)
 from bot_0dte.strategy.elite_entry import EliteEntryEngine, EliteSignal
 from bot_0dte.strategy.strike_selector import StrikeSelector
+from bot_0dte.validation.option_trend_validator import OptionTrendValidator
 
 # Risk
 from bot_0dte.risk.trail_logic import TrailLogic
@@ -176,6 +177,8 @@ class Orchestrator:
         # Chain aggregation + freshness
         self.chain_agg = ChainAggregator(self.symbols)
         self.freshness = None
+
+        self.option_trend_validator = OptionTrendValidator(self.chain_agg)
 
         # Massive snapshot + Greeks
         self.snapshot_client = MassiveSnapshotClient(
@@ -390,7 +393,7 @@ class Orchestrator:
 
         if not self.hydration_complete:
             return
-        
+
         # Skip if trade active
         if self.active_symbol is not None:
             await self._manage_trade(symbol, price)
@@ -408,15 +411,12 @@ class Orchestrator:
         ):
             self._forced_entry_fired = True
 
-            # ⚠️ DEV-ONLY: Synthetic strike bypasses selector and liquidity checks
-            # This is deterministic test data, not real market conditions
             synthetic_strike = {
-                "strike": price + 5.0,  # synthetic strike
+                "strike": price + 5.0,
                 "contract": "SPY_FORCED_TEST",
-                "premium": 1.00,  # fixed $1.00 entry
+                "premium": 1.00,
             }
-            
-            # Synthetic signal
+
             signal = EliteSignal(
                 bias="CALL",
                 grade="A",
@@ -426,32 +426,27 @@ class Orchestrator:
             )
 
             self.logger.log_event("forced_shadow_entry", {"forced": True})
-            
-            # Use normal entry path with synthetic values
             await self._execute_entry(symbol, signal, synthetic_strike, qty=1)
             return
-        
+
         # --------------------------------------------------
         # Normal auto-trade gating
         # --------------------------------------------------
-
         if not self.auto:
             return
-        
-        # Post-exit micro cooldown (30 seconds, mechanical only)
+
         if self.last_exit_ts is not None:
             if time.monotonic() - self.last_exit_ts < 30.0:
                 return
-        
+
         # Get chain
         chain_rows = self.chain_agg.get_chain(symbol)
         if not chain_rows:
             return
-        
+
         # VWAP data
         vwap_data = self.vwap[symbol].update(price)
-        
-        # Market snapshot (structure-only)
+
         snap = {
             "symbol": symbol,
             "price": price,
@@ -461,17 +456,16 @@ class Orchestrator:
             "seconds_since_open": self.seconds_since_open,
         }
 
-        # ----------------------------------------------------------------
+        # --------------------------------------------------
         # REGIME DETECTION
-        # ----------------------------------------------------------------
+        # --------------------------------------------------
         try:
             regime = self.entry_engine.detect_regime(snap)
         except Exception:
             self.logger.exception("[ENTRY] detect_regime() failed")
             return
-        
+
         if not regime:
-            # Pinned at VWAP - reset acceptance state
             self.acceptance_state[symbol] = {
                 "hold_bars": 0,
                 "range_high": None,
@@ -480,13 +474,12 @@ class Orchestrator:
                 "regime": None,
             }
             return
-        
-        # ----------------------------------------------------------------
-        # ACCEPTANCE STATE MANAGEMENT (orchestrator-owned)
-        # ----------------------------------------------------------------
+
+        # --------------------------------------------------
+        # ACCEPTANCE STATE MANAGEMENT
+        # --------------------------------------------------
         state = self.acceptance_state[symbol]
 
-        # Reset acceptance ONLY on bias flip (not regime transitions)
         if state["bias"] != regime.bias:
             state["hold_bars"] = 0
             state["range_high"] = price
@@ -495,12 +488,8 @@ class Orchestrator:
             state["regime"] = regime.regime
             state["last_hold_ts"] = 0
         else:
-            # Update regime without resetting acceptance
             state["regime"] = regime.regime
 
-        # ---------------------------------------------------------------
-        # HOLD BAR TRACKING (TIME-BASED, NOT TICK-BASED)
-        # ---------------------------------------------------------------
         vwap = snap.get("vwap")
         now = time.monotonic()
 
@@ -521,30 +510,23 @@ class Orchestrator:
                 state["hold_bars"] = 0
                 state["last_hold_ts"] = None
 
-        # ---------------------------------------------------------------
-        # RANGE TRACKING (INDEPENDENT OF HOLD)
-        # ---------------------------------------------------------------
         if state["range_high"] is None or price > state["range_high"]:
             state["range_high"] = price
 
         if state["range_low"] is None or price < state["range_low"]:
             state["range_low"] = price
 
-        
-        # ----------------------------------------------------------------
+        # --------------------------------------------------
         # TREND-FIRST PRIORITY ROUTING
-        # ----------------------------------------------------------------
+        # --------------------------------------------------
         signal = None
-        
-        # PRIORITY 1: TREND (daily participation, enabled from 9:35+)
-        TREND_SESSION_START = 300  # 5 minutes after open
+        TREND_SESSION_START = 300
 
         if regime.regime == "TREND" and self.seconds_since_open >= TREND_SESSION_START:
             try:
                 if self.entry_engine.acceptance_ok(snap, state):
                     signal = self.entry_engine.build_signal(regime, snap)
                 else:
-                    # 🔍 Log only once acceptance is actually forming
                     if state["hold_bars"] > 0:
                         self.logger.log_event("acceptance_blocked", {
                             "symbol": symbol,
@@ -559,8 +541,6 @@ class Orchestrator:
             except Exception:
                 self.logger.exception("[ENTRY] TREND acceptance failed")
 
-    
-        # PRIORITY 2: RECLAIM (convexity enhancement, any time)
         if not signal and regime.regime == "RECLAIM":
             try:
                 if self.entry_engine.acceptance_ok(snap, state):
@@ -578,8 +558,10 @@ class Orchestrator:
                     })
             except Exception:
                 self.logger.exception("[ENTRY] RECLAIM acceptance failed")
-       
-        # Log entry snapshot for audit
+
+        # --------------------------------------------------
+        # ENTRY SNAPSHOT
+        # --------------------------------------------------
         if signal:
             self.logger.log_event("entry_snapshot", {
                 "symbol": symbol,
@@ -599,27 +581,61 @@ class Orchestrator:
             })
         else:
             return
-        
-        # Strike selection
+
+        # ==================================================
+        # OPTION TREND VALIDATION (DIAGNOSTIC ONLY)
+        # ==================================================
+        try:
+            option_trend = await self.option_trend_validator.observe(
+                symbol=symbol,
+                bias=signal.bias,
+                chain=chain_rows,
+                ts=time.monotonic(),
+            )
+
+            self.logger.log_event("option_trend_validation", option_trend)
+
+            # --------------------------------------------------
+            # OPTION TREND HARD GATE
+            # --------------------------------------------------
+            if not option_trend.get("is_trending", True):
+                self.logger.log_event(
+                    "option_trend_blocked",
+                    {
+                        "symbol": symbol,
+                        "bias": signal.bias,
+                        "regime": signal.regime,
+                    }
+                )
+                return
+
+        except Exception as e:
+            self.logger.log_event(
+                "option_trend_validation_failed",
+                {"symbol": symbol, "error": str(e)}
+            )
+
+        # --------------------------------------------------
+        # STRIKE SELECTION
+        # --------------------------------------------------
         strike_result = await self.selector.select(
             symbol=symbol,
             underlying_price=price,
             bias=signal.bias,
             chain=chain_rows,
         )
-        
+
         if not strike_result:
             return
-        
-        # Position sizing
+
         cap = self.CONTRACT_CAPS.get(symbol, self.DEFAULT_CAP)
         qty = min(int(1000 * self.RISK_PCT / strike_result["premium"]), cap)
-        
+
         if qty < 1:
             return
-        
-        # Execute (decision log moved inside _execute_entry after successful execution)
+
         await self._execute_entry(symbol, signal, strike_result, qty, price)
+
 
     async def _manage_trade(self, symbol: str, price: float):
         """
