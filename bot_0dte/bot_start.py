@@ -18,6 +18,9 @@ from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
 from bot_0dte.infra.phase import ExecutionPhase
 
+# ✅ Dynamic universe resolver (SPY/QQQ daily + MATMAN Thu/Fri)
+from bot_0dte.universe import get_universe_for_today
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -26,13 +29,20 @@ async def main():
     # PHASE: Resolve from environment
     # ========================================
     execution_phase = ExecutionPhase.from_env(default="shadow")
-    
+
     print("\n" + "=" * 70)
     print(f" BOOTING IN {execution_phase.value.upper()} MODE ".center(70, "="))
     print("=" * 70 + "\n")
-    
+
     logger = StructuredLogger()
     telemetry = Telemetry()
+
+    # ---------------------------------------------------------
+    # RESOLVE UNIVERSE (TIME-AWARE)
+    # ---------------------------------------------------------
+    symbols = get_universe_for_today()
+
+    print(f"[BOOT] Trading universe resolved: {symbols}")
 
     # ---------------------------------------------------------
     # 1. IBKR UNDERLYING FEED (All modes for market data)
@@ -48,7 +58,7 @@ async def main():
     await ib_underlying.connect()
 
     print("[BOOT] Subscribing to underlying tickers (IBKR)...")
-    await ib_underlying.subscribe(["SPY", "QQQ"])
+    await ib_underlying.subscribe(symbols)
 
     print("[BOOT] Waiting for initial underlying ticks...")
     await asyncio.sleep(0.75)
@@ -66,6 +76,7 @@ async def main():
     mux = MassiveMux(
         options_ws=options_ws,
         ib_underlying=ib_underlying,
+        symbols=symbols,
     )
 
     # ---------------------------------------------------------
@@ -127,7 +138,7 @@ async def main():
     if orch._shutdown is None:
         print("❌ FATAL: _shutdown Event was not created in start()")
         return
-    
+
     await orch._shutdown.wait()
 
     print("\n🛑 Shutdown signal received. Cleaning up…")
