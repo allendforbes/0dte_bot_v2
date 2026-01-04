@@ -1,283 +1,190 @@
 """
-Elite Entry Engine v5.0 — Pure Structure Entry (No Greek Gating)
+Elite Entry Engine v6.0 — Pure Signal Builder
 
 Architecture:
-  1. detect_regime() → identifies RECLAIM/TREND based on VWAP/price/structure only
-  2. acceptance_ok() → gates entry to avoid early failed reclaims (structure-only)
-  3. build_signal() → constructs signal with scoring (VWAP energy only, no Greeks)
+    build_signal(mandate, snap) → EliteSignal
+    
+    This engine is a PURE EXECUTOR. It does NOT:
+    - Detect regime (moved to SessionMandateEngine)
+    - Gate acceptance (moved to SessionMandateEngine)
+    - Decide eligibility (mandate.allows_entry() already checked)
+    
+    It ONLY:
+    - Constructs EliteSignal from an already-approved mandate
+    - Scores based on VWAP energy (observability)
+    - Sets trail multiplier based on regime classification
 
-Greeks/IV are POST-ENTRY observability only and never gate entries.
+Invariants:
+    1. build_signal() assumes permission already granted
+    2. No regime detection logic
+    3. No acceptance checking logic
+    4. Pure input → output transformation
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bot_0dte.strategy.session_mandate import SessionMandate
 
 
 @dataclass
 class EliteSignal:
-    bias: str
-    grade: str
-    regime: str
-    score: float
-    trail_mult: float
-
-
-@dataclass
-class RegimeDetection:
     """
-    Detected regime (not yet accepted for entry).
+    Entry signal produced by EliteEntryEngine.
+    
+    All fields are informational for execution and logging.
+    Permission has already been granted by SessionMandate.
     """
     bias: str  # "CALL" or "PUT"
-    regime: str  # "RECLAIM" or "TREND"
-    confidence: float  # 0.0 to 1.0
+    grade: str  # "A+", "A", "B" (for logging/tier)
+    regime: str  # "TREND" or "RECLAIM" (from mandate)
+    score: float  # 0-100 (for logging)
+    trail_mult: float  # Trail multiplier for risk management
 
 
 class EliteEntryEngine:
+    """
+    Pure signal builder.
+    
+    Called ONLY after SessionMandate.allows_entry() returns True.
+    Does not make eligibility decisions.
+    """
+    
     # ========================================================================
-    # CONFIGURATION
+    # SCORING CONFIGURATION
     # ========================================================================
     
-    # Acceptance criteria (structure-only)
-    ACCEPTANCE_HOLD_BARS = 2  # Bars to hold above/below VWAP
-    ACCEPTANCE_RANGE_BREAK = True  # Require range high/low break
+    # Base scores by regime type
+    BASE_SCORE_TREND = 60.0
+    BASE_SCORE_RECLAIM = 70.0
     
-    # Scoring (VWAP energy only, no Greeks)
-    BASE_SCORE = 70.0
+    # VWAP energy boosts (observability scoring)
     BOOST_STRONG_SLOPE = 15.0  # abs(slope) > 0.05
     BOOST_HIGH_DEV = 10.0      # abs(dev) > 0.15
     
-    # Grading
-    GRADE_A_PLUS = 90.0
-    TRAIL_A = 1.30
-    TRAIL_A_PLUS = 1.40
+    # Grading thresholds
+    GRADE_A_PLUS_THRESHOLD = 90.0
+    GRADE_A_THRESHOLD = 70.0
     
-    # Trend participation mode (activated after convexity fails)
-    TREND_MIN_CONSECUTIVE_BARS = 3  # Bars of aligned VWAP
-    TREND_MIN_SLOPE = 0.02  # Minimum VWAP slope
-    TREND_SESSION_START = 600  # 10 minutes after open (in seconds)
-    TREND_SCORE = 60.0  # Lower score than convexity
-    TREND_TRAIL_MULT = 1.25  # Tighter trail for trend
+    # Trail multipliers
+    TRAIL_TREND = 1.25
+    TRAIL_RECLAIM_A = 1.30
+    TRAIL_RECLAIM_A_PLUS = 1.40
     
     # ========================================================================
-    # STAGE 1: REGIME DETECTION (STRUCTURE ONLY)
+    # PUBLIC API
     # ========================================================================
     
-    def detect_regime(self, snap: dict) -> Optional[RegimeDetection]:
+    def build_signal(
+        self,
+        mandate: "SessionMandate",
+        snap: dict,
+    ) -> EliteSignal:
         """
-        Regime detection: RECLAIM vs TREND.
+        Construct EliteSignal from approved mandate.
         
-        RECLAIM = slope-aligned transition (convexity enhancement)
-        TREND = location only (daily participation default)
+        PRECONDITION: mandate.allows_entry() == True
         
-        Detection is BINARY and FAST. Quality gates live in acceptance.
-        
-        Returns:
-            RegimeDetection or None
-        """
-        
-        # Extract structure-only fields
-        dev = snap.get("vwap_dev")
-        slope = snap.get("vwap_dev_change")
-        
-        # Basic validation only (missing data = can't classify)
-        if dev is None or slope is None:
-            return None
-        
-        # ----------------------------------------------------------------
-        # RECLAIM DETECTION (slope-aligned transition - CHECK FIRST)
-        # ----------------------------------------------------------------
-        # This is the ENHANCEMENT path for displacement days
-        # Rising above VWAP with momentum = CALL reclaim
-        if dev > 0 and slope > 0:
-            return RegimeDetection(
-                bias="CALL",
-                regime="RECLAIM",
-                confidence=0.5
-            )
-        
-        # Falling below VWAP with momentum = PUT reclaim
-        if dev < 0 and slope < 0:
-            return RegimeDetection(
-                bias="PUT",
-                regime="RECLAIM",
-                confidence=0.5
-            )
-        
-        # ----------------------------------------------------------------
-        # TREND DETECTION (location-based fallback - pure location)
-        # ----------------------------------------------------------------
-        # Price above VWAP (no slope requirement) = CALL TREND
-        if dev > 0:
-            return RegimeDetection(
-                bias="CALL",
-                regime="TREND",
-                confidence=0.5
-            )
-        
-        # Price below VWAP (no slope requirement) = PUT TREND
-        if dev < 0:
-            return RegimeDetection(
-                bias="PUT",
-                regime="TREND",
-                confidence=0.5
-            )
-        
-        # Pinned at VWAP = no regime
-        return None
-    
-    # ========================================================================
-    # STAGE 2: ACCEPTANCE GATE (STRUCTURE ONLY)
-    # ========================================================================
-    
-    def acceptance_ok(self, snap: dict, state: dict) -> bool:
-        """
-        Acceptance gate: structural fakeout filter only.
-        
-        Answers: "Is this HOLDING?" (not "Is this STRONG?")
+        This method does NOT check permission. The caller (orchestrator)
+        MUST verify mandate.allows_entry() before calling.
         
         Args:
-            snap: Current market snapshot (structure-only)
-            state: Orchestrator tracking state with:
-                - hold_bars: Number of bars held above/below VWAP
-                - range_high: Local high since detection
-                - range_low: Local low since detection
-                - bias: CALL or PUT
+            mandate: Approved SessionMandate with:
+                - bias: "CALL" or "PUT"
+                - regime_type: "TREND" or "RECLAIM"
+                - confidence: 0.0 to 1.0 (not used for scoring)
+            snap: Market snapshot with:
+                - vwap_dev: Price deviation from VWAP
+                - vwap_dev_change: Change in deviation (slope)
         
         Returns:
-            True if acceptance criteria met, False to wait
-        
-        Criteria (structural only):
-            - Hold above/below VWAP for ≥2 bars, OR
-            - Break range high/low (momentum follow-through)
-        
-        No slope minimums. No deviation minimums. No Greeks.
+            EliteSignal ready for execution
         """
         
-        price = snap.get("price")
-        vwap = snap.get("vwap")
+        # Extract fields from mandate
+        bias = mandate.bias
+        regime_type = mandate.regime_type or "TREND"
         
-        if price is None or vwap is None:
-            return False
-        
-        bias = state.get("bias")
-        hold_bars = state.get("hold_bars", 0)
-        range_high = state.get("range_high")
-        range_low = state.get("range_low")
-        
-        if not bias:
-            return False
+        # Extract VWAP energy from snap
+        vwap_dev = snap.get("vwap_dev", 0.0) or 0.0
+        vwap_dev_change = snap.get("vwap_dev_change", 0.0) or 0.0
         
         # ----------------------------------------------------------------
-        # CRITERION 1: Hold Bars (≥2 = confirmed hold)
+        # SCORING
         # ----------------------------------------------------------------
-        if hold_bars >= self.ACCEPTANCE_HOLD_BARS:
-            return True
-        
-        # ----------------------------------------------------------------
-        # CRITERION 2: Range Break (momentum follow-through)
-        # ----------------------------------------------------------------
-        if self.ACCEPTANCE_RANGE_BREAK and range_high and range_low:
-            if bias == "CALL" and price > range_high:
-                return True
-            elif bias == "PUT" and price < range_low:
-                return True
-        
-        # Not yet accepted
-        return False
-    
-    # ========================================================================
-    # STAGE 3: SIGNAL CONSTRUCTION (VWAP ENERGY ONLY)
-    # ========================================================================
-    
-    def build_signal(self, regime: RegimeDetection, snap: dict) -> EliteSignal:
-        """
-        Construct EliteSignal from accepted regime.
-        
-        TREND: Daily participation mode (lower score, tighter trail)
-        RECLAIM: Convexity enhancement (higher score, looser trail)
-        
-        Args:
-            regime: Detected regime from detect_regime()
-            snap: Current market snapshot
-        
-        Returns:
-            EliteSignal ready for entry
-        """
-        
-        dev = snap.get("vwap_dev", 0.0)
-        slope = snap.get("vwap_dev_change", 0.0)
-        
-        # ----------------------------------------------------------------
-        # REGIME-BASED SCORING
-        # ----------------------------------------------------------------
-        if regime.regime == "TREND":
-            # TREND mode: default participation path
-            score = self.TREND_SCORE  # 60.0
-            trail_mult = self.TREND_TRAIL_MULT  # 1.25
-            grade = "B"  # Standard grade for trends
-        
+        if regime_type == "TREND":
+            score = self.BASE_SCORE_TREND  # 60.0
         else:  # RECLAIM
-            # RECLAIM mode: convexity enhancement
-            score = self.BASE_SCORE  # 70.0
-            
-            # VWAP energy boosts (displacement quality)
-            if abs(slope) > 0.05:
-                score += self.BOOST_STRONG_SLOPE  # +15
-            
-            if abs(dev) > 0.15:
-                score += self.BOOST_HIGH_DEV  # +10
-            
-            # Grading based on total score
-            if score >= self.GRADE_A_PLUS:  # 90+
-                grade = "A+"
-                trail_mult = self.TRAIL_A_PLUS  # 1.40
-            else:
-                grade = "A"
-                trail_mult = self.TRAIL_A  # 1.30
+            score = self.BASE_SCORE_RECLAIM  # 70.0
+        
+        # VWAP energy boosts
+        if abs(vwap_dev_change) > 0.05:
+            score += self.BOOST_STRONG_SLOPE  # +15
+        
+        if abs(vwap_dev) > 0.15:
+            score += self.BOOST_HIGH_DEV  # +10
+        
+        # ----------------------------------------------------------------
+        # GRADING + TRAIL MULTIPLIER
+        # ----------------------------------------------------------------
+        # Both TREND and RECLAIM can earn grades based on score
+        # This is observability only - does not affect execution behavior
+        
+        if score >= self.GRADE_A_PLUS_THRESHOLD:  # 90+
+            grade = "A+"
+            trail_mult = self.TRAIL_RECLAIM_A_PLUS  # 1.40
+        elif score >= self.GRADE_A_THRESHOLD:  # 70+
+            grade = "A"
+            trail_mult = self.TRAIL_RECLAIM_A  # 1.30
+        else:
+            grade = "B"
+            trail_mult = self.TRAIL_TREND  # 1.25
         
         # ----------------------------------------------------------------
         # CONSTRUCT SIGNAL
         # ----------------------------------------------------------------
         return EliteSignal(
-            bias=regime.bias,
+            bias=bias,
             grade=grade,
-            regime=regime.regime,
+            regime=regime_type,
             score=float(score),
             trail_mult=float(trail_mult),
         )
     
     # ========================================================================
-    # BACKWARD COMPATIBILITY: qualify() WRAPPER
+    # DEPRECATED METHODS (for reference during migration)
     # ========================================================================
     
-    def qualify(self, snap: dict, state: Optional[dict] = None) -> Optional[EliteSignal]:
+    def detect_regime(self, snap: dict):
         """
-        ⚠️ DEPRECATED: Do not use qualify() in production entry path.
+        ⚠️ REMOVED: Regime detection moved to SessionMandateEngine.
         
-        Orchestrator should use 3-stage API directly:
-          1. detect_regime(snap)
-          2. acceptance_ok(snap, state)
-          3. build_signal(regime, snap)
-        
-        This wrapper is for legacy compatibility only.
-        
-        Args:
-            snap: Market snapshot (structure-only fields)
-            state: Optional acceptance state (if None, accepts immediately)
-        
-        Returns:
-            EliteSignal if entry ready, None otherwise
+        This method should not be called. Raises error to catch misuse.
         """
+        raise NotImplementedError(
+            "detect_regime() has been removed. "
+            "Use SessionMandateEngine.determine() instead."
+        )
+    
+    def acceptance_ok(self, snap: dict, state: dict) -> bool:
+        """
+        ⚠️ REMOVED: Acceptance checking moved to SessionMandateEngine.
         
-        # Stage 1: Detect regime
-        regime = self.detect_regime(snap)
-        if not regime:
-            return None
+        This method should not be called. Raises error to catch misuse.
+        """
+        raise NotImplementedError(
+            "acceptance_ok() has been removed. "
+            "Use SessionMandateEngine.determine() instead."
+        )
+    
+    def qualify(self, snap: dict, state: Optional[dict] = None):
+        """
+        ⚠️ REMOVED: Combined detection+acceptance moved to SessionMandateEngine.
         
-        # Stage 2: Check acceptance (if state provided)
-        if state is not None:
-            if not self.acceptance_ok(snap, state):
-                return None  # Regime detected but not yet accepted
-        
-        # Stage 3: Build signal
-        return self.build_signal(regime, snap)
+        This method should not be called. Raises error to catch misuse.
+        """
+        raise NotImplementedError(
+            "qualify() has been removed. "
+            "Use SessionMandateEngine.determine() + build_signal() instead."
+        )

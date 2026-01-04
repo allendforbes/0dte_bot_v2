@@ -1,5 +1,19 @@
 """
-0DTE Options Trading Orchestrator
+0DTE Options Trading Orchestrator (REFACTORED)
+
+REFACTOR SUMMARY:
+    - SessionMandate is now the SINGLE AUTHORITY for entry permission
+    - All regime detection moved to SessionMandateEngine
+    - All acceptance checking moved to SessionMandateEngine
+    - Entry engines are pure executors (no permission decisions)
+    - VWAP is context (metadata), not a gate
+
+CONTROL FLOW:
+    1. _evaluate() → mandate_engine.determine()
+    2. if not mandate.allows_entry(): return (HARD STOP)
+    3. strike_selector.select() (pure executor)
+    4. entry_engine.build_signal() (pure builder)
+    5. _execute_entry()
 
 ⚠️ DEV MODE: FORCE_SHADOW_ENTRY
 When FORCE_SHADOW_ENTRY=1 is set, the system will:
@@ -22,7 +36,10 @@ from typing import Dict, Any, List
 from datetime import datetime, time as dttime
 import pytz
 
-# Strategy (data-only)
+# Session Mandate (SINGLE AUTHORITY)
+from bot_0dte.strategy.session_mandate import SessionMandateEngine, SessionMandate, RegimeState
+
+# Strategy (pure executors)
 from bot_0dte.strategy.elite_entry import EliteEntryEngine, EliteSignal
 from bot_0dte.strategy.strike_selector import StrikeSelector
 from bot_0dte.validation.option_trend_validator import OptionTrendValidator
@@ -51,6 +68,7 @@ from bot_0dte.infra.decision_logger import DecisionLogger, ConvexityLogger
 # DEV FLAGS (module-level, evaluated once at startup)
 # --------------------------------------------------
 FORCE_SHADOW_ENTRY = os.getenv("FORCE_SHADOW_ENTRY") == "1"
+
 
 # ======================================================================
 # VWAP TRACKER
@@ -138,7 +156,6 @@ class Orchestrator:
         # -------------------------------------------------
         # Runtime dev controls (SHADOW ONLY)
         # -------------------------------------------------
-        import os
         self.force_shadow_entry = os.getenv("FORCE_SHADOW_ENTRY") == "1"
         self._forced_entry_fired = False
 
@@ -185,7 +202,12 @@ class Orchestrator:
             api_key=os.getenv("MASSIVE_API_KEY")
         )
 
-        # Strategy engines (minimal)
+        # ================================================================
+        # SESSION MANDATE ENGINE (SINGLE AUTHORITY)
+        # ================================================================
+        self.mandate_engine = SessionMandateEngine()
+        
+        # Strategy engines (pure executors, no permission decisions)
         self.entry_engine = EliteEntryEngine()
         self.selector = StrikeSelector()
         self.trail = TrailLogic(max_loss_pct=0.50)
@@ -199,20 +221,8 @@ class Orchestrator:
         self.active_grade = None
         self.active_score = None
         
-        # Acceptance state tracking (per symbol, orchestrator-owned)
-        self.acceptance_state = {
-            s: {
-                "hold_bars": 0,
-                "range_high": None,
-                "range_low": None,
-                "bias": None,
-                "regime": None,
-            }
-            for s in self.symbols
-        }
-        
-        # Post-exit micro cooldown (30 seconds, mechanical only)
-        self.last_exit_ts = None
+        # Post-exit micro cooldown is now managed by SessionMandateEngine
+        # (self.last_exit_ts removed — mandate_engine owns cooldown)
         
         # Trading phase (PRE/IN/POST)
         self.trading_phase = TradingPhase.PRE_TRADE
@@ -238,7 +248,7 @@ class Orchestrator:
         self._shutdown_created = False
 
         print("\n" + "=" * 70)
-        print(" ASCII UI ORCHESTRATOR (Rich Removed) ".center(70, "="))
+        print(" ASCII UI ORCHESTRATOR (SessionMandate Refactor) ".center(70, "="))
         print("=" * 70 + "\n")
 
     def track(self, task: asyncio.Task):
@@ -381,27 +391,39 @@ class Orchestrator:
                     if mid_price <= self.trail.state.trail_level:
                         await self._execute_exit(sym, reason="trail_stop")
 
+    # ================================================================
+    # MAIN EVALUATION LOOP (REFACTORED)
+    # ================================================================
     async def _evaluate(self, symbol: str, price: float):
         """
         Strategy evaluation on underlying tick.
+        
+        CONTROL FLOW:
+            1. Hydration check
+            2. Active trade check
+            3. SessionMandate determination (SINGLE AUTHORITY)
+            4. Permission gate (HARD STOP if not allowed)
+            5. Strike selection (pure executor)
+            6. Signal construction (pure builder)
+            7. Execution
         """
 
-        # --------------------------------------------------
-        # TIME-BASED ACCEPTANCE CONFIG
-        # --------------------------------------------------
-        HOLD_INTERVAL = 5  # seconds ≈ one bar
-
+        # ================================================================
+        # STEP 1: HYDRATION CHECK
+        # ================================================================
         if not self.hydration_complete:
             return
 
-        # Skip if trade active
+        # ================================================================
+        # STEP 2: ACTIVE TRADE CHECK
+        # ================================================================
         if self.active_symbol is not None:
             await self._manage_trade(symbol, price)
             return
 
-        # --------------------------------------------------
+        # ================================================================
         # DEV: Runtime-controlled forced SHADOW entry
-        # --------------------------------------------------
+        # ================================================================
         if (
             FORCE_SHADOW_ENTRY
             and self.execution_phase.name == "SHADOW"
@@ -426,26 +448,29 @@ class Orchestrator:
             )
 
             self.logger.log_event("forced_shadow_entry", {"forced": True})
-            await self._execute_entry(symbol, signal, synthetic_strike, qty=1)
+            await self._execute_entry(symbol, signal, synthetic_strike, qty=1, price=price)
             return
 
-        # --------------------------------------------------
-        # Normal auto-trade gating
-        # --------------------------------------------------
+        # ================================================================
+        # STEP 3: AUTO-TRADE GATE
+        # ================================================================
         if not self.auto:
             return
 
-        if self.last_exit_ts is not None:
-            if time.monotonic() - self.last_exit_ts < 30.0:
-                return
-
-        # Get chain
+        # ================================================================
+        # STEP 4: BUILD MARKET SNAPSHOT
+        # ================================================================
         chain_rows = self.chain_agg.get_chain(symbol)
         if not chain_rows:
             return
 
         # VWAP data
         vwap_data = self.vwap[symbol].update(price)
+        
+        # Get explicit reference price from mandate engine
+        reference_price = self.mandate_engine.get_reference_price(symbol, {
+            "vwap": vwap_data.get("vwap"),
+        })
 
         snap = {
             "symbol": symbol,
@@ -454,160 +479,52 @@ class Orchestrator:
             "vwap_dev": vwap_data.get("vwap_dev"),
             "vwap_dev_change": vwap_data.get("vwap_dev_change"),
             "seconds_since_open": self.seconds_since_open,
+            "reference_price": reference_price,  # Explicit reference
         }
 
-        # --------------------------------------------------
-        # REGIME DETECTION
-        # --------------------------------------------------
-        try:
-            regime = self.entry_engine.detect_regime(snap)
-        except Exception:
-            self.logger.exception("[ENTRY] detect_regime() failed")
+        # ================================================================
+        # STEP 5: SESSION MANDATE (SINGLE AUTHORITY)
+        # ================================================================
+        mandate = self.mandate_engine.determine(symbol, snap)
+        
+        # Log mandate for observability
+        self.logger.log_event("session_mandate", mandate.to_dict())
+
+        # ================================================================
+        # STEP 6: PERMISSION GATE (HARD STOP)
+        # ================================================================
+        if not mandate.allows_entry():
+            # Log blocked state (observability)
+            if mandate.state == RegimeState.SUPPRESSED:
+                self.logger.log_event("entry_suppressed", {
+                    "symbol": symbol,
+                    "bias": mandate.bias,
+                    "reason": mandate.reason,
+                    "confidence": mandate.confidence,
+                })
+            # NO_TRADE is silent (cooldown, no data, etc.)
             return
 
-        if not regime:
-            self.acceptance_state[symbol] = {
-                "hold_bars": 0,
-                "range_high": None,
-                "range_low": None,
-                "bias": None,
-                "regime": None,
-            }
-            return
+        # ================================================================
+        # At this point: mandate.allows_entry() == True (guaranteed)
+        # ================================================================
 
-        # --------------------------------------------------
-        # ACCEPTANCE STATE MANAGEMENT
-        # --------------------------------------------------
-        state = self.acceptance_state[symbol]
-
-        if state["bias"] != regime.bias:
-            state["hold_bars"] = 0
-            state["range_high"] = price
-            state["range_low"] = price
-            state["bias"] = regime.bias
-            state["regime"] = regime.regime
-            state["last_hold_ts"] = 0
-        else:
-            state["regime"] = regime.regime
-
-        vwap = snap.get("vwap")
-        now = time.monotonic()
-
-        if state.get("last_hold_ts") is None:
-            state["last_hold_ts"] = now
-
-        if vwap is not None:
-            aligned = (
-                (regime.bias == "CALL" and price > vwap) or
-                (regime.bias == "PUT"  and price < vwap)
-            )
-
-            if aligned:
-                if now - state["last_hold_ts"] >= HOLD_INTERVAL:
-                    state["hold_bars"] += 1
-                    state["last_hold_ts"] = now
-            else:
-                state["hold_bars"] = 0
-                state["last_hold_ts"] = None
-
-        if state["range_high"] is None or price > state["range_high"]:
-            state["range_high"] = price
-
-        if state["range_low"] is None or price < state["range_low"]:
-            state["range_low"] = price
-
-        # --------------------------------------------------
-        # TREND-FIRST PRIORITY ROUTING
-        # --------------------------------------------------
-        signal = None
-        TREND_SESSION_START = 300
-
-        if regime.regime == "TREND" and self.seconds_since_open >= TREND_SESSION_START:
-            try:
-                if self.entry_engine.acceptance_ok(snap, state):
-                    signal = self.entry_engine.build_signal(regime, snap)
-                else:
-                    if state["hold_bars"] > 0:
-                        self.logger.log_event("acceptance_blocked", {
-                            "symbol": symbol,
-                            "bias": regime.bias,
-                            "regime": regime.regime,
-                            "hold_bars": state["hold_bars"],
-                            "range_high": state["range_high"],
-                            "range_low": state["range_low"],
-                            "price": price,
-                            "vwap": snap.get("vwap"),
-                        })
-            except Exception:
-                self.logger.exception("[ENTRY] TREND acceptance failed")
-
-        if not signal and regime.regime == "RECLAIM":
-            try:
-                if self.entry_engine.acceptance_ok(snap, state):
-                    signal = self.entry_engine.build_signal(regime, snap)
-                else:
-                    self.logger.log_event("acceptance_blocked", {
-                        "symbol": symbol,
-                        "bias": regime.bias,
-                        "regime": regime.regime,
-                        "hold_bars": state["hold_bars"],
-                        "range_high": state["range_high"],
-                        "range_low": state["range_low"],
-                        "price": price,
-                        "vwap": snap.get("vwap"),
-                    })
-            except Exception:
-                self.logger.exception("[ENTRY] RECLAIM acceptance failed")
-
-        # --------------------------------------------------
-        # ENTRY SNAPSHOT
-        # --------------------------------------------------
-        if signal:
-            self.logger.log_event("entry_snapshot", {
-                "symbol": symbol,
-                "snap": snap,
-                "signal": {
-                    "bias": signal.bias,
-                    "grade": signal.grade,
-                    "regime": signal.regime,
-                    "score": signal.score,
-                    "trail_mult": signal.trail_mult,
-                },
-                "acceptance_state": {
-                    "hold_bars": state["hold_bars"],
-                    "range_high": state["range_high"],
-                    "range_low": state["range_low"],
-                }
-            })
-        else:
-            return
-
-        # ==================================================
-        # OPTION TREND VALIDATION (DIAGNOSTIC ONLY)
-        # ==================================================
+        # ================================================================
+        # STEP 7: OPTION TREND VALIDATION (METADATA ONLY - NO VETO)
+        # ================================================================
+        option_trend = None
         try:
             option_trend = await self.option_trend_validator.observe(
                 symbol=symbol,
-                bias=signal.bias,
+                bias=mandate.bias,
                 chain=chain_rows,
                 ts=time.monotonic(),
             )
 
             self.logger.log_event("option_trend_validation", option_trend)
-
-            # --------------------------------------------------
-            # OPTION TREND HARD GATE
-            # --------------------------------------------------
-            if not option_trend.get("is_trending", True):
-                self.logger.log_event(
-                    "option_trend_blocked",
-                    {
-                        "symbol": symbol,
-                        "bias": signal.bias,
-                        "regime": signal.regime,
-                    }
-                )
-                return
+            
+            # NOTE: option_trend is metadata only
+            # It does NOT veto entry - that violates single-authority principle
 
         except Exception as e:
             self.logger.log_event(
@@ -615,25 +532,51 @@ class Orchestrator:
                 {"symbol": symbol, "error": str(e)}
             )
 
-        # --------------------------------------------------
-        # STRIKE SELECTION
-        # --------------------------------------------------
+        # ================================================================
+        # STEP 8: STRIKE SELECTION (pure executor)
+        # ================================================================
         strike_result = await self.selector.select(
             symbol=symbol,
             underlying_price=price,
-            bias=signal.bias,
+            bias=mandate.bias,
             chain=chain_rows,
         )
 
         if not strike_result:
+            self.logger.log_event("strike_selection_failed", {"symbol": symbol})
             return
 
+        # ================================================================
+        # STEP 9: SIGNAL CONSTRUCTION (pure builder)
+        # ================================================================
+        signal = self.entry_engine.build_signal(mandate, snap)
+        
+        # Log entry snapshot
+        self.logger.log_event("entry_snapshot", {
+            "symbol": symbol,
+            "snap": snap,
+            "mandate": mandate.to_dict(),
+            "signal": {
+                "bias": signal.bias,
+                "grade": signal.grade,
+                "regime": signal.regime,
+                "score": signal.score,
+                "trail_mult": signal.trail_mult,
+            },
+        })
+
+        # ================================================================
+        # STEP 10: POSITION SIZING
+        # ================================================================
         cap = self.CONTRACT_CAPS.get(symbol, self.DEFAULT_CAP)
         qty = min(int(1000 * self.RISK_PCT / strike_result["premium"]), cap)
 
         if qty < 1:
             return
 
+        # ================================================================
+        # STEP 11: EXECUTION
+        # ================================================================
         await self._execute_entry(symbol, signal, strike_result, qty, price)
 
 
@@ -924,7 +867,7 @@ class Orchestrator:
         self.trail.state.active = False
         
         # Reset trading phase
-        self.trading_phase = TradingPhase.HUNTING
+        self.trading_phase = TradingPhase.PRE_TRADE
 
     # ------------------------------------------------------------
     async def _execute_exit(self, symbol: str, reason: str):
@@ -1031,8 +974,10 @@ class Orchestrator:
         self.trading_phase = TradingPhase.POST_TRADE
         self._post_trade_ts = time.monotonic()
         
-        # Set exit timestamp for micro cooldown
-        self.last_exit_ts = time.monotonic()
+        # ================================================================
+        # NOTIFY MANDATE ENGINE OF EXIT (for cooldown)
+        # ================================================================
+        self.mandate_engine.set_last_exit_ts(time.monotonic())
         
         # Clear active state
         self.active_symbol = None
