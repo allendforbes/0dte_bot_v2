@@ -14,16 +14,6 @@ CONTROL FLOW:
     3. strike_selector.select() (pure executor)
     4. entry_engine.build_signal() (pure builder)
     5. _execute_entry()
-
-⚠️ DEV MODE: FORCE_SHADOW_ENTRY
-When FORCE_SHADOW_ENTRY=1 is set, the system will:
-- Fire a single forced trade in SHADOW mode only
-- Bypass strike selection and use synthetic values
-- Auto-exit after 30 seconds with synthetic price movement
-- Test trail logic, R-multiple math, and UI transitions
-
-This is for mechanics testing ONLY, not expectancy inference.
-To disable: simply don't set FORCE_SHADOW_ENTRY environment variable.
 """
 
 import os
@@ -64,61 +54,6 @@ from bot_0dte.infra.phase import ExecutionPhase
 from bot_0dte.infra.trading_phase import TradingPhase
 from bot_0dte.infra.decision_logger import DecisionLogger, ConvexityLogger
 
-# --------------------------------------------------
-# DEV FLAGS (module-level, evaluated once at startup)
-# --------------------------------------------------
-FORCE_SHADOW_ENTRY = os.getenv("FORCE_SHADOW_ENTRY") == "1"
-
-
-# ======================================================================
-# VWAP TRACKER
-# ======================================================================
-class VWAPTracker:
-    def __init__(self, window_size=100):
-        self.window_size = window_size
-        self.prices = []
-        self.volumes = []
-        self.last_dev = 0.0
-        self.last_vwap = None
-        self.last_dev_change = 0.0
-
-    @property
-    def current(self):
-        """Read-only accessor for UI snapshot (no mutation)."""
-        return {
-            "vwap": self.last_vwap,
-            "dev": self.last_dev,
-            "dev_change": self.last_dev_change,
-        }
-
-    def update(self, price: float, volume: float = 1.0):
-        self.prices.append(price)
-        self.volumes.append(volume)
-
-        if len(self.prices) > self.window_size:
-            self.prices.pop(0)
-            self.volumes.pop(0)
-
-        total_pv = sum(p*v for p, v in zip(self.prices, self.volumes))
-        total_v  = sum(self.volumes)
-
-        vwap = total_pv / total_v if total_v else price
-        
-        # Raw deviation: price - vwap
-        dev = price - vwap
-        change = dev - self.last_dev
-        
-        # Cache for read-only access
-        self.last_vwap = vwap
-        self.last_dev = dev
-        self.last_dev_change = change
-
-        return {
-            "vwap": vwap,
-            "vwap_dev": dev,
-            "vwap_dev_change": change
-        }
-
 
 # ======================================================================
 # ORCHESTRATOR
@@ -153,15 +88,6 @@ class Orchestrator:
         print(f" EXECUTION PHASE: {self.execution_phase.value.upper()} ".center(70, "="))
         print("=" * 70 + "\n")
 
-        # -------------------------------------------------
-        # Runtime dev controls (SHADOW ONLY)
-        # -------------------------------------------------
-        self.force_shadow_entry = os.getenv("FORCE_SHADOW_ENTRY") == "1"
-        self._forced_entry_fired = False
-
-        if self.force_shadow_entry:
-            logger.info("[DEV] FORCE_SHADOW_ENTRY ENABLED")
-        
         # Core
         self.engine = engine
         self.mux = mux
@@ -169,11 +95,6 @@ class Orchestrator:
         self.telemetry = telemetry
         self.auto = auto_trade_enabled
 
-        # ----------------------------------
-        # DEV / TEST STATE
-        # ----------------------------------
-        self._forced_entry_fired = False
-        
         # -------------------------------------------------
         # Market session timing
         # -------------------------------------------------
@@ -189,7 +110,7 @@ class Orchestrator:
 
         # Underlying tracking
         self.last_price = {s: None for s in self.symbols}
-        self.vwap = {s: VWAPTracker() for s in self.symbols}
+        self.vwap = {}
 
         # Chain aggregation + freshness
         self.chain_agg = ChainAggregator(self.symbols)
@@ -223,6 +144,9 @@ class Orchestrator:
         
         # Post-exit micro cooldown is now managed by SessionMandateEngine
         # (self.last_exit_ts removed — mandate_engine owns cooldown)
+        
+        # Strike attempt throttle (per-symbol, prevents ENTRY_ALLOWED spam)
+        self._last_strike_attempt_ts: Dict[str, float] = {}
         
         # Trading phase (PRE/IN/POST)
         self.trading_phase = TradingPhase.PRE_TRADE
@@ -404,8 +328,9 @@ class Orchestrator:
             3. SessionMandate determination (SINGLE AUTHORITY)
             4. Permission gate (HARD STOP if not allowed)
             5. Strike selection (pure executor)
-            6. Signal construction (pure builder)
-            7. Execution
+            6. Option trend validation (metadata only, AFTER strike exists)
+            7. Signal construction (pure builder)
+            8. Execution
         """
 
         # ================================================================
@@ -422,36 +347,6 @@ class Orchestrator:
             return
 
         # ================================================================
-        # DEV: Runtime-controlled forced SHADOW entry
-        # ================================================================
-        if (
-            FORCE_SHADOW_ENTRY
-            and self.execution_phase.name == "SHADOW"
-            and self.trading_phase.name == "PRE_TRADE"
-            and symbol == "SPY"
-            and not self._forced_entry_fired
-        ):
-            self._forced_entry_fired = True
-
-            synthetic_strike = {
-                "strike": price + 5.0,
-                "contract": "SPY_FORCED_TEST",
-                "premium": 1.00,
-            }
-
-            signal = EliteSignal(
-                bias="CALL",
-                grade="A",
-                regime="FORCED",
-                score=0.0,
-                trail_mult=1.30,
-            )
-
-            self.logger.log_event("forced_shadow_entry", {"forced": True})
-            await self._execute_entry(symbol, signal, synthetic_strike, qty=1, price=price)
-            return
-
-        # ================================================================
         # STEP 3: AUTO-TRADE GATE
         # ================================================================
         if not self.auto:
@@ -465,21 +360,16 @@ class Orchestrator:
             return
 
         # VWAP data
-        vwap_data = self.vwap[symbol].update(price)
-        
-        # Get explicit reference price from mandate engine
-        reference_price = self.mandate_engine.get_reference_price(symbol, {
-            "vwap": vwap_data.get("vwap"),
-        })
+        reference_price = self.mandate_engine.get_reference_price(symbol, {})
 
         snap = {
             "symbol": symbol,
             "price": price,
-            "vwap": vwap_data.get("vwap"),
-            "vwap_dev": vwap_data.get("vwap_dev"),
-            "vwap_dev_change": vwap_data.get("vwap_dev_change"),
+            "vwap": None,
+            "vwap_dev": 0.0,
+            "vwap_dev_change": 0.0,
             "seconds_since_open": self.seconds_since_open,
-            "reference_price": reference_price,  # Explicit reference
+            "reference_price": reference_price,
         }
 
         # ================================================================
@@ -510,41 +400,49 @@ class Orchestrator:
         # ================================================================
 
         # ================================================================
-        # STEP 7: OPTION TREND VALIDATION (METADATA ONLY - NO VETO)
+        # STEP 7: STRIKE SELECTION (pure executor)
         # ================================================================
-        option_trend = None
-        try:
-            option_trend = await self.option_trend_validator.observe(
-                symbol=symbol,
-                bias=mandate.bias,
-                chain=chain_rows,
-                ts=time.monotonic(),
-            )
-
-            self.logger.log_event("option_trend_validation", option_trend)
-            
-            # NOTE: option_trend is metadata only
-            # It does NOT veto entry - that violates single-authority principle
-
-        except Exception as e:
-            self.logger.log_event(
-                "option_trend_validation_failed",
-                {"symbol": symbol, "error": str(e)}
-            )
-
-        # ================================================================
-        # STEP 8: STRIKE SELECTION (pure executor)
-        # ================================================================
+        
+        # Micro-throttle: prevent ENTRY_ALLOWED spam when liquidity unavailable
+        now = time.monotonic()
+        last_attempt = self._last_strike_attempt_ts.get(symbol, 0)
+        
+        if now - last_attempt < 3.0:
+            return
+        
         strike_result = await self.selector.select(
             symbol=symbol,
             underlying_price=price,
             bias=mandate.bias,
             chain=chain_rows,
         )
+        
+        self._last_strike_attempt_ts[symbol] = now
 
         if not strike_result:
             self.logger.log_event("strike_selection_failed", {"symbol": symbol})
             return
+
+        # ================================================================
+        # STEP 8: OPTION TREND VALIDATION (METADATA ONLY - NO VETO)
+        # ================================================================
+        option_trend = None
+        try:
+            option_trend = await self.option_trend_validator.observe(
+                symbol=symbol,
+                bias=mandate.bias,
+                contract=strike_result["contract"],
+                chain=chain_rows,
+                ts=time.monotonic(),
+            )
+
+            self.logger.log_event("option_trend_validation", option_trend)
+
+        except Exception as e:
+            self.logger.log_event(
+                "option_trend_validation_failed",
+                {"symbol": symbol, "error": str(e)}
+            )
 
         # ================================================================
         # STEP 9: SIGNAL CONSTRUCTION (pure builder)
@@ -587,41 +485,6 @@ class Orchestrator:
         """
         
         if symbol != self.active_symbol:
-            return
-        
-        # --------------------------------------------------
-        # DEV: Forced exit for SHADOW test harness
-        # --------------------------------------------------
-        if (
-            FORCE_SHADOW_ENTRY
-            and self.execution_phase.name == "SHADOW"
-            and self.active_contract == "SPY_FORCED_TEST"
-        ):
-            # Check if 30 seconds elapsed
-            if hasattr(self.trail.state, 'entry_ts'):
-                elapsed = time.monotonic() - self.trail.state.entry_ts
-                if elapsed >= 30.0:
-                    self.logger.log_event("forced_shadow_exit", {"forced": True})
-                    await self._execute_exit(symbol, reason="FORCED_SHADOW_EXIT")
-                    return
-            
-            # For forced trades, update trail with synthetic price movement
-            # ⚠️ DEV-ONLY: Synthetic price path inflates R-multiple
-            # This is acceptable for mechanics testing, NOT for expectancy inference
-            if self.active_entry_price:
-                # Synthetic price: linear increase from entry to +30% over 30 seconds
-                elapsed = time.monotonic() - self.trail.state.entry_ts if hasattr(self.trail.state, 'entry_ts') else 0
-                synthetic_mid = self.active_entry_price * (1.0 + 0.3 * (elapsed / 30.0))
-                
-                if self.trail.state.active:
-                    self.trail.update(symbol, synthetic_mid)
-                    
-                    # Check for trail exit
-                    if synthetic_mid <= self.trail.state.trail_level:
-                        await self._execute_exit(symbol, reason="trail_stop")
-                        return
-            
-            # Skip normal chain lookup for forced trades
             return
         
         try:
@@ -735,7 +598,6 @@ class Orchestrator:
         # STEP 3: EXECUTE VIA IBKR
         # ================================================================
         execution_success = False
-        is_forced = strike_result.get("contract") == "SPY_FORCED_TEST"
         
         # Calculate bracket levels
         take_profit = entry_price * getattr(signal, 'trail_mult', 2.0)
@@ -756,9 +618,6 @@ class Orchestrator:
                 },
             )
 
-            # ================================================================
-            # GUARD: Handle None result from send_bracket
-            # ================================================================
             if not result:
                 self.logger.log_event("order_failed", {
                     "symbol": symbol,
@@ -788,9 +647,6 @@ class Orchestrator:
                     execution_success = False
 
         except RuntimeError as e:
-            # ------------------------------------------------
-            # SHADOW MODE GUARD
-            # ------------------------------------------------
             if "SHADOW" in str(e):
                 self.logger.log_event("shadow_execution", {
                     "symbol": symbol,
@@ -819,7 +675,6 @@ class Orchestrator:
         # STEP 4: ON SUCCESS - FINALIZE ENTRY
         # ================================================================
         if execution_success:
-            # ✅ Log decision ONLY after successful execution
             self.decision_log.log(
                 decision="ENTRY",
                 symbol=symbol,
@@ -829,12 +684,10 @@ class Orchestrator:
                 price=float(price),
             )
             
-            # ✅ Initialize trail
             self.trail.initialize(symbol, entry_price, getattr(signal, 'trail_mult', 2.0))
             self.trail.state.oneR = entry_price * 0.50
             self.trail.state.entry_ts = time.monotonic()
             
-            # ✅ Set trading phase
             self.trading_phase = TradingPhase.IN_TRADE
             
             self.logger.log_event("entry_executed", {
@@ -844,7 +697,7 @@ class Orchestrator:
                 "entry": entry_price,
             })
             
-            return  # Success path
+            return
         
         # ================================================================
         # STEP 5: ON FAILURE - ROLLBACK STATE
@@ -854,7 +707,6 @@ class Orchestrator:
             "reason": "execution_failed",
         })
         
-        # Clear all active state
         self.active_symbol = None
         self.active_contract = None
         self.active_bias = None
@@ -863,10 +715,8 @@ class Orchestrator:
         self.active_grade = None
         self.active_score = None
         
-        # Clear trail state to prevent phantom trailing
         self.trail.state.active = False
         
-        # Reset trading phase
         self.trading_phase = TradingPhase.PRE_TRADE
 
     # ------------------------------------------------------------
@@ -878,37 +728,24 @@ class Orchestrator:
         if not self.trail.state.active:
             return
         
-        # --------------------------------------------------
-        # DEV: Handle forced SHADOW trades
-        # --------------------------------------------------
-        if (
-            FORCE_SHADOW_ENTRY
-            and self.execution_phase.name == "SHADOW"
-            and self.active_contract == "SPY_FORCED_TEST"
-        ):
-            # Use synthetic exit price for forced trades
-            elapsed = time.monotonic() - self.trail.state.entry_ts if hasattr(self.trail.state, 'entry_ts') else 30.0
-            exit_price = self.active_entry_price * (1.0 + 0.3 * (elapsed / 30.0))
-            
-        else:
-            # Normal exit: Get current contract price
-            chain_rows = self.chain_agg.get_chain(symbol)
-            contract_row = next(
-                (r for r in chain_rows if r["contract"] == self.active_contract),
-                None
-            )
-            
-            if not contract_row:
-                self.logger.log_event("exit_no_price", {"symbol": symbol})
-                return
-            
-            bid = contract_row.get("bid")
-            ask = contract_row.get("ask")
-            
-            if bid is None or ask is None:
-                return
-            
-            exit_price = (bid + ask) / 2
+        # Get current contract price
+        chain_rows = self.chain_agg.get_chain(symbol)
+        contract_row = next(
+            (r for r in chain_rows if r["contract"] == self.active_contract),
+            None
+        )
+        
+        if not contract_row:
+            self.logger.log_event("exit_no_price", {"symbol": symbol})
+            return
+        
+        bid = contract_row.get("bid")
+        ask = contract_row.get("ask")
+        
+        if bid is None or ask is None:
+            return
+        
+        exit_price = (bid + ask) / 2
         
         # Calculate PnL
         pnl_per_contract = exit_price - self.active_entry_price
@@ -930,14 +767,12 @@ class Orchestrator:
         
         # Send exit order (phase-gated)
         if self.execution_phase.name != "LIVE":
-            is_forced = self.active_contract == "SPY_FORCED_TEST"
             self.logger.log_event("shadow_execution", {
                 "symbol": symbol,
                 "action": "exit",
                 "reason": reason,
                 "pnl": round(total_pnl, 2),
                 "pnl_pct": round(pnl_pct, 2),
-                "forced": is_forced,
             })
         else:
             await self.engine.close_position(
@@ -974,9 +809,7 @@ class Orchestrator:
         self.trading_phase = TradingPhase.POST_TRADE
         self._post_trade_ts = time.monotonic()
         
-        # ================================================================
-        # NOTIFY MANDATE ENGINE OF EXIT (for cooldown)
-        # ================================================================
+        # Notify mandate engine of exit (for cooldown)
         self.mandate_engine.set_last_exit_ts(time.monotonic())
         
         # Clear active state
@@ -988,7 +821,7 @@ class Orchestrator:
         self.active_grade = None
         self.active_score = None
         
-        # Reset trail state (preserve object, reset state)
+        # Reset trail state
         self.trail.state.active = False
 
     # ------------------------------------------------------------
