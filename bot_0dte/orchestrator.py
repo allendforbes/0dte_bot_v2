@@ -36,6 +36,7 @@ from bot_0dte.validation.option_trend_validator import OptionTrendValidator
 
 # Risk
 from bot_0dte.risk.trail_logic import TrailLogic
+from bot_0dte.risk.risk_engine import RiskEngine
 
 # Chain & data
 from bot_0dte.chain.chain_aggregator import ChainAggregator
@@ -59,14 +60,6 @@ from bot_0dte.infra.decision_logger import DecisionLogger, ConvexityLogger
 # ORCHESTRATOR
 # ======================================================================
 class Orchestrator:
-
-    RISK_PCT = 0.05
-    CONTRACT_CAPS = {
-        "SPY": 20, "QQQ": 20,
-        "AAPL": 10, "AMZN": 10, "META": 10,
-        "MSFT": 10, "NVDA": 10, "TSLA": 10
-    }
-    DEFAULT_CAP = 5
 
     def __init__(
         self,
@@ -448,8 +441,8 @@ class Orchestrator:
         # STEP 9: SIGNAL CONSTRUCTION (pure builder)
         # ================================================================
         signal = self.entry_engine.build_signal(mandate, snap)
-        
-        # Log entry snapshot
+
+        # Log entry snapshot (signal-level observability, NO RISK YET)
         self.logger.log_event("entry_snapshot", {
             "symbol": symbol,
             "snap": snap,
@@ -464,18 +457,30 @@ class Orchestrator:
         })
 
         # ================================================================
-        # STEP 10: POSITION SIZING
+        # STEP 10: RISK GATE (SINGLE AUTHORITY)
         # ================================================================
-        cap = self.CONTRACT_CAPS.get(symbol, self.DEFAULT_CAP)
-        qty = min(int(1000 * self.RISK_PCT / strike_result["premium"]), cap)
+        trade_intent = {
+            "symbol": symbol,
+            "signal": signal,
+            "strike": strike_result,
+            "option_price": strike_result["premium"],
+            "underlying_price": price,
+        }
 
-        if qty < 1:
+        approved = await self.risk_engine.approve(trade_intent)
+        if not approved:
             return
 
         # ================================================================
-        # STEP 11: EXECUTION
+        # STEP 11: EXECUTION (RISK-APPROVED)
         # ================================================================
-        await self._execute_entry(symbol, signal, strike_result, qty, price)
+        await self._execute_entry(
+            symbol=symbol,
+            signal=signal,
+            strike_result=strike_result,
+            qty=approved["contracts"],
+            price=price,
+        )
 
 
     async def _manage_trade(self, symbol: str, price: float):
