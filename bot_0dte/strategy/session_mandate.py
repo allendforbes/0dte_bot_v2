@@ -113,49 +113,52 @@ class SessionMandateEngine:
         
         Args:
             symbol: Trading symbol
-            price_type: One of "open", "onh", "onl", "vwap"
+            price_type: One of "open", "onh", "onl", "vwap", "prev_close"
             value: Price value
         """
         if symbol not in self._reference_prices:
             self._reference_prices[symbol] = {}
         self._reference_prices[symbol][price_type] = value
     
-    def get_reference_price(self, symbol: str, snap: Dict[str, Any]) -> Optional[float]:
+    def get_reference_price(self, symbol: str, snap: Dict[str, Any], log_func=None) -> Optional[float]:
         """
         Get best available reference price for bias determination.
         
-        Priority:
-            1. VWAP (if available and stable)
-            2. ONH/ONL midpoint (overnight high/low)
-            3. Opening price
-            4. None (cannot determine bias)
+        Priority: VWAP → ONH → ONL → PREV_CLOSE → OPEN
+        
+        This fallback chain ensures the mandate can evaluate early in the session,
+        even if VWAP hasn't printed yet.
         
         Args:
             symbol: Trading symbol
-            snap: Market snapshot (may contain vwap)
+            snap: Market snapshot (may contain vwap, overnight_high, etc.)
+            log_func: Optional logging function (callable that accepts string)
         
         Returns:
             Reference price or None
         """
         refs = self._reference_prices.get(symbol, {})
         
-        # Priority 1: VWAP from snap
-        vwap = snap.get("vwap")
-        if vwap is not None:
-            return vwap
+        def _log(msg: str):
+            if log_func is not None:
+                log_func(msg)
         
-        # Priority 2: ONH/ONL midpoint
-        onh = refs.get("onh")
-        onl = refs.get("onl")
-        if onh is not None and onl is not None:
-            return (onh + onl) / 2
+        # Build ordered fallback chain: (label, value)
+        # Check snap first for live values, then stored refs
+        price_sources = [
+            ("VWAP", snap.get("vwap")),
+            ("ONH", snap.get("overnight_high") or refs.get("onh")),
+            ("ONL", snap.get("overnight_low") or refs.get("onl")),
+            ("PREV_CLOSE", snap.get("previous_close") or refs.get("prev_close")),
+            ("OPEN", snap.get("open_price") or refs.get("open")),
+        ]
         
-        # Priority 3: Opening price
-        open_price = refs.get("open")
-        if open_price is not None:
-            return open_price
+        for label, price in price_sources:
+            if price is not None and price > 0:
+                _log(f"[refprice] Using {label}: {price}")
+                return price
         
-        # No reference available
+        _log("[refprice] No valid reference price found")
         return None
     
     def _get_acceptance_state(self, symbol: str) -> Dict[str, Any]:
