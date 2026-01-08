@@ -2,6 +2,10 @@
 """
 Hybrid Bot Launcher (IBKR Underlying + Massive Options)
 ASCII UI - Rich completely removed
+
+CHANGELOG:
+    - ADDED: RiskConfig instantiation from environment
+    - ADDED: Pass config to Orchestrator
 """
 
 import asyncio
@@ -17,6 +21,9 @@ from bot_0dte.orchestrator import Orchestrator
 from bot_0dte.infra.logger import StructuredLogger
 from bot_0dte.infra.telemetry import Telemetry
 from bot_0dte.infra.phase import ExecutionPhase
+
+# ✅ Centralized risk config
+from bot_0dte.risk.risk_config import RiskConfig
 
 # ✅ Dynamic universe resolver (SPY/QQQ daily + MATMAN Thu/Fri)
 from bot_0dte.universe import get_universe_for_today
@@ -36,6 +43,12 @@ async def main():
 
     logger = StructuredLogger()
     telemetry = Telemetry()
+
+    # ---------------------------------------------------------
+    # RISK CONFIG (from env vars or defaults)
+    # ---------------------------------------------------------
+    risk_config = RiskConfig.from_env()
+    print(f"[BOOT] Risk config: {risk_config}")
 
     # ---------------------------------------------------------
     # RESOLVE UNIVERSE (TIME-AWARE)
@@ -122,8 +135,9 @@ async def main():
         mux=mux,
         telemetry=telemetry,
         logger=logger,
+        config=risk_config,  # ✅ NEW: Pass centralized risk config
         auto_trade_enabled=True,
-        execution_phase=execution_phase,  # enum, not string
+        execution_phase=execution_phase,
     )
 
     # ---------------------------------------------------------

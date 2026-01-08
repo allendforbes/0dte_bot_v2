@@ -182,7 +182,24 @@ class SessionMandateEngine:
             "bias": None,
             "last_hold_ts": None,
         }
-    
+    def get_debug_state(self, symbol: str) -> Dict[str, Any]:
+        """Return debug state for UI snapshot."""
+        state = self._acceptance.get(symbol, {})
+        cooldown_active = False
+        if self._last_exit_ts:
+            cooldown_active = (time.monotonic() - self._last_exit_ts) < self.POST_EXIT_COOLDOWN_SEC
+        
+        return {
+            "acceptance": {
+                "bias": state.get("bias"),
+                "hold_bars": state.get("hold_bars", 0),
+                "last_aligned": state.get("last_hold_ts") is not None,
+            },
+            "config": {
+                "hold_bars_required": self.HOLD_BARS_REQUIRED,
+            },
+            "cooldown_active": cooldown_active,
+        }
     def determine(
         self,
         symbol: str,
