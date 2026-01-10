@@ -99,7 +99,7 @@ class Orchestrator:
 
         # Phase resolution
         if execution_phase is None:
-            execution_phase = ExecutionPhase.from_env(default="shadow")
+            execution_phase = ExecutionPhase.from_env(default="paper")
         
         self.execution_phase = execution_phase
 
@@ -277,6 +277,36 @@ class Orchestrator:
         
         print("[ORCHESTRATOR] Start complete")
 
+    async def run_test_entry_now(self):
+        symbol = "TSLA"
+        price = self.last_price.get(symbol)
+        if price is None:
+            print(f"[TEST ENTRY] No price for {symbol}")
+            return
+
+        chain_rows = self.chain_agg.get_chain(symbol)
+        if not chain_rows:
+            print(f"[TEST ENTRY] No chain for {symbol}")
+            return
+
+        reference_price = self.session_open_price.get(symbol)
+
+        snap = {
+            "symbol": symbol,
+            "price": price,
+            "vwap": self.vwap.get(symbol),
+            "vwap_dev": None,
+            "vwap_dev_change": None,
+            "reference_price": reference_price,
+            "seconds_since_open": self.seconds_since_open,
+        }
+
+        mandate = self.mandate_engine.determine(symbol, snap)
+        self.logger.log_event("force_entry_test_started", mandate.to_dict())
+
+        await self._attempt_entry(symbol, mandate, price, chain_rows)
+
+
     async def _on_underlying(self, event):
         """Handle underlying price tick with VWAP update."""
         sym = event.get("symbol")
@@ -340,7 +370,6 @@ class Orchestrator:
     async def _evaluate(self, symbol: str, price: float, vwap_result: VWAPResult):
         """
         Main evaluation loop with VWAP integration.
-        
         REFACTORED: snap now includes vwap_dev and vwap_dev_change from tracker.
         """
         if not self.hydration_complete:
@@ -476,8 +505,9 @@ class Orchestrator:
             "underlying_price": price,
         }
 
+        # --- RISK GATE (1st occurrence) ---
         approved_intent = await self.risk_engine.approve(trade_intent)
-        if not approved_intent:
+        if approved_intent is None:
             return
 
         # ================================================================
@@ -487,7 +517,7 @@ class Orchestrator:
             symbol=symbol,
             signal=signal,
             strike_result=strike_dict,
-            qty=approved_intent.contracts,
+            qty=approved_intent["contracts"],
             price=price,
         )
     async def _attempt_entry(self, symbol, mandate, price, chain_rows):
@@ -506,11 +536,14 @@ class Orchestrator:
         )
 
         if not strike_result.success:
+            print(f"[ENTRY FAIL] No strike selected for {symbol} - {strike_result}")
             return False
 
         strike_dict = strike_result.as_legacy_dict()
 
-        signal = self.entry_engine.build_signal(mandate, {"symbol": symbol, "price": price})
+        signal = self.entry_engine.build_signal(
+            mandate, {"symbol": symbol, "price": price}
+        )
 
         trade_intent = {
             "symbol": symbol,
@@ -520,15 +553,26 @@ class Orchestrator:
             "underlying_price": price,
         }
 
+        # ------------------------------------------------
+        # RISK GATE
+        # ------------------------------------------------
         approved_intent = await self.risk_engine.approve(trade_intent)
-        if not approved_intent:
+        print(f"[DEBUG] approved_intent = {approved_intent}")
+        if approved_intent is None:
+            print(f"[ENTRY BLOCKED] Risk rejected trade for {symbol}")
             return False
+
+        print(
+            f"[ENTRY PASS] {symbol} "
+            f"contracts={approved_intent['contracts']} "
+            f"premium={strike_dict['premium']}"
+        )
 
         await self._execute_entry(
             symbol=symbol,
             signal=signal,
             strike_result=strike_dict,
-            qty=approved_intent.contracts,
+            qty=approved_intent["contracts"],
             price=price,
         )
 
@@ -628,17 +672,27 @@ class Orchestrator:
                 },
             )
 
-            if result and result.get("status") in ["filled", "mock-filled"]:
-                execution_success = True
-                self.logger.log_event("order_sent", {
-                    "symbol": symbol,
-                    "status": result.get("status"),
-                    "phase": self.execution_phase.value,
-                })
+            if result:
+                status = result.get("status", "").lower()
+                if status in ["filled", "mock-filled", "submitted", "pending"]:
+                    execution_success = True
+                    self.logger.log_event("order_sent", {
+                        "symbol": symbol,
+                        "status": status,
+                        "phase": self.execution_phase.value,
+                    })
+                else:
+                    print(f"[ORDER NOT FILLED] Status={status} → result={result}")
+                    self.logger.log_event("order_blocked", {
+                        "symbol": symbol,
+                        "status": status,
+                        "details": result,
+                    })
             else:
+                print(f"[ORDER FAILED] No result returned from engine.send_bracket()")
                 self.logger.log_event("order_blocked", {
                     "symbol": symbol,
-                    "status": result.get("status") if result else "none",
+                    "status": "none",
                 })
 
         except RuntimeError as e:

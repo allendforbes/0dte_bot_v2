@@ -29,6 +29,8 @@ class AccountState:
     def is_fresh(self, max_age_sec: float = 20.0) -> bool:
         return (time.time() - self.last_update) <= max_age_sec
 
+    def get_equity(self) -> float:
+        return self.net_liq
 
 # ================================================================
 # Execution Engine
